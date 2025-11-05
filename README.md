@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# NaJakiejPodstawie.pl
 
-## Project info
+Asystent prawny pomagający znaleźć podstawę prawną w polskim prawie w kilka sekund.
 
-**URL**: https://lovable.dev/projects/d229634a-6a38-417e-8974-ebe81b316688
+## Technologie
 
-## How can I edit this code?
+- **Frontend**: React + TypeScript + Vite
+- **UI**: shadcn-ui + Tailwind CSS
+- **Backend**: Supabase Edge Functions
+- **AI**: Anthropic Claude API (model: claude-3-5-haiku-20241022)
 
-There are several ways of editing your application.
+## Konfiguracja
 
-**Use Lovable**
+### 1. Instalacja zależności
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d229634a-6a38-417e-8974-ebe81b316688) and start prompting.
+```bash
+npm install
+```
 
-Changes made via Lovable will be committed automatically to this repo.
+### 2. Konfiguracja zmiennych środowiskowych
 
-**Use your preferred IDE**
+#### Frontend (.env)
+Skopiuj plik `.env` i uzupełnij dane z Twojego projektu Supabase:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```env
+VITE_SUPABASE_PROJECT_ID="twoj-project-id"
+VITE_SUPABASE_PUBLISHABLE_KEY="twoj-anon-key"
+VITE_SUPABASE_URL="https://twoj-project-id.supabase.co"
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+#### Supabase Edge Function
+W panelu Supabase (Settings > Edge Functions > Secrets) dodaj:
 
-Follow these steps:
+```
+ANTHROPIC_API_KEY=twoj-klucz-api-anthropic
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 3. Jak uzyskać klucz API Anthropic
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. Załóż konto na https://console.anthropic.com/
+2. Przejdź do Settings > API Keys
+3. Kliknij "Create Key"
+4. Skopiuj klucz i dodaj go do Supabase Secrets
 
-# Step 3: Install the necessary dependencies.
-npm i
+**Koszt**: Claude 3.5 Haiku to $1 za milion tokenów input, $5 za milion tokenów output (bardzo tani!)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 4. Uruchomienie lokalnie
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Aplikacja będzie dostępna pod adresem `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Deployment
 
-**Use GitHub Codespaces**
+### Supabase Edge Function
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Aby wdrożyć Edge Function:
 
-## What technologies are used for this project?
+```bash
+# Zainstaluj Supabase CLI
+npm i supabase -g
 
-This project is built with:
+# Zaloguj się
+supabase login
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Link do projektu
+supabase link --project-ref twoj-project-id
 
-## How can I deploy this project?
+# Deploy funkcji
+supabase functions deploy legal-assistant
+```
 
-Simply open [Lovable](https://lovable.dev/projects/d229634a-6a38-417e-8974-ebe81b316688) and click on Share -> Publish.
+### Frontend
 
-## Can I connect a custom domain to my Lovable project?
+Frontend możesz wdrożyć na:
+- **Vercel**: `npm i -g vercel && vercel`
+- **Netlify**: `netlify deploy`
+- **Cloudflare Pages**: połącz repo z panelem Cloudflare
 
-Yes, you can!
+## Struktura projektu
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```
+├── src/
+│   ├── components/       # Komponenty React
+│   ├── pages/           # Strony aplikacji
+│   ├── store/           # Zustand state management
+│   └── integrations/    # Integracja z Supabase
+├── supabase/
+│   └── functions/       # Edge Functions
+│       └── legal-assistant/  # Funkcja AI
+└── public/              # Pliki statyczne
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Licencja
+
+Projekt stworzony dla celów edukacyjnych. Nie stanowi porady prawnej.
