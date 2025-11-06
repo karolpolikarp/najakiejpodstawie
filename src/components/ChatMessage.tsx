@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -9,61 +9,195 @@ interface ChatMessageProps {
   content: string;
 }
 
+interface Section {
+  type: string;
+  title: string;
+  content: string;
+}
+
+const parseMessage = (content: string): Section[] => {
+  const sections: Section[] = [];
+  const lines = content.split('\n');
+  let currentSection: Section | null = null;
+
+  // Regex patterns for section headers
+  const sectionPatterns = [
+    { pattern: /^(📜\s*)?PODSTAWA PRAWNA:?$/i, type: 'legal-basis' },
+    { pattern: /^(📝\s*)?CO TO OZNACZA:?$/i, type: 'explanation' },
+    { pattern: /^(🔗\s*)?ŹRÓDŁO:?$/i, type: 'source' },
+    { pattern: /^(⚠️\s*)?UWAGA:?$/i, type: 'warning' },
+    { pattern: /^(KLUCZOWE INFORMACJE|SZCZEGÓŁY|SZCZEGÓŁOWY TRYB ZWROTU|WARUNKI SKORZYSTANIA|WARUNKI):?$/i, type: 'details' },
+    { pattern: /^(DODATKOWE INFORMACJE|PRZYKŁADY|ZASADY):?$/i, type: 'additional' },
+  ];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // Check if this line is a section header
+    const matchedPattern = sectionPatterns.find(p => p.pattern.test(line));
+
+    if (matchedPattern) {
+      // Save previous section
+      if (currentSection) {
+        sections.push(currentSection);
+      }
+
+      // Start new section
+      currentSection = {
+        type: matchedPattern.type,
+        title: line.replace(/^(📜|📝|🔗|⚠️)\s*/, '').replace(/:$/, ''),
+        content: ''
+      };
+    } else if (currentSection) {
+      // Add content to current section
+      if (currentSection.content && line) {
+        currentSection.content += '\n' + line;
+      } else if (line) {
+        currentSection.content += line;
+      }
+    } else if (line) {
+      // Content before any section header
+      sections.push({
+        type: 'text',
+        title: '',
+        content: line
+      });
+    }
+  }
+
+  // Don't forget the last section
+  if (currentSection) {
+    sections.push(currentSection);
+  }
+
+  return sections;
+};
+
+const formatContent = (content: string) => {
+  const lines = content.split('\n').filter(line => line.trim());
+
+  return lines.map((line, idx) => {
+    const trimmed = line.trim();
+
+    // Numbered list
+    if (/^\d+\.\s/.test(trimmed)) {
+      return (
+        <div key={idx} className="flex gap-2 mb-1">
+          <span className="font-medium text-primary">{trimmed.match(/^\d+\./)?.[0]}</span>
+          <span>{trimmed.replace(/^\d+\.\s/, '')}</span>
+        </div>
+      );
+    }
+
+    // Bullet list
+    if (/^[-•]\s/.test(trimmed)) {
+      return (
+        <div key={idx} className="flex gap-2 mb-1 ml-2">
+          <span className="text-primary">•</span>
+          <span>{trimmed.replace(/^[-•]\s/, '')}</span>
+        </div>
+      );
+    }
+
+    // Regular paragraph
+    return <p key={idx} className="mb-2 last:mb-0">{trimmed}</p>;
+  });
+};
+
 const formatAssistantMessage = (content: string) => {
-  const sections = content.split('\n\n');
-  
+  const sections = parseMessage(content);
+
   return sections.map((section, idx) => {
-    if (section.startsWith('📜 PODSTAWA PRAWNA:')) {
-      return (
-        <div key={idx} className="mb-4 p-4 bg-primary/5 rounded-lg border-l-4 border-primary">
-          <div className="flex items-center gap-2 mb-2">
-            <Scale className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-primary">PODSTAWA PRAWNA</h3>
-          </div>
-          <p className="text-foreground font-medium">{section.replace('📜 PODSTAWA PRAWNA:', '').trim()}</p>
-        </div>
-      );
-    }
-    
-    if (section.startsWith('📝 CO TO OZNACZA:')) {
-      return (
-        <div key={idx} className="mb-4 p-4 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <FileText className="h-5 w-5 text-foreground" />
-            <h3 className="font-semibold">CO TO OZNACZA</h3>
-          </div>
-          <p className="text-muted-foreground leading-relaxed">{section.replace('📝 CO TO OZNACZA:', '').trim()}</p>
-        </div>
-      );
-    }
-    
-    if (section.startsWith('🔗 ŹRÓDŁO:')) {
-      return (
-        <div key={idx} className="mb-4 p-3 bg-accent/10 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <LinkIcon className="h-4 w-4 text-accent" />
-            <h3 className="font-semibold text-sm">ŹRÓDŁO</h3>
-          </div>
-          <p className="text-sm text-muted-foreground">{section.replace('🔗 ŹRÓDŁO:', '').trim()}</p>
-        </div>
-      );
-    }
-    
-    if (section.startsWith('⚠️ UWAGA:')) {
-      return (
-        <div key={idx} className="p-3 bg-destructive/10 rounded-lg border border-destructive/20">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-            <div>
-              <h3 className="font-semibold text-sm text-destructive mb-1">UWAGA</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">{section.replace('⚠️ UWAGA:', '').trim()}</p>
+    switch (section.type) {
+      case 'legal-basis':
+        return (
+          <div key={idx} className="mb-4 p-4 bg-primary/5 rounded-lg border-l-4 border-primary">
+            <div className="flex items-center gap-2 mb-2">
+              <Scale className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-primary">{section.title}</h3>
+            </div>
+            <div className="text-foreground font-medium">
+              {formatContent(section.content)}
             </div>
           </div>
-        </div>
-      );
+        );
+
+      case 'explanation':
+        return (
+          <div key={idx} className="mb-4 p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="h-5 w-5 text-foreground" />
+              <h3 className="font-semibold">{section.title}</h3>
+            </div>
+            <div className="text-muted-foreground leading-relaxed">
+              {formatContent(section.content)}
+            </div>
+          </div>
+        );
+
+      case 'source':
+        return (
+          <div key={idx} className="mb-4 p-3 bg-accent/10 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <LinkIcon className="h-4 w-4 text-accent" />
+              <h3 className="font-semibold text-sm">{section.title}</h3>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {formatContent(section.content)}
+            </div>
+          </div>
+        );
+
+      case 'warning':
+        return (
+          <div key={idx} className="mb-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm text-destructive mb-1">{section.title}</h3>
+                <div className="text-xs text-muted-foreground leading-relaxed">
+                  {formatContent(section.content)}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'details':
+        return (
+          <div key={idx} className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+            <div className="flex items-center gap-2 mb-2">
+              <ListChecks className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <h3 className="font-semibold text-blue-900 dark:text-blue-100">{section.title}</h3>
+            </div>
+            <div className="text-sm text-blue-900/80 dark:text-blue-100/80">
+              {formatContent(section.content)}
+            </div>
+          </div>
+        );
+
+      case 'additional':
+        return (
+          <div key={idx} className="mb-4 p-4 bg-violet-50 dark:bg-violet-950/20 rounded-lg border border-violet-200 dark:border-violet-900">
+            <div className="flex items-center gap-2 mb-2">
+              <Info className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              <h3 className="font-semibold text-violet-900 dark:text-violet-100">{section.title}</h3>
+            </div>
+            <div className="text-sm text-violet-900/80 dark:text-violet-100/80">
+              {formatContent(section.content)}
+            </div>
+          </div>
+        );
+
+      case 'text':
+      default:
+        if (!section.content.trim()) return null;
+        return (
+          <div key={idx} className="mb-2 text-muted-foreground">
+            {formatContent(section.content)}
+          </div>
+        );
     }
-    
-    return <p key={idx} className="mb-2 text-muted-foreground">{section}</p>;
   });
 };
 
