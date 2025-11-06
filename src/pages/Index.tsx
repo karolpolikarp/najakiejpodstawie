@@ -183,16 +183,32 @@ const Index = () => {
       // Get Supabase URL and auth token
       const { data: { session } } = await supabase.auth.getSession();
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      // Debug logs
+      console.log('=== AUTH DEBUG ===');
+      console.log('Supabase URL:', supabaseUrl);
+      console.log('Has anonKey:', !!anonKey);
+      console.log('Has session:', !!session);
+      console.log('Session access token:', session?.access_token ? 'exists' : 'none');
 
       // Make a direct fetch call to support streaming
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': anonKey,
+      };
+
+      // If user is authenticated, use their token for Authorization
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      } else {
+        // Otherwise use anon key for Authorization too
+        headers['Authorization'] = `Bearer ${anonKey}`;
+      }
+
       const response = await fetch(`${supabaseUrl}/functions/v1/legal-assistant`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${anonKey}`,
-          ...(session?.access_token && { 'Authorization': `Bearer ${session.access_token}` }),
-        },
+        headers,
         body: JSON.stringify({
           message: content,
           fileContext: attachedFile?.content || null,
@@ -200,8 +216,22 @@ const Index = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData: { error?: string; details?: string } = {};
+
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          console.error('Failed to parse error response:', e);
+        }
+
         const errorMessage = errorData.error || `HTTP error ${response.status}`;
+
+        // Log detailed error for debugging
+        console.error('API Error Details:', {
+          status: response.status,
+          message: errorMessage,
+          details: errorData.details,
+        });
 
         // Rate limit error - retry with exponential backoff
         if (response.status === 429 && retryCount < CONSTANTS.API.MAX_RETRIES) {
@@ -209,6 +239,12 @@ const Index = () => {
           toast.info(`Zbyt wiele zapytań. Ponawiam za ${delay / 1000}s...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           return handleSendMessage(content, retryCount + 1);
+        }
+
+        // Bad request - show specific error message
+        if (response.status === 400) {
+          toast.error(errorMessage);
+          throw new Error(errorMessage);
         }
 
         throw new Error(errorMessage);
@@ -295,7 +331,7 @@ const Index = () => {
       // Specific error messages based on error type
       if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
         toast.error('Przekroczono limit zapytań. Spróbuj za chwilę.');
-      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('failed to fetch')) {
         // Retry on network error
         if (retryCount < CONSTANTS.API.MAX_RETRIES) {
           const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
@@ -306,6 +342,11 @@ const Index = () => {
         toast.error('Błąd połączenia. Sprawdź połączenie z internetem.');
       } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
         toast.error('Błąd autoryzacji. Skontaktuj się z administratorem.');
+      } else if (errorMessage.includes('400') || errorMessage.includes('bad request')) {
+        // Already shown via toast in the error handling above
+        toast.error(error.message || 'Nieprawidłowe zapytanie');
+      } else if (errorMessage.includes('500') || errorMessage.includes('internal server')) {
+        toast.error('Błąd serwera. Spróbuj ponownie za chwilę.');
       } else if (errorMessage.includes('timeout')) {
         toast.error('Przekroczono limit czasu. Spróbuj ponownie.');
       } else {
