@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X } from 'lucide-react';
+import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, memo } from 'react';
 import { toast } from 'sonner';
@@ -10,8 +10,10 @@ interface ChatMessageProps {
   content: string;
   messageId?: string;
   userContent?: string;
+  feedback?: 'positive' | 'negative' | null;
   onRetry?: (content: string) => void;
   onRemove?: (messageId: string) => void;
+  onFeedback?: (messageId: string, feedback: 'positive' | 'negative' | null) => void;
 }
 
 interface Section {
@@ -232,7 +234,7 @@ const isErrorMessage = (content: string): boolean => {
   );
 };
 
-export const ChatMessage = memo(({ role, content, messageId, userContent, onRetry, onRemove }: ChatMessageProps) => {
+export const ChatMessage = memo(({ role, content, messageId, userContent, feedback, onRetry, onRemove, onFeedback }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const isError = role === 'assistant' && isErrorMessage(content);
 
@@ -264,6 +266,22 @@ export const ChatMessage = memo(({ role, content, messageId, userContent, onRetr
     }
   };
 
+  const handleFeedback = (type: 'positive' | 'negative') => {
+    if (onFeedback && messageId) {
+      // Toggle feedback - if same type clicked, remove it
+      const newFeedback = feedback === type ? null : type;
+      onFeedback(messageId, newFeedback);
+
+      if (newFeedback === 'positive') {
+        toast.success('Dziękujemy za pozytywną opinię!');
+      } else if (newFeedback === 'negative') {
+        toast.info('Dziękujemy za feedback. Postaramy się poprawić!');
+      } else {
+        toast.info('Feedback usunięty');
+      }
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -286,53 +304,88 @@ export const ChatMessage = memo(({ role, content, messageId, userContent, onRetr
           </div>
         )}
         {role === 'assistant' && (
-          <div className="mt-4 pt-3 border-t border-border/50 flex justify-between items-center">
-            {isError && (
-              <div className="flex gap-2">
-                {onRetry && userContent && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRetry}
-                    className="h-8 text-xs hover:bg-primary/10"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                    Ponów pytanie
-                  </Button>
-                )}
-                {onRemove && messageId && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRemove}
-                    className="h-8 text-xs hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <X className="h-3.5 w-3.5 mr-1.5" />
-                    Usuń
-                  </Button>
-                )}
+          <div className="mt-4 pt-3 border-t border-border/50 flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              {isError && (
+                <div className="flex gap-2">
+                  {onRetry && userContent && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetry}
+                      className="h-8 text-xs hover:bg-primary/10"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                      Ponów pytanie
+                    </Button>
+                  )}
+                  {onRemove && messageId && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemove}
+                      className="h-8 text-xs hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className="h-3.5 w-3.5 mr-1.5" />
+                      Usuń
+                    </Button>
+                  )}
+                </div>
+              )}
+              <div className={isError ? 'ml-auto' : ''}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="h-8 text-xs"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCheck className="h-3.5 w-3.5 mr-1.5 text-accent" />
+                      Skopiowano
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 mr-1.5" />
+                      Kopiuj
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Feedback buttons */}
+            {!isError && messageId && (
+              <div className="flex items-center gap-2 pt-2 border-t border-border/30">
+                <span className="text-xs text-muted-foreground mr-1">Czy ta odpowiedź była pomocna?</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleFeedback('positive')}
+                  className={`h-7 px-2 ${
+                    feedback === 'positive'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                      : 'hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                  }`}
+                  title="Pomocna odpowiedź"
+                >
+                  <ThumbsUp className={`h-3.5 w-3.5 ${feedback === 'positive' ? 'fill-current' : ''}`} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleFeedback('negative')}
+                  className={`h-7 px-2 ${
+                    feedback === 'negative'
+                      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                      : 'hover:bg-red-50 dark:hover:bg-red-900/20'
+                  }`}
+                  title="Niepomocna odpowiedź"
+                >
+                  <ThumbsDown className={`h-3.5 w-3.5 ${feedback === 'negative' ? 'fill-current' : ''}`} />
+                </Button>
               </div>
             )}
-            <div className={isError ? 'ml-auto' : ''}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className="h-8 text-xs"
-              >
-                {copied ? (
-                  <>
-                    <CheckCheck className="h-3.5 w-3.5 mr-1.5 text-accent" />
-                    Skopiowano
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3.5 w-3.5 mr-1.5" />
-                    Kopiuj
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
         )}
       </div>

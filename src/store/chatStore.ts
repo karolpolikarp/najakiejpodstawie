@@ -6,6 +6,7 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  feedback?: 'positive' | 'negative' | null;
 }
 
 export interface AttachedFile {
@@ -22,6 +23,7 @@ interface ChatState {
   clearMessages: () => void;
   setLoading: (loading: boolean) => void;
   setAttachedFile: (file: AttachedFile | null) => void;
+  setMessageFeedback: (messageId: string, feedback: 'positive' | 'negative' | null) => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -48,6 +50,12 @@ export const useChatStore = create<ChatState>()(
       clearMessages: () => set({ messages: [] }),
       setLoading: (loading) => set({ isLoading: loading }),
       setAttachedFile: (file) => set({ attachedFile: file }),
+      setMessageFeedback: (messageId, feedback) =>
+        set((state) => ({
+          messages: state.messages.map((msg) =>
+            msg.id === messageId ? { ...msg, feedback } : msg
+          ),
+        })),
     }),
     {
       name: 'chat-storage',
