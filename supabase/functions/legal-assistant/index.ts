@@ -49,6 +49,15 @@ serve(async (req) => {
     const { message, fileContext } = await req.json();
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
+    // DEBUG LOGS
+    console.log('=== LEGAL ASSISTANT DEBUG ===');
+    console.log('Message received:', message);
+    console.log('FileContext exists:', !!fileContext);
+    console.log('FileContext length:', fileContext?.length || 0);
+    if (fileContext) {
+      console.log('FileContext preview (first 200 chars):', fileContext.substring(0, 200));
+    }
+
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
