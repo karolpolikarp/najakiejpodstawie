@@ -41,7 +41,7 @@ const Terms = () => {
                 <li><strong>Serwis</strong> - serwis internetowy JakiePrawo.pl dostępny pod adresem jakieprawo.pl</li>
                 <li><strong>Usługodawca</strong> - właściciel i operator serwisu JakiePrawo.pl</li>
                 <li><strong>Użytkownik</strong> - każda osoba korzystająca z serwisu</li>
-                <li><strong>System AI</strong> - system sztucznej inteligencji Anthropic Claude wykorzystywany do generowania odpowiedzi</li>
+                <li><strong>System AI</strong> - system sztucznej inteligencji Anthropic wykorzystywany do generowania odpowiedzi</li>
                 <li><strong>Treści</strong> - pytania, załączone pliki i inne dane przesyłane przez Użytkownika</li>
               </ul>
             </section>
@@ -78,7 +78,7 @@ const Terms = () => {
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
                 <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-2">⚠️ Odpowiedzi generowane przez AI</h3>
                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                  Wszystkie odpowiedzi są generowane przez system sztucznej inteligencji (Anthropic Claude).
+                  Wszystkie odpowiedzi są generowane przez system sztucznej inteligencji (Anthropic).
                   AI może popełniać błędy, generować nieprecyzyjne lub nieaktualne informacje.
                 </p>
               </div>

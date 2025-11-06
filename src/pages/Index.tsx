@@ -117,7 +117,7 @@ const Index = () => {
       // Usuń poprzednie pytanie użytkownika
       removeMessage(messages[messageIndex - 1].id);
     }
-    // Usuń wiadomość asystenta
+    // Usuń wiadomość AI
     removeMessage(messageId);
   };
 
@@ -326,7 +326,7 @@ const Index = () => {
         // If no content was streamed, throw an error
         if (!streamedContent) {
           console.error('No content was streamed!');
-          throw new Error('Brak odpowiedzi od asystenta');
+          throw new Error('Brak odpowiedzi');
         }
 
       } else {
@@ -337,7 +337,7 @@ const Index = () => {
         if (data?.message) {
           addMessage({ role: 'assistant', content: data.message });
         } else {
-          throw new Error('Brak odpowiedzi od asystenta');
+          throw new Error('Brak odpowiedzi');
         }
       }
 
@@ -581,7 +581,7 @@ const Index = () => {
               {/* AI Disclaimer - AI Act Art. 13 compliance */}
               <div className="mt-2 pt-2 border-t border-border/50">
                 <p className="text-xs text-muted-foreground text-center">
-                  🤖 Odpowiedzi generowane przez AI (Anthropic Claude) •
+                  🤖 Odpowiedzi generowane przez AI (Anthropic) •
                   Wymaga weryfikacji prawnika •
                   Nie przesyłaj danych osobowych
                 </p>

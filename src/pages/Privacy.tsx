@@ -41,7 +41,7 @@ const Privacy = () => {
                 <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">✓ Gwarancja prywatności</h3>
                 <p className="text-sm text-green-700 dark:text-green-300">
                   <strong>NIE zapisujemy treści Twoich pytań</strong>, <strong>NIE gromadzimy danych osobowych</strong>
-                  i <strong>NIE stosujemy śledzących cookies</strong>. Twoje rozmowy z asystentem prawnym pozostają prywatne.
+                  i <strong>NIE stosujemy śledzących cookies</strong>. Twoje rozmowy pozostają prywatne.
                 </p>
               </div>
 
@@ -120,7 +120,7 @@ const Privacy = () => {
                 <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-2">⚠️ WAŻNE OSTRZEŻENIE</h3>
                 <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">
                   <strong>NIE PRZESYŁAJ DANYCH OSOBOWYCH</strong> do serwisu. Twoje pytania są przetwarzane przez
-                  system sztucznej inteligencji Anthropic Claude. Mimo że Anthropic zapewnia zgodność z RODO i nie wykorzystuje
+                  system sztucznej inteligencji Anthropic. Mimo że Anthropic zapewnia zgodność z RODO i nie wykorzystuje
                   danych do treningu modeli, przesyłanie danych osobowych osób trzecich bez ich zgody narusza RODO.
                 </p>
                 <p className="text-sm text-amber-700 dark:text-amber-300">
@@ -134,7 +134,7 @@ const Privacy = () => {
               <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
                 <li><strong>Administrator danych:</strong> JakiePrawo.pl - odpowiada za przetwarzanie danych w serwisie</li>
                 <li><strong>Procesor danych (Podprocesor):</strong> Anthropic PBC (USA) - przetwarza dane w celu generowania odpowiedzi AI</li>
-                <li><strong>Model AI:</strong> Claude (system AI ogólnego przeznaczenia w rozumieniu AI Act)</li>
+                <li><strong>Model AI:</strong> Anthropic (system AI ogólnego przeznaczenia w rozumieniu AI Act)</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Podstawa prawna przetwarzania:</h3>
@@ -147,7 +147,7 @@ const Privacy = () => {
               <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground mb-4">
                 <li>Wpisujesz pytanie lub załączasz plik w serwisie JakiePrawo.pl</li>
                 <li>Treść jest wysyłana przez nasze serwery (Supabase) do API Anthropic</li>
-                <li>Anthropic Claude analizuje pytanie i generuje odpowiedź</li>
+                <li>Anthropic analizuje pytanie i generuje odpowiedź</li>
                 <li>Odpowiedź jest wyświetlana w Twojej przeglądarce</li>
                 <li>Historia rozmowy jest zapisywana <strong>tylko lokalnie w Twojej przeglądarce</strong></li>
                 <li>Anthropic przechowuje dane przez max. 30 dni w celach bezpieczeństwa, potem są trwale usuwane</li>
@@ -171,11 +171,11 @@ const Privacy = () => {
               </p>
 
               <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
-                <li><strong>Art. 13 AI Act</strong> - Informujemy, że korzystasz z systemu AI (Anthropic Claude)</li>
+                <li><strong>Art. 13 AI Act</strong> - Informujemy, że korzystasz z systemu AI (Anthropic)</li>
                 <li><strong>Transparentność</strong> - Wszystkie odpowiedzi są oznaczone jako generowane przez AI</li>
                 <li><strong>Nadzór człowieka</strong> - Odpowiedzi AI wymagają weryfikacji przez prawnika</li>
                 <li><strong>Nie jest systemem wysokiego ryzyka</strong> - nasz system nie podejmuje automatycznych decyzji prawnych</li>
-                <li><strong>GPAI (General Purpose AI)</strong> - Anthropic Claude jest modelem AI ogólnego przeznaczenia</li>
+                <li><strong>GPAI (General Purpose AI)</strong> - Anthropic jest modelem AI ogólnego przeznaczenia</li>
               </ul>
 
               <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
