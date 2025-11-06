@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
-import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, RotateCcw, X } from 'lucide-react';
+import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { toast } from 'sonner';
+import { CONSTANTS } from '@/lib/constants';
 
 interface ChatMessageProps {
   role: 'user' | 'assistant';
@@ -28,6 +29,7 @@ const parseMessage = (content: string): Section[] => {
   const sectionPatterns = [
     { pattern: /^(📜\s*)?PODSTAWA PRAWNA:?$/i, type: 'legal-basis' },
     { pattern: /^(📝\s*)?CO TO OZNACZA:?$/i, type: 'explanation' },
+    { pattern: /^(📚\s*)?POWIĄZANE PRZEPISY:?$/i, type: 'related-provisions' },
     { pattern: /^(🔗\s*)?ŹRÓDŁO:?$/i, type: 'source' },
     { pattern: /^(⚠️\s*)?UWAGA:?$/i, type: 'warning' },
     { pattern: /^(KLUCZOWE INFORMACJE|SZCZEGÓŁY|SZCZEGÓŁOWY TRYB ZWROTU|WARUNKI SKORZYSTANIA|WARUNKI):?$/i, type: 'details' },
@@ -49,7 +51,7 @@ const parseMessage = (content: string): Section[] => {
       // Start new section
       currentSection = {
         type: matchedPattern.type,
-        title: line.replace(/^(📜|📝|🔗|⚠️)\s*/, '').replace(/:$/, ''),
+        title: line.replace(/^(📜|📝|📚|🔗|⚠️)\s*/, '').replace(/:$/, ''),
         content: ''
       };
     } else if (currentSection) {
@@ -139,6 +141,19 @@ const formatAssistantMessage = (content: string) => {
           </div>
         );
 
+      case 'related-provisions':
+        return (
+          <div key={idx} className="mb-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-900">
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h3 className="font-semibold text-emerald-900 dark:text-emerald-100">{section.title}</h3>
+            </div>
+            <div className="text-sm text-emerald-900/80 dark:text-emerald-100/80">
+              {formatContent(section.content)}
+            </div>
+          </div>
+        );
+
       case 'source':
         return (
           <div key={idx} className="mb-4 p-3 bg-accent/10 rounded-lg">
@@ -217,15 +232,23 @@ const isErrorMessage = (content: string): boolean => {
   );
 };
 
-export const ChatMessage = ({ role, content, messageId, userContent, onRetry, onRemove }: ChatMessageProps) => {
+export const ChatMessage = memo(({ role, content, messageId, userContent, onRetry, onRemove }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const isError = role === 'assistant' && isErrorMessage(content);
+
+  // Memoize formatted content to avoid re-parsing on every render
+  const formattedContent = useMemo(() => {
+    if (role === 'assistant') {
+      return formatAssistantMessage(content);
+    }
+    return content;
+  }, [role, content]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
     setCopied(true);
     toast.success('Skopiowano do schowka');
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), CONSTANTS.UI.COPY_FEEDBACK_DURATION_MS);
   };
 
   const handleRetry = () => {
@@ -256,10 +279,10 @@ export const ChatMessage = ({ role, content, messageId, userContent, onRetry, on
         }`}
       >
         {role === 'user' ? (
-          <div className="whitespace-pre-wrap break-words">{content}</div>
+          <div className="whitespace-pre-wrap break-words">{formattedContent}</div>
         ) : (
           <div className="space-y-2">
-            {formatAssistantMessage(content)}
+            {formattedContent}
           </div>
         )}
         {role === 'assistant' && (
@@ -315,4 +338,6 @@ export const ChatMessage = ({ role, content, messageId, userContent, onRetry, on
       </div>
     </motion.div>
   );
-};
+});
+
+ChatMessage.displayName = 'ChatMessage';
