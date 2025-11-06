@@ -46,7 +46,17 @@ serve(async (req) => {
   }
 
   try {
-    const { message, fileContext } = await req.json();
+    const requestBody = await req.json();
+    const { message, fileContext } = requestBody || {};
+
+    // Validate required fields
+    if (!message || typeof message !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Pole "message" jest wymagane i musi być tekstem' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
     if (!ANTHROPIC_API_KEY) {
@@ -145,7 +155,7 @@ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikie
 Wyjątki od 14-dniowego zwrotu istnieją dla niektórych towarów (np. produkty higieniczne, spersonalizowane).`;
 
     // If user attached a file, modify system prompt
-    if (fileContext) {
+    if (fileContext && typeof fileContext === 'string' && fileContext.length > 0) {
       systemPrompt += `
 
 📄 KONTEKST Z ZAŁĄCZONEGO DOKUMENTU:
@@ -158,7 +168,7 @@ Jeśli pytanie wykracza poza załączony dokument, powiedz o tym wyraźnie i uż
     let userMessage = message;
 
     // If file context exists, prepend it to the message
-    if (fileContext) {
+    if (fileContext && typeof fileContext === 'string' && fileContext.length > 0) {
       // Limit file context to avoid token limits (keep first 30k chars)
       const limitedContext = fileContext.length > 30000
         ? fileContext.substring(0, 30000) + "\n\n[...dokument został skrócony...]"
@@ -254,9 +264,15 @@ ${message}`;
     });
   } catch (error) {
     console.error('Error in legal-assistant function:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({
+        error: errorMessage,
+        details: error instanceof Error ? error.stack : undefined
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
