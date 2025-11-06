@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks } from 'lucide-react';
+import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -24,6 +24,7 @@ const parseMessage = (content: string): Section[] => {
   const sectionPatterns = [
     { pattern: /^(📜\s*)?PODSTAWA PRAWNA:?$/i, type: 'legal-basis' },
     { pattern: /^(📝\s*)?CO TO OZNACZA:?$/i, type: 'explanation' },
+    { pattern: /^(📚\s*)?POWIĄZANE PRZEPISY:?$/i, type: 'related-provisions' },
     { pattern: /^(🔗\s*)?ŹRÓDŁO:?$/i, type: 'source' },
     { pattern: /^(⚠️\s*)?UWAGA:?$/i, type: 'warning' },
     { pattern: /^(KLUCZOWE INFORMACJE|SZCZEGÓŁY|SZCZEGÓŁOWY TRYB ZWROTU|WARUNKI SKORZYSTANIA|WARUNKI):?$/i, type: 'details' },
@@ -45,7 +46,7 @@ const parseMessage = (content: string): Section[] => {
       // Start new section
       currentSection = {
         type: matchedPattern.type,
-        title: line.replace(/^(📜|📝|🔗|⚠️)\s*/, '').replace(/:$/, ''),
+        title: line.replace(/^(📜|📝|📚|🔗|⚠️)\s*/, '').replace(/:$/, ''),
         content: ''
       };
     } else if (currentSection) {
@@ -130,6 +131,19 @@ const formatAssistantMessage = (content: string) => {
               <h3 className="font-semibold">{section.title}</h3>
             </div>
             <div className="text-muted-foreground leading-relaxed">
+              {formatContent(section.content)}
+            </div>
+          </div>
+        );
+
+      case 'related-provisions':
+        return (
+          <div key={idx} className="mb-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-900">
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h3 className="font-semibold text-emerald-900 dark:text-emerald-100">{section.title}</h3>
+            </div>
+            <div className="text-sm text-emerald-900/80 dark:text-emerald-100/80">
               {formatContent(section.content)}
             </div>
           </div>
