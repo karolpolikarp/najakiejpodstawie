@@ -70,7 +70,7 @@ const Landing = () => {
             <div className="flex items-center gap-2">
               <Scale className="h-7 w-7 text-primary" />
               <div>
-                <h1 className="text-2xl font-bold text-primary">NaJakiejPodstawie.pl</h1>
+                <h1 className="text-2xl font-bold text-primary">JakiePrawo.pl</h1>
                 <p className="text-sm text-muted-foreground hidden sm:block">Wyszukiwarka podstaw prawnych</p>
               </div>
             </div>
@@ -118,7 +118,7 @@ const Landing = () => {
 
       {/* Features Section */}
       <section className="container mx-auto px-4 py-16 bg-card/30">
-        <h3 className="text-3xl md:text-4xl font-bold text-center mb-12">Dlaczego NaJakiejPodstawie.pl?</h3>
+        <h3 className="text-3xl md:text-4xl font-bold text-center mb-12">Dlaczego JakiePrawo.pl?</h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {features.map((feature, idx) => {
             const Icon = feature.icon;
@@ -175,7 +175,7 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto">
           <h3 className="text-3xl md:text-4xl font-bold text-center mb-6">Historie użycia</h3>
           <p className="text-center text-muted-foreground mb-12 text-lg">
-            Zobacz, jak inni korzystają z NaJakiejPodstawie.pl
+            Zobacz, jak inni korzystają z JakiePrawo.pl
           </p>
           <div className="grid md:grid-cols-3 gap-6">
             {caseStudies.map((study, idx) => {
@@ -221,7 +221,7 @@ const Landing = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="font-medium">
-                NaJakiejPodstawie.pl to narzędzie wspierające, nie zastępuje profesjonalnej porady prawnej.
+                JakiePrawo.pl to narzędzie wspierające, nie zastępuje profesjonalnej porady prawnej.
               </p>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Informacje mają charakter edukacyjny i pomocniczy</li>
@@ -257,7 +257,7 @@ const Landing = () => {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Scale className="h-6 w-6 text-primary" />
-                <h4 className="font-bold text-primary">NaJakiejPodstawie.pl</h4>
+                <h4 className="font-bold text-primary">JakiePrawo.pl</h4>
               </div>
               <p className="text-sm text-muted-foreground">
                 Wyszukiwarka podstaw prawnych wspierana przez AI
@@ -305,7 +305,7 @@ const Landing = () => {
             </div>
           </div>
           <div className="text-center text-sm text-muted-foreground pt-4 border-t border-border">
-            <p>© 2025 NaJakiejPodstawie.pl - Projekt open source</p>
+            <p>© 2025 JakiePrawo.pl - Projekt open source</p>
           </div>
         </div>
       </footer>

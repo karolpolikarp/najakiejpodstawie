@@ -14,7 +14,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 // CORS configuration - restrict to specific domains for security
 // In production, set ALLOWED_ORIGINS environment variable (comma-separated)
-// Example: "https://najakiejpodstawie.pl,https://www.najakiejpodstawie.pl"
+// Example: "https://jakieprawo.pl,https://www.jakieprawo.pl"
 const getAllowedOrigin = (requestOrigin: string | null): string => {
   const allowedOrigins = Deno.env.get('ALLOWED_ORIGINS')?.split(',') || [
     'http://localhost:8080',

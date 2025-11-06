@@ -10,7 +10,7 @@ const Privacy = () => {
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Scale className="h-7 w-7 text-primary" />
             <div>
-              <h1 className="text-2xl font-bold text-primary">NaJakiejPodstawie.pl</h1>
+              <h1 className="text-2xl font-bold text-primary">JakiePrawo.pl</h1>
               <p className="text-sm text-muted-foreground">Wyszukiwarka podstaw prawnych</p>
             </div>
           </Link>
@@ -165,7 +165,7 @@ const Privacy = () => {
                 <h3 className="text-base font-semibold text-amber-800 dark:text-amber-200 mb-2">Jak zgłosić naruszenie?</h3>
                 <ol className="list-decimal list-inside space-y-2 text-sm text-amber-700 dark:text-amber-300">
                   <li>Skontaktuj się z nami przez <Link to="/kontakt" className="underline font-medium">stronę kontaktu</Link></li>
-                  <li>Wyślij email na adres: <a href="mailto:privacy@najakiejpodstawie.pl" className="underline font-medium">privacy@najakiejpodstawie.pl</a></li>
+                  <li>Wyślij email na adres: <a href="mailto:privacy@jakieprawo.pl" className="underline font-medium">privacy@jakieprawo.pl</a></li>
                   <li>W wiadomości opisz charakter podejrzanego naruszenia i podaj datę zdarzenia</li>
                 </ol>
               </div>

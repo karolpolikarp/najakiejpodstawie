@@ -85,7 +85,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
             </form>
 
             <p className="text-xs text-muted-foreground text-center mt-6">
-              NaJakiejPodstawie.pl - Asystent Prawny
+              JakiePrawo.pl - Asystent Prawny
             </p>
           </div>
         </div>

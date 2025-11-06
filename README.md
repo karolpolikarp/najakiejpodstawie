@@ -1,12 +1,12 @@
-# NaJakiejPodstawie.pl
+# JakiePrawo.pl
 
 **Znajdź podstawę prawną w polskim prawie w kilka sekund.**
 
 ---
 
-## 🎯 Czym jest NaJakiejPodstawie.pl?
+## 🎯 Czym jest JakiePrawo.pl?
 
-**NaJakiejPodstawie.pl** to nowoczesna aplikacja webowa wykorzystująca sztuczną inteligencję, która pomaga znaleźć konkretną podstawę prawną dla różnych sytuacji życiowych i biznesowych.
+**JakiePrawo.pl** to nowoczesna aplikacja webowa wykorzystująca sztuczną inteligencję, która pomaga znaleźć konkretną podstawę prawną dla różnych sytuacji życiowych i biznesowych.
 
 Zamiast godzinami przeszukiwać akty prawne, wystarczy zadać pytanie - a aplikacja w kilka sekund dostarczy:
 - 📜 Konkretny artykuł i nazwę aktu prawnego
@@ -77,7 +77,7 @@ Wszystko oparte na nowoczesnych, sprawdzonych technologiach używanych przez naj
 
 ## ⚠️ Ważne zastrzeżenia
 
-**NaJakiejPodstawie.pl służy celom informacyjnym i edukacyjnym.**
+**JakiePrawo.pl służy celom informacyjnym i edukacyjnym.**
 
 Aplikacja **nie zastępuje profesjonalnej porady prawnej**. W indywidualnych sprawach, szczególnie tych o dużym znaczeniu prawnym lub finansowym, zawsze skonsultuj się z wykwalifikowanym prawnikiem lub radcą prawnym.
 
@@ -99,6 +99,6 @@ Projekt open source na licencji MIT.
 
 ---
 
-**NaJakiejPodstawie.pl** - bo prawo powinno być dostępne dla każdego.
+**JakiePrawo.pl** - bo prawo powinno być dostępne dla każdego.
 
 *Wersja 1.0 | 2025*
