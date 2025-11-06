@@ -149,7 +149,7 @@ Wyjątki od 14-dniowego zwrotu istnieją dla niektórych towarów (np. produkty 
       systemPrompt += `
 
 📄 KONTEKST Z ZAŁĄCZONEGO DOKUMENTU:
-Użytkownik załączył dokument prawny. PRIORYTETOWO wykorzystuj ten dokument do odpowiedzi.
+Użytkownik załączył dokument. PRIORYTETOWO wykorzystuj ten dokument do odpowiedzi.
 Jeśli odpowiedź znajduje się w załączonym dokumencie, cytuj konkretne fragmenty.
 Jeśli pytanie wykracza poza załączony dokument, powiedz o tym wyraźnie i użyj swojej wiedzy.`;
     }
@@ -164,7 +164,7 @@ Jeśli pytanie wykracza poza załączony dokument, powiedz o tym wyraźnie i uż
         ? fileContext.substring(0, 30000) + "\n\n[...dokument został skrócony...]"
         : fileContext;
 
-      userMessage = `ZAŁĄCZONY DOKUMENT PRAWNY:
+      userMessage = `ZAŁĄCZONY DOKUMENT:
 ---
 ${limitedContext}
 ---
