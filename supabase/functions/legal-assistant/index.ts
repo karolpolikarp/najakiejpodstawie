@@ -23,6 +23,10 @@ const getAllowedOrigin = (requestOrigin: string | null): string => {
     'http://localhost:5173',
     'http://127.0.0.1:8080',
     'http://127.0.0.1:5173',
+    'https://jakieprawo.pl',
+    'https://www.jakieprawo.pl/czat',
+    'https://najakiejpodstawie.pl',
+    'https://najakiejpodstawie.vercel.app',
   ];
 
   if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
@@ -222,6 +226,12 @@ ${message}`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Anthropic API error:', response.status, errorText);
+      console.error('Request details:', {
+        model: 'claude-3-5-haiku-20241022',
+        stream: true,
+        messageLength: userMessage.length,
+        systemPromptLength: systemPrompt.length,
+      });
 
       if (response.status === 429) {
         return new Response(
@@ -234,6 +244,16 @@ ${message}`;
         return new Response(
           JSON.stringify({ error: 'Nieprawidłowy klucz API. Sprawdź konfigurację.' }),
           { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (response.status === 400) {
+        return new Response(
+          JSON.stringify({
+            error: `Błąd zapytania do API: ${errorText}`,
+            details: errorText
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 

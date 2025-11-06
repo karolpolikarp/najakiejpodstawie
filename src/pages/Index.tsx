@@ -252,6 +252,7 @@ const Index = () => {
 
       // Check if response is streaming (text/event-stream) or regular JSON
       const contentType = response.headers.get('content-type');
+      console.log('Response content-type:', contentType);
 
       if (contentType?.includes('text/event-stream')) {
         // Handle streaming response
@@ -271,50 +272,66 @@ const Index = () => {
 
         let buffer = '';
 
-        while (true) {
-          const { done, value } = await reader.read();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
 
-          if (done) {
-            break;
-          }
+            if (done) {
+              console.log('Stream ended. Total content length:', streamedContent.length);
+              break;
+            }
 
-          // Decode chunk
-          buffer += decoder.decode(value, { stream: true });
+            // Decode chunk
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
 
-          // Process complete SSE messages
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+            // Process complete SSE messages
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6); // Remove 'data: ' prefix
+            for (const line of lines) {
+              if (!line.trim()) continue; // Skip empty lines
 
-              // Skip empty data or event markers
-              if (!data || data === '[DONE]') continue;
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6); // Remove 'data: ' prefix
 
-              try {
-                const parsed = JSON.parse(data);
+                // Skip [DONE] marker
+                if (data === '[DONE]') continue;
 
-                // Anthropic streaming format
-                if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                  streamedContent += parsed.delta.text;
-                  updateMessageContent(assistantMessageId, streamedContent);
+                try {
+                  const parsed = JSON.parse(data);
+                  console.log('Parsed SSE event:', parsed.type);
+
+                  // Anthropic streaming format
+                  if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                    streamedContent += parsed.delta.text;
+                    updateMessageContent(assistantMessageId, streamedContent);
+                  } else if (parsed.type === 'content_block_start') {
+                    console.log('Content block started');
+                  } else if (parsed.type === 'message_start') {
+                    console.log('Message started');
+                  }
+                } catch (e) {
+                  // Ignore JSON parse errors for malformed chunks
+                  console.warn('Failed to parse SSE data:', data, e);
                 }
-              } catch (e) {
-                // Ignore JSON parse errors for malformed chunks
-                console.warn('Failed to parse SSE data:', data);
               }
             }
           }
+        } catch (streamError) {
+          console.error('Stream reading error:', streamError);
+          throw streamError;
         }
 
         // If no content was streamed, throw an error
         if (!streamedContent) {
+          console.error('No content was streamed!');
           throw new Error('Brak odpowiedzi od asystenta');
         }
 
       } else {
         // Handle regular JSON response (fallback)
+        console.log('Using fallback JSON response');
         const data = await response.json();
 
         if (data?.message) {
