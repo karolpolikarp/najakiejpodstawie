@@ -38,22 +38,28 @@ const Privacy = () => {
               <h2 className="text-2xl font-semibold text-foreground mb-4">1. Jakie dane zbieramy?</h2>
 
               <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-                <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">✓ Gwarancja prywatności</h3>
+                <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">✓ Ochrona prywatności</h3>
                 <p className="text-sm text-green-700 dark:text-green-300">
-                  <strong>NIE zapisujemy treści Twoich pytań</strong>, <strong>NIE gromadzimy danych osobowych</strong>
-                  i <strong>NIE stosujemy śledzących cookies</strong>. Twoje rozmowy z asystentem prawnym pozostają prywatne.
+                  <strong>NIE gromadzimy danych osobowych</strong> (imię, email, adres).
+                  Zbieramy treść pytań do statystyk (anonimowo, bez identyfikacji użytkownika).
+                  Używamy Google Analytics i Plausible do analizy ruchu.
                 </p>
               </div>
 
               <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Dane, które NIE zbieramy:</h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
-                <li><strong>Treść pytań i odpowiedzi</strong> - nie są zapisywane na naszych serwerach</li>
                 <li><strong>Dane osobowe</strong> - nie zbieramy imienia, nazwiska, adresu email, numeru telefonu</li>
                 <li><strong>Aktywność użytkownika</strong> - nie śledzimy Twoich działań poza aplikacją</li>
-                <li><strong>Cookies śledzące</strong> - nie używamy plików cookie do śledzenia lub profilowania</li>
                 <li><strong>Dane geolokalizacyjne</strong> - nie zbieramy informacji o Twojej lokalizacji</li>
-                <li><strong>Metadane rozmów</strong> - nie zapisujemy historii zapytań na serwerze</li>
                 <li>Nie sprzedajemy ani nie udostępniamy żadnych danych osobom trzecim</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Dane, które zbieramy (anonimowo, do statystyk):</h3>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
+                <li><strong>Treść pytań</strong> - zapisujemy pytania zadawane asystentowi w celach statystycznych i poprawy jakości</li>
+                <li><strong>Metadane zapytań</strong> - czas przetwarzania, długość odpowiedzi, informacja czy dołączono dokument</li>
+                <li><strong>Statystyki użycia</strong> - liczba pytań, najczęściej zadawane pytania</li>
+                <li><strong>Analytics</strong> - używamy Google Analytics i Plausible do analizy ruchu (szczegóły poniżej)</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Dane techniczne (przechowywane lokalnie):</h3>
@@ -100,7 +106,66 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">3. Twoje prawa</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">3. Narzędzia analityczne</h2>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                Używamy narzędzi analitycznych do lepszego zrozumienia, jak użytkownicy korzystają z aplikacji:
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Google Analytics</h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Google Analytics pomaga nam zrozumieć, jak odwiedzający korzystają z naszej strony.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                    <li>Zbiera dane o odwiedzinach stron, czasie spędzonym na stronie, lokalizacji geograficznej (na poziomie kraju)</li>
+                    <li>Używa cookies do śledzenia sesji użytkowników</li>
+                    <li>Dane są anonimizowane i nie zawierają informacji umożliwiających identyfikację osoby</li>
+                    <li>Zobacz: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Polityka prywatności Google</a></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Plausible Analytics</h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Plausible to przyjazne dla prywatności narzędzie analityczne, które używamy jako alternatywę dla Google Analytics.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                    <li>NIE używa cookies</li>
+                    <li>Wszystkie dane są anonimowe</li>
+                    <li>Zgodne z RODO, CCPA i PECR</li>
+                    <li>Dane przechowywane w UE</li>
+                    <li>Zobacz: <a href="https://plausible.io/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Polityka prywatności Plausible</a></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Dashboard Statystyk Wewnętrznych</h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Zbieramy statystyki użycia aplikacji, aby poprawić jakość odpowiedzi i zrozumieć potrzeby użytkowników.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                    <li>Zapisujemy treść pytań zadawanych asystentowi</li>
+                    <li>NIE łączymy pytań z konkretnymi użytkownikami (brak identyfikatorów osobowych)</li>
+                    <li>Pytania są grupowane i anonimizowane</li>
+                    <li>Dane używane wyłącznie do wewnętrznych statystyk i poprawy jakości</li>
+                    <li>Statystyki dostępne publicznie na stronie /dashboard</li>
+                  </ul>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h3 className="text-base font-semibold text-blue-800 dark:text-blue-200 mb-2">Jak zrezygnować z śledzenia?</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-blue-700 dark:text-blue-300 ml-4">
+                    <li>Google Analytics: Zainstaluj <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="underline">Google Analytics Opt-out Browser Add-on</a></li>
+                    <li>Plausible: Nie używa cookies, więc nie wymaga zgody</li>
+                    <li>Możesz również korzystać z trybu prywatnego przeglądarki lub blokować skrypty analityczne</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Twoje prawa</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Zgodnie z RODO (Ogólne Rozporządzenie o Ochronie Danych) masz prawo do:
               </p>
@@ -117,7 +182,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Retencja danych</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">5. Retencja danych</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Informujemy o okresach przechowywania danych w kontekście ewentualnych przyszłych funkcji:
               </p>
@@ -155,7 +220,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">5. Zgłaszanie naruszeń danych osobowych</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">6. Zgłaszanie naruszeń danych osobowych</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Twoja prywatność i bezpieczeństwo danych są dla nas priorytetem. W przypadku podejrzenia naruszenia
                 ochrony danych osobowych lub incydentu bezpieczeństwa:
@@ -195,7 +260,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">6. Bezpieczeństwo</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">7. Bezpieczeństwo</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Aplikacja korzysta z szyfrowania HTTPS. Twoje zapytania są przesyłane bezpiecznie.
                 Nie przechowujemy haseł ani danych logowania w niezabezpieczony sposób.
@@ -203,14 +268,14 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">7. Zmiany w polityce</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">8. Zmiany w polityce</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Możemy aktualizować tę politykę. Zmiany będą publikowane na tej stronie z nową datą aktualizacji.
               </p>
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">8. Kontakt</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">9. Kontakt</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Pytania dotyczące prywatności? Skontaktuj się przez <Link to="/kontakt" className="text-primary hover:underline">stronę kontaktu</Link>.
               </p>
@@ -218,8 +283,10 @@ const Privacy = () => {
 
             <section className="bg-primary/10 border border-primary/30 rounded-lg p-6">
               <p className="text-sm text-foreground">
-                <strong>Podsumowanie:</strong> Nie zbieramy Twoich danych osobowych. Twoje pytania są przetwarzane przez AI,
-                ale nie są przez nas przechowywane. Twoja historia czatu jest tylko w Twojej przeglądarce.
+                <strong>Podsumowanie:</strong> Nie zbieramy Twoich danych osobowych (imię, email, adres).
+                Zbieramy anonimowo treść pytań do celów statystycznych i poprawy jakości.
+                Używamy Google Analytics i Plausible do analizy ruchu.
+                Twoja historia czatu jest przechowywana tylko w Twojej przeglądarce.
               </p>
             </section>
           </div>

@@ -12,6 +12,20 @@
     <meta property="og:type" content="website" />
 
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Plausible Analytics - Privacy-friendly analytics -->
+    <!-- Replace data-domain with your actual domain when deploying -->
+    <script defer data-domain="najakiejpodstawie.pl" src="https://plausible.io/js/script.js"></script>
+
+    <!-- Google Analytics - Replace G-XXXXXXXXXX with your GA4 Measurement ID -->
+    <!-- You can configure this in Google Analytics and update the ID below -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
   </head>
 
   <body>

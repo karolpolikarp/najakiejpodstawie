@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 /**
  * Legal Context Knowledge Base
@@ -11,6 +12,26 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
  * When laws change, update legal-context.ts for reference and update this prompt
  * with new examples if needed.
  */
+
+// Helper function to generate a hash for grouping similar questions
+async function generateQuestionHash(question: string): Promise<string> {
+  // Normalize the question: lowercase, remove punctuation, trim whitespace
+  const normalized = question
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Simple hash using built-in crypto
+  const encoder = new TextEncoder();
+  const data = encoder.encode(normalized);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  // Return first 16 characters for shorter hash
+  return hashHex.substring(0, 16);
+}
 
 // CORS configuration - restrict to specific domains for security
 // In production, set ALLOWED_ORIGINS environment variable (comma-separated)
@@ -48,10 +69,19 @@ serve(async (req) => {
   try {
     const { message, fileContext } = await req.json();
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    // Initialize Supabase client for analytics
+    const supabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+      ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+      : null;
+
+    const startTime = Date.now();
 
     // Base system prompt
     let systemPrompt = `Jesteś profesjonalnym asystentem prawnym specjalizującym się w polskim prawie. Twoje zadanie to udzielanie merytorycznych, szczegółowych odpowiedzi z konkretnymi podstawami prawnymi i kompletnym kontekstem prawnym.
@@ -214,6 +244,40 @@ ${message}`;
 
     const data = await response.json();
     const assistantMessage = data.content[0].text;
+    const processingTime = Date.now() - startTime;
+
+    // Log analytics if Supabase is configured
+    if (supabase) {
+      try {
+        const questionHash = await generateQuestionHash(message);
+
+        // Insert question
+        const { data: questionData, error: questionError } = await supabase
+          .from('questions')
+          .insert({
+            question_text: message,
+            question_hash: questionHash,
+            has_file_context: !!fileContext,
+          })
+          .select()
+          .single();
+
+        if (!questionError && questionData) {
+          // Insert response
+          await supabase
+            .from('responses')
+            .insert({
+              question_id: questionData.id,
+              response_length: assistantMessage.length,
+              tokens_used: data.usage?.input_tokens + data.usage?.output_tokens || 0,
+              processing_time_ms: processingTime,
+            });
+        }
+      } catch (analyticsError) {
+        // Don't fail the request if analytics logging fails
+        console.error('Analytics logging error:', analyticsError);
+      }
+    }
 
     return new Response(
       JSON.stringify({ message: assistantMessage }),

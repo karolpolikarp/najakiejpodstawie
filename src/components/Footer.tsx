@@ -32,6 +32,12 @@ export const Footer = () => {
               Kontakt
             </Link>
             <Link
+              to="/dashboard"
+              className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-1"
+            >
+              Dashboard
+            </Link>
+            <Link
               to="/polityka-prywatnosci"
               className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-1"
             >
