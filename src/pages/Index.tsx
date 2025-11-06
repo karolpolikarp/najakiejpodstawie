@@ -295,9 +295,9 @@ const Index = () => {
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => window.location.href = '/'}
               className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity cursor-pointer"
-              aria-label="Odśwież stronę i rozpocznij nową rozmowę"
+              aria-label="Przejdź do strony głównej"
             >
               <Scale className="h-6 w-6 sm:h-7 sm:w-7 text-primary flex-shrink-0" aria-hidden="true" />
               <div className="min-w-0">
