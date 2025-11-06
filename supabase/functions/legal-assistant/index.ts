@@ -17,6 +17,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // Example: "https://jakieprawo.pl,https://www.jakieprawo.pl"
 const getAllowedOrigin = (requestOrigin: string | null): string => {
   const allowedOrigins = Deno.env.get('ALLOWED_ORIGINS')?.split(',') || [
+    'https://jakieprawo.pl',
+    'https://www.jakieprawo.pl',
     'http://localhost:8080',
     'http://localhost:5173',
     'http://127.0.0.1:8080',
