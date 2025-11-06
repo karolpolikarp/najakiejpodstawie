@@ -185,14 +185,30 @@ const Index = () => {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+      // Debug logs
+      console.log('=== AUTH DEBUG ===');
+      console.log('Supabase URL:', supabaseUrl);
+      console.log('Has anonKey:', !!anonKey);
+      console.log('Has session:', !!session);
+      console.log('Session access token:', session?.access_token ? 'exists' : 'none');
+
       // Make a direct fetch call to support streaming
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': anonKey,
+      };
+
+      // If user is authenticated, use their token for Authorization
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      } else {
+        // Otherwise use anon key for Authorization too
+        headers['Authorization'] = `Bearer ${anonKey}`;
+      }
+
       const response = await fetch(`${supabaseUrl}/functions/v1/legal-assistant`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${anonKey}`,
-          ...(session?.access_token && { 'Authorization': `Bearer ${session.access_token}` }),
-        },
+        headers,
         body: JSON.stringify({
           message: content,
           fileContext: attachedFile?.content || null,
