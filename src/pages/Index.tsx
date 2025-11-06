@@ -8,6 +8,7 @@ import { Footer } from '@/components/Footer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { FileUpload } from '@/components/FileUpload';
 import { GDPRWarningModal } from '@/components/GDPRWarningModal';
+import { AINoticeBanner } from '@/components/AINoticeBanner';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -333,6 +334,8 @@ const Index = () => {
           {messages.length > 0 && (
             <div className="mb-8">
               <div ref={messagesStartRef} />
+              {/* AI Notice Banner */}
+              <AINoticeBanner />
               <div className="space-y-4 mb-6" role="log" aria-live="polite" aria-label="Historia rozmowy">
                 {messages.map((message, index) => {
                   // Znajdź poprzednie pytanie użytkownika dla wiadomości asystenta
