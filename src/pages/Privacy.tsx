@@ -37,20 +37,31 @@ const Privacy = () => {
             <section className="bg-card border border-border rounded-lg p-6">
               <h2 className="text-2xl font-semibold text-foreground mb-4">1. Jakie dane zbieramy?</h2>
 
+              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">✓ Gwarancja prywatności</h3>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  <strong>NIE zapisujemy treści Twoich pytań</strong>, <strong>NIE gromadzimy danych osobowych</strong>
+                  i <strong>NIE stosujemy śledzących cookies</strong>. Twoje rozmowy z asystentem prawnym pozostają prywatne.
+                </p>
+              </div>
+
               <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Dane, które NIE zbieramy:</h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
-                <li>Nie zapisujemy Twoich pytań ani odpowiedzi</li>
-                <li>Nie gromadzimy danych osobowych (imię, nazwisko, email)</li>
-                <li>Nie śledzimy Twoich działań poza aplikacją</li>
-                <li>Nie używamy plików cookie śledzących</li>
-                <li>Nie sprzedajemy żadnych danych osobom trzecim</li>
+                <li><strong>Treść pytań i odpowiedzi</strong> - nie są zapisywane na naszych serwerach</li>
+                <li><strong>Dane osobowe</strong> - nie zbieramy imienia, nazwiska, adresu email, numeru telefonu</li>
+                <li><strong>Aktywność użytkownika</strong> - nie śledzimy Twoich działań poza aplikacją</li>
+                <li><strong>Cookies śledzące</strong> - nie używamy plików cookie do śledzenia lub profilowania</li>
+                <li><strong>Dane geolokalizacyjne</strong> - nie zbieramy informacji o Twojej lokalizacji</li>
+                <li><strong>Metadane rozmów</strong> - nie zapisujemy historii zapytań na serwerze</li>
+                <li>Nie sprzedajemy ani nie udostępniamy żadnych danych osobom trzecim</li>
               </ul>
 
-              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Dane techniczne (lokalnie):</h3>
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Dane techniczne (przechowywane lokalnie):</h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li><strong>Historia czatu</strong> - zapisywana tylko w Twojej przeglądarce (localStorage), nie wysyłamy jej na serwer</li>
                 <li><strong>Sesja logowania</strong> - informacja czy jesteś zalogowany (localStorage)</li>
-                <li>Możesz wyczyścić te dane w każdej chwili czyszcząc historię przeglądarki</li>
+                <li><strong>Preferencje motywu</strong> - wybór jasnego/ciemnego motywu (localStorage)</li>
+                <li>Możesz wyczyścić te dane w każdej chwili używając przycisku "Usuń wszystkie dane lokalne" w aplikacji</li>
               </ul>
             </section>
 
@@ -106,7 +117,85 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Bezpieczeństwo</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Retencja danych</h2>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                Informujemy o okresach przechowywania danych w kontekście ewentualnych przyszłych funkcji:
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">Dane lokalne (localStorage):</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Historia czatu, sesja logowania i preferencje motywu są przechowywane lokalnie w Twojej przeglądarce
+                    <strong> bezterminowo</strong> do momentu ich ręcznego usunięcia przez Ciebie lub wyczyszczenia danych przeglądarki.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">W przypadku wprowadzenia funkcji logowania:</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Jeśli w przyszłości wprowadzilibyśmy funkcję rejestracji i logowania użytkowników:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground mt-2 ml-4">
+                    <li>Dane konta (email, hasło) byłyby przechowywane do czasu usunięcia konta</li>
+                    <li>Historia rozmów (jeśli byłaby synchronizowana) - do 90 dni lub do usunięcia konta</li>
+                    <li>Logi techniczne - maksymalnie 30 dni</li>
+                    <li>Nieaktywne konta byłyby usuwane po 24 miesiącach braku aktywności</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">Usługi zewnętrzne:</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Dane przetwarzane przez usługi zewnętrzne (Anthropic, Supabase, Vercel) podlegają ich polityce retencji
+                    - szczegóły w sekcji "Usługi zewnętrzne" powyżej.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">5. Zgłaszanie naruszeń danych osobowych</h2>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                Twoja prywatność i bezpieczeństwo danych są dla nas priorytetem. W przypadku podejrzenia naruszenia
+                ochrony danych osobowych lub incydentu bezpieczeństwa:
+              </p>
+
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                <h3 className="text-base font-semibold text-amber-800 dark:text-amber-200 mb-2">Jak zgłosić naruszenie?</h3>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-amber-700 dark:text-amber-300">
+                  <li>Skontaktuj się z nami przez <Link to="/kontakt" className="underline font-medium">stronę kontaktu</Link></li>
+                  <li>Wyślij email na adres: <a href="mailto:privacy@najakiejpodstawie.pl" className="underline font-medium">privacy@najakiejpodstawie.pl</a></li>
+                  <li>W wiadomości opisz charakter podejrzanego naruszenia i podaj datę zdarzenia</li>
+                </ol>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">Nasze zobowiązanie:</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                    <li>Odpowiemy na zgłoszenie w ciągu <strong>72 godzin</strong></li>
+                    <li>Przeprowadzimy wewnętrzne dochodzenie</li>
+                    <li>Poinformujemy Cię o podjętych działaniach</li>
+                    <li>W razie potwierdzonego naruszenia powiadomimy Urząd Ochrony Danych Osobowych zgodnie z RODO</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">Prawo do skargi:</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Masz prawo złożyć skargę do organu nadzorczego - Prezesa Urzędu Ochrony Danych Osobowych (UODO):
+                    <br />
+                    <a href="https://uodo.gov.pl" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      www.uodo.gov.pl
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">6. Bezpieczeństwo</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Aplikacja korzysta z szyfrowania HTTPS. Twoje zapytania są przesyłane bezpiecznie.
                 Nie przechowujemy haseł ani danych logowania w niezabezpieczony sposób.
@@ -114,14 +203,14 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">5. Zmiany w polityce</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">7. Zmiany w polityce</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Możemy aktualizować tę politykę. Zmiany będą publikowane na tej stronie z nową datą aktualizacji.
               </p>
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">6. Kontakt</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">8. Kontakt</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Pytania dotyczące prywatności? Skontaktuj się przez <Link to="/kontakt" className="text-primary hover:underline">stronę kontaktu</Link>.
               </p>

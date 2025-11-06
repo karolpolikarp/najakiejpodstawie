@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Scale, Trash2, LogOut, ArrowUp } from 'lucide-react';
+import { Scale, Trash2, LogOut, Database, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
@@ -10,6 +10,7 @@ import { FileUpload } from '@/components/FileUpload';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CONSTANTS } from '@/lib/constants';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Index = () => {
-  const { messages, isLoading, addMessage, clearMessages, setLoading, attachedFile, setAttachedFile } = useChatStore();
+  const { messages, isLoading, addMessage, removeMessage, clearMessages, setLoading, attachedFile, setAttachedFile } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesStartRef = useRef<HTMLDivElement>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -50,9 +51,28 @@ const Index = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSendMessage = async (content: string) => {
-    addMessage({ role: 'user', content });
-    setLoading(true);
+  const handleRetry = (content: string) => {
+    // Ponów wysłanie pytania
+    handleSendMessage(content);
+  };
+
+  const handleRemoveMessage = (messageId: string) => {
+    // Usuń wiadomość błędu oraz poprzedzające ją pytanie użytkownika
+    const messageIndex = messages.findIndex((msg) => msg.id === messageId);
+    if (messageIndex > 0 && messages[messageIndex - 1].role === 'user') {
+      // Usuń poprzednie pytanie użytkownika
+      removeMessage(messages[messageIndex - 1].id);
+    }
+    // Usuń wiadomość asystenta
+    removeMessage(messageId);
+  };
+
+  const handleSendMessage = async (content: string, retryCount = 0) => {
+    // Only add user message on first attempt
+    if (retryCount === 0) {
+      addMessage({ role: 'user', content });
+      setLoading(true);
+    }
 
     try {
       const { data, error } = await supabase.functions.invoke('legal-assistant', {
@@ -62,14 +82,55 @@ const Index = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check for specific error types
+        const errorMessage = error.message?.toLowerCase() || '';
+
+        // Rate limit error - retry with exponential backoff
+        if ((errorMessage.includes('429') || errorMessage.includes('rate limit')) &&
+            retryCount < CONSTANTS.API.MAX_RETRIES) {
+          const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
+          toast.info(`Zbyt wiele zapytań. Ponawiam za ${delay / 1000}s...`);
+
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return handleSendMessage(content, retryCount + 1);
+        }
+
+        // Network error - retry
+        if ((errorMessage.includes('network') || errorMessage.includes('fetch')) &&
+            retryCount < CONSTANTS.API.MAX_RETRIES) {
+          const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
+          toast.info(`Błąd połączenia. Ponawiam za ${delay / 1000}s...`);
+
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return handleSendMessage(content, retryCount + 1);
+        }
+
+        throw error;
+      }
 
       if (data?.message) {
         addMessage({ role: 'assistant', content: data.message });
+      } else {
+        throw new Error('Brak odpowiedzi od asystenta');
       }
     } catch (error: any) {
       console.error('Error calling legal assistant:', error);
-      toast.error('Nie udało się przetworzyć pytania');
+      const errorMessage = error.message?.toLowerCase() || '';
+
+      // Specific error messages based on error type
+      if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+        toast.error('Przekroczono limit zapytań. Spróbuj za chwilę.');
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        toast.error('Błąd połączenia. Sprawdź połączenie z internetem.');
+      } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+        toast.error('Błąd autoryzacji. Skontaktuj się z administratorem.');
+      } else if (errorMessage.includes('timeout')) {
+        toast.error('Przekroczono limit czasu. Spróbuj ponownie.');
+      } else {
+        toast.error('Nie udało się przetworzyć pytania');
+      }
+
       addMessage({
         role: 'assistant',
         content: 'Niestety coś poszło nie tak. Spróbuj zadać pytanie ponownie lub sformułuj je inaczej.',
@@ -89,6 +150,41 @@ const Index = () => {
   const handleLogout = () => {
     localStorage.removeItem('app_authenticated');
     window.location.reload();
+  };
+
+  const handleDeleteAllData = () => {
+    const confirmed = window.confirm(
+      'Czy na pewno chcesz usunąć wszystkie dane lokalne?\n\n' +
+      'To działanie usunie:\n' +
+      '• Historię czatu\n' +
+      '• Sesję logowania\n' +
+      '• Preferencje motywu\n' +
+      '• Wszystkie inne dane przechowywane lokalnie\n\n' +
+      'Ta operacja jest nieodwracalna.'
+    );
+
+    if (confirmed) {
+      try {
+        // Clear all localStorage data
+        localStorage.clear();
+
+        // Clear sessionStorage as well (in case any data is stored there)
+        sessionStorage.clear();
+
+        // Clear any Supabase-specific storage
+        supabase.auth.signOut();
+
+        toast.success('Wszystkie dane lokalne zostały usunięte');
+
+        // Reload the page to reset the application state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } catch (error) {
+        console.error('Error deleting local data:', error);
+        toast.error('Wystąpił błąd podczas usuwania danych');
+      }
+    }
   };
 
   return (
@@ -119,6 +215,16 @@ const Index = () => {
                 </Button>
               )}
               <ThemeToggle />
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteAllData}
+                aria-label="Usuń wszystkie dane lokalne"
+                title="Usuń wszystkie dane lokalne (historia, ustawienia, sesja)"
+                className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 p-0"
+              >
+                <Database className="h-4 w-4" aria-hidden="true" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -163,9 +269,28 @@ const Index = () => {
             <div className="mb-8">
               <div ref={messagesStartRef} />
               <div className="space-y-4 mb-6" role="log" aria-live="polite" aria-label="Historia rozmowy">
-                {messages.map((message) => (
-                  <ChatMessage key={message.id} role={message.role} content={message.content} />
-                ))}
+                {messages.map((message, index) => {
+                  // Znajdź poprzednie pytanie użytkownika dla wiadomości asystenta
+                  let userContent: string | undefined;
+                  if (message.role === 'assistant' && index > 0) {
+                    const previousMessage = messages[index - 1];
+                    if (previousMessage.role === 'user') {
+                      userContent = previousMessage.content;
+                    }
+                  }
+
+                  return (
+                    <ChatMessage
+                      key={message.id}
+                      role={message.role}
+                      content={message.content}
+                      messageId={message.id}
+                      userContent={userContent}
+                      onRetry={handleRetry}
+                      onRemove={handleRemoveMessage}
+                    />
+                  );
+                })}
                 {isLoading && (
                   <div className="flex justify-start mb-6">
                     <div className="bg-assistant text-assistant-foreground border border-border rounded-lg p-5 max-w-[85%]" role="status" aria-live="polite">

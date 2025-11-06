@@ -5,11 +5,59 @@ interface ExampleQuestionsProps {
   disabled?: boolean;
 }
 
-const EXAMPLE_QUESTIONS = [
-  'Zwrot towaru kupionego online',
-  'Wypowiedzenie umowy najmu przez najemcę',
-  'Urlop na żądanie - ile dni w roku?',
-];
+// Kategoryzowane przykładowe pytania
+const QUESTION_CATEGORIES = {
+  'Prawo konsumenckie': [
+    'Zwrot towaru kupionego online',
+    'Reklamacja wadliwego produktu',
+    'Odwołanie umowy kredytu konsumenckiego',
+    'Odstąpienie od umowy zawartej na odległość',
+  ],
+  'Prawo pracy': [
+    'Urlop na żądanie - ile dni w roku?',
+    'Wypowiedzenie umowy o pracę przez pracownika',
+    'Nadgodziny - jak są płatne?',
+    'Urlop macierzyński i rodzicielski - ile tygodni?',
+    'Mobbing w pracy - jak się bronić?',
+  ],
+  'Prawo najmu': [
+    'Wypowiedzenie umowy najmu przez najemcę',
+    'Kaucja przy wynajmie - zwrot po wyprowadzce',
+    'Podniesienie czynszu przez właściciela',
+    'Eksmisja z mieszkania - kiedy jest możliwa?',
+  ],
+  'Podatki': [
+    'Odliczenie VAT od zakupów firmowych',
+    'Ulga na dziecko w zeznaniu podatkowym',
+    'Zwolnienie z podatku darowizny od rodziny',
+    'Termin składania zeznania rocznego PIT',
+  ],
+  'Prawo rodzinne': [
+    'Alimenty na dziecko - jak ustalić wysokość?',
+    'Rozwód bez orzekania o winie',
+    'Władza rodzicielska po rozwodzie',
+    'Podział majątku po rozwodzie',
+  ],
+  'Prawo karne': [
+    'Przedawnienie wykroczenia drogowego',
+    'Obrona konieczna - kiedy jest legalna?',
+    'Zniesławienie w internecie - jak się bronić?',
+  ],
+  'Prawo ruchu drogowego': [
+    'Punkty karne - ile można mieć?',
+    'Cofnięcie prawa jazdy za przekroczenie prędkości',
+    'Szkoda w aucie na parkingu - kto odpowiada?',
+  ],
+};
+
+// Funkcja do losowego wyboru pytań z różnych kategorii
+const getRandomQuestions = (count: number = 6): string[] => {
+  const allQuestions = Object.values(QUESTION_CATEGORIES).flat();
+  const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+};
+
+const EXAMPLE_QUESTIONS = getRandomQuestions(6);
 
 export const ExampleQuestions = ({ onSelect, disabled }: ExampleQuestionsProps) => {
   return (

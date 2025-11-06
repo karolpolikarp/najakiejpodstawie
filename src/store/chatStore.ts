@@ -18,6 +18,7 @@ interface ChatState {
   isLoading: boolean;
   attachedFile: AttachedFile | null;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
+  removeMessage: (messageId: string) => void;
   clearMessages: () => void;
   setLoading: (loading: boolean) => void;
   setAttachedFile: (file: AttachedFile | null) => void;
@@ -40,12 +41,20 @@ export const useChatStore = create<ChatState>()(
             },
           ],
         })),
+      removeMessage: (messageId) =>
+        set((state) => ({
+          messages: state.messages.filter((msg) => msg.id !== messageId),
+        })),
       clearMessages: () => set({ messages: [] }),
       setLoading: (loading) => set({ isLoading: loading }),
       setAttachedFile: (file) => set({ attachedFile: file }),
     }),
     {
       name: 'chat-storage',
+      // Only persist messages, not loading states or attached files
+      partialize: (state) => ({
+        messages: state.messages,
+      }),
     }
   )
 );
