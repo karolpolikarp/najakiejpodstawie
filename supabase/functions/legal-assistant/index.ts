@@ -12,14 +12,15 @@ serve(async (req) => {
   }
 
   try {
-    const { message } = await req.json();
+    const { message, fileContext } = await req.json();
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
-    const systemPrompt = `Jesteś asystentem prawnym specjalizującym się w polskim prawie. Twoje zadanie to:
+    // Base system prompt
+    let systemPrompt = `Jesteś asystentem prawnym specjalizującym się w polskim prawie. Twoje zadanie to:
 
 1. Znaleźć konkretną podstawę prawną dla pytania użytkownika
 2. Odpowiedzieć DOKŁADNIE w poniższym formacie (użyj dokładnie tych emoji i sekcji):
@@ -42,6 +43,35 @@ WAŻNE:
 - Używaj prostego języka
 - Zawsze dodaj zastrzeżenie o konsultacji z prawnikiem`;
 
+    // If user attached a file, modify system prompt
+    if (fileContext) {
+      systemPrompt += `
+
+📄 KONTEKST Z ZAŁĄCZONEGO DOKUMENTU:
+Użytkownik załączył dokument prawny. PRIORYTETOWO wykorzystuj ten dokument do odpowiedzi.
+Jeśli odpowiedź znajduje się w załączonym dokumencie, cytuj konkretne fragmenty.
+Jeśli pytanie wykracza poza załączony dokument, powiedz o tym wyraźnie i użyj swojej wiedzy.`;
+    }
+
+    // Build user message
+    let userMessage = message;
+
+    // If file context exists, prepend it to the message
+    if (fileContext) {
+      // Limit file context to avoid token limits (keep first 30k chars)
+      const limitedContext = fileContext.length > 30000
+        ? fileContext.substring(0, 30000) + "\n\n[...dokument został skrócony...]"
+        : fileContext;
+
+      userMessage = `ZAŁĄCZONY DOKUMENT PRAWNY:
+---
+${limitedContext}
+---
+
+PYTANIE UŻYTKOWNIKA:
+${message}`;
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -54,7 +84,7 @@ WAŻNE:
         max_tokens: 2048,
         system: systemPrompt,
         messages: [
-          { role: 'user', content: message }
+          { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
       }),
