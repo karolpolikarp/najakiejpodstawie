@@ -302,7 +302,7 @@ const Index = () => {
               <Scale className="h-6 w-6 sm:h-7 sm:w-7 text-primary flex-shrink-0" aria-hidden="true" />
               <div className="min-w-0">
                 <h1 className="text-lg sm:text-2xl font-bold text-primary truncate">JakiePrawo.pl</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground hidden xs:block">Wyszukiwarka podstaw prawnych</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Wyszukiwarka podstaw prawnych</p>
               </div>
             </button>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
