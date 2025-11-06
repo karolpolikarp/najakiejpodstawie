@@ -53,9 +53,9 @@ All colors MUST be HSL.
     --assistant-message: 40 30% 96%;
     --assistant-message-foreground: 25 25% 20%;
 
-    /* Gradient tła - ciepły */
-    --gradient-start: 40 25% 97%;
-    --gradient-end: 40 20% 94%;
+    /* Gradient tła - ciepły z większym kontrastem */
+    --gradient-start: 40 30% 96%;
+    --gradient-end: 145 20% 88%;
   }
 
   .dark {
@@ -102,9 +102,9 @@ All colors MUST be HSL.
     --assistant-message: 145 8% 15%;
     --assistant-message-foreground: 40 20% 92%;
 
-    /* Gradient tła - ciemny */
-    --gradient-start: 145 10% 8%;
-    --gradient-end: 145 12% 10%;
+    /* Gradient tła - ciemny z większym kontrastem */
+    --gradient-start: 145 15% 8%;
+    --gradient-end: 145 10% 15%;
   }
 }
 

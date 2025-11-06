@@ -257,13 +257,17 @@ const Index = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10" role="banner">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+            <button
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity cursor-pointer"
+              aria-label="Odśwież stronę i rozpocznij nową rozmowę"
+            >
               <Scale className="h-6 w-6 sm:h-7 sm:w-7 text-primary flex-shrink-0" aria-hidden="true" />
               <div className="min-w-0">
                 <h1 className="text-lg sm:text-2xl font-bold text-primary truncate">JakiePrawo.pl</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground hidden xs:block">Wyszukiwarka podstaw prawnych</p>
               </div>
-            </div>
+            </button>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               {messages.length > 0 && (
                 <Button
@@ -305,7 +309,7 @@ const Index = () => {
 
       {/* Main Chat Area */}
       <main className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-8" role="main">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto bg-card/40 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-4 sm:p-6 md:p-8">
           {/* Welcome Message */}
           {messages.length === 0 && (
             <div className="text-center mb-8 sm:mb-12 animate-fade-in px-2">
