@@ -78,10 +78,10 @@ const About = () => {
 
           <div className="mt-8 flex gap-4">
             <Button asChild variant="outline">
-              <Link to="/">← Wróć do wyszukiwarki</Link>
+              <Link to="/">← Strona główna</Link>
             </Button>
             <Button asChild variant="default">
-              <Link to="/kontakt">Skontaktuj się</Link>
+              <Link to="/czat">Przejdź do wyszukiwarki</Link>
             </Button>
           </div>
         </div>
