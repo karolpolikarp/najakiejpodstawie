@@ -32,6 +32,7 @@ const Index = () => {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const shouldAutoScrollRef = useRef(true); // Śledzi czy powinniśmy auto-scrollować
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,41 +42,42 @@ const Index = () => {
     messagesStartRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const scrollToLastMessage = () => {
-    // Sprawdź czy są wiadomości
-    if (messages.length === 0) return;
-
-    const lastMessage = messages[messages.length - 1];
-
-    // Jeśli ostatnia wiadomość to odpowiedź AI, przewiń do jej początku
-    // żeby użytkownik mógł czytać od góry
-    if (lastMessage.role === 'assistant') {
-      // Użyj querySelector żeby znaleźć ostatni element wiadomości
-      const messageElements = document.querySelectorAll('[role="log"] > div');
-      const lastElement = messageElements[messageElements.length - 1];
-
-      if (lastElement) {
-        lastElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    } else {
-      // Dla wiadomości użytkownika przewiń normalnie na dół
-      scrollToBottom();
-    }
+  // Sprawdź czy użytkownik jest blisko dołu strony
+  const isNearBottom = () => {
+    const threshold = 150; // piksele od dołu
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const pageHeight = document.documentElement.scrollHeight;
+    return pageHeight - scrollPosition < threshold;
   };
 
-  useEffect(() => {
-    scrollToLastMessage();
-  }, [messages]);
-
+  // Śledź czy użytkownik przewinął w górę
   useEffect(() => {
     const handleScroll = () => {
-      // Show scroll-to-top button when scrolled down more than 500px
+      // Jeśli użytkownik jest blisko dołu, włącz auto-scroll
+      // Jeśli przewinął w górę, wyłącz
+      shouldAutoScrollRef.current = isNearBottom();
+
+      // Pokaż przycisk scroll-to-top
       setShowScrollTop(window.scrollY > 500);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Auto-scroll podczas streamowania - jak w Claude
+  useEffect(() => {
+    // Przewijaj tylko gdy:
+    // 1. Trwa streaming (isLoading) ALBO dodano nową wiadomość
+    // 2. Użytkownik nie przewinął w górę (shouldAutoScrollRef = true)
+    if (shouldAutoScrollRef.current) {
+      const timeoutId = setTimeout(() => {
+        scrollToBottom();
+      }, 50); // Krótkie opóźnienie dla płynności
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [messages, isLoading]);
 
   // Auto-clear attached file after 15 minutes of inactivity
   useEffect(() => {
