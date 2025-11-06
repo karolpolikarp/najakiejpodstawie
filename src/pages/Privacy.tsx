@@ -162,6 +162,15 @@ const Privacy = () => {
                 <li>Zobacz: <a href="https://www.anthropic.com/legal/commercial-terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Commercial Terms Anthropic</a></li>
                 <li>Zobacz: <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Polityka prywatności Anthropic</a></li>
               </ul>
+
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
+                <p className="text-sm text-blue-900 dark:text-blue-100">
+                  <strong>Ważne:</strong> Administrator (JakiePrawo.pl) nie ma bezpośredniego dostępu do danych przesłanych do Anthropic.
+                  Dane są automatycznie usuwane przez Anthropic po maksymalnie 30 dniach zgodnie z ich polityką.
+                  Nie możemy przyspieszyć tego procesu. Jeśli przypadkowo przesłałeś dane osobowe, możesz{' '}
+                  <Link to="/kontakt" className="underline font-medium">zgłosić incydent</Link> do udokumentowania dla celów compliance.
+                </p>
+              </div>
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">

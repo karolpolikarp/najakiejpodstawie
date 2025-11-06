@@ -106,18 +106,35 @@ const FAQ = () => {
       question: "Co zrobić, jeśli przypadkowo przesłałem dane osobowe?",
       answer: (
         <>
-          <ol className="list-decimal list-inside space-y-2 ml-4">
-            <li><strong>Nie panikuj</strong> – dane zostaną automatycznie usunięte po max. 30 dniach</li>
-            <li><strong>Skontaktuj się z nami</strong> przez{' '}
-              <Link to="/kontakt" className="text-primary hover:underline">stronę kontaktu</Link>, żeby przyspieszyć usunięcie
-            </li>
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-3">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              <strong>Ważne:</strong> Dane są przetwarzane przez Anthropic (USA). Nie mamy bezpośredniego dostępu
+              do tych danych ani możliwości ich natychmiastowego usunięcia.
+            </p>
+          </div>
+
+          <p className="mb-3"><strong>Nie panikuj.</strong> Oto co się stanie:</p>
+
+          <ul className="list-disc list-inside space-y-2 ml-4 mb-3">
+            <li><strong>Automatyczne usunięcie:</strong> Dane zostaną usunięte przez Anthropic po maksymalnie 30 dniach zgodnie z ich polityką retencji</li>
+            <li><strong>Brak treningu AI:</strong> Anthropic nie używa danych z API do trenowania swoich modeli</li>
+            <li><strong>Szyfrowane przesyłanie:</strong> Dane były przesłane przez bezpieczne połączenie HTTPS</li>
+          </ul>
+
+          <p className="mb-3"><strong>Co możesz zrobić:</strong></p>
+          <ul className="list-disc list-inside space-y-2 ml-4 mb-3">
+            <li>Możesz <Link to="/kontakt" className="text-primary hover:underline">zgłosić incydent</Link> - udokumentujemy to dla celów compliance</li>
+            <li>Jeśli dane dotyczą osoby trzeciej, rozważ poinformowanie jej o tym (obowiązek z RODO)</li>
             <li><strong>Pamiętaj na przyszłość:</strong> Formułuj pytania ogólnie</li>
-          </ol>
+          </ul>
+
           <div className="mt-3 bg-muted p-3 rounded">
-            <p className="text-sm"><strong>Przykład:</strong></p>
+            <p className="text-sm"><strong>Przykład jak pytać:</strong></p>
             <ul className="text-sm space-y-1 mt-1">
               <li>❌ ZŁE: "Czy Jan Kowalski, PESEL 12345678901, może..."</li>
               <li>✅ DOBRE: "Czy pracodawca może..."</li>
+              <li>❌ ZŁE: "Moja umowa z firmą XYZ na ul. Warszawskiej..."</li>
+              <li>✅ DOBRE: "Czy w umowie najmu może być zapis o..."</li>
             </ul>
           </div>
         </>
