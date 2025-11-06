@@ -28,6 +28,7 @@ const Index = () => {
   const messagesStartRef = useRef<HTMLDivElement>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -50,6 +51,34 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Auto-clear attached file after 15 minutes of inactivity
+  useEffect(() => {
+    const resetInactivityTimer = () => {
+      // Clear existing timer
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+
+      // Only set timer if file is attached
+      if (attachedFile) {
+        inactivityTimerRef.current = setTimeout(() => {
+          setAttachedFile(null);
+          toast.info('Załączony dokument został automatycznie usunięty po 15 minutach bezczynności');
+        }, 15 * 60 * 1000); // 15 minutes in milliseconds
+      }
+    };
+
+    // Reset timer on any activity (messages, loading state change)
+    resetInactivityTimer();
+
+    // Cleanup on unmount
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [attachedFile, messages, isLoading, setAttachedFile]);
 
   const handleRetry = (content: string) => {
     // Ponów wysłanie pytania
