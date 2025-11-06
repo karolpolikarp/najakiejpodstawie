@@ -35,15 +35,15 @@ export const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
           onKeyDown={handleKeyDown}
           placeholder="Zapytaj np. 'na jakiej podstawie mogę zwrócić towar?'"
           disabled={disabled}
-          className="min-h-[60px] max-h-[200px] resize-none"
+          className="min-h-[50px] sm:min-h-[60px] max-h-[200px] resize-none text-sm sm:text-base"
         />
         <Button
           type="submit"
           disabled={!message.trim() || disabled}
           size="icon"
-          className="h-[60px] w-[60px] shrink-0"
+          className="h-[50px] w-[50px] sm:h-[60px] sm:w-[60px] shrink-0"
         >
-          <Send className="h-5 w-5" />
+          <Send className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
       </div>
     </form>

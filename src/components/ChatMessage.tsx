@@ -269,13 +269,13 @@ export const ChatMessage = memo(({ role, content, messageId, userContent, onRetr
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'} mb-6`}
+      className={`flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'} mb-4 sm:mb-6`}
     >
       <div
-        className={`max-w-[85%] rounded-lg ${
+        className={`max-w-[95%] sm:max-w-[85%] rounded-lg ${
           role === 'user'
-            ? 'bg-user text-user-foreground p-4'
-            : 'bg-assistant text-assistant-foreground border border-border p-5'
+            ? 'bg-user text-user-foreground p-3 sm:p-4'
+            : 'bg-assistant text-assistant-foreground border border-border p-4 sm:p-5'
         }`}
       >
         {role === 'user' ? (

@@ -61,14 +61,14 @@ const EXAMPLE_QUESTIONS = getRandomQuestions(6);
 
 export const ExampleQuestions = ({ onSelect, disabled }: ExampleQuestionsProps) => {
   return (
-    <div className="flex flex-wrap gap-3 justify-center mb-6">
+    <div className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-4 sm:mb-6 px-2">
       {EXAMPLE_QUESTIONS.map((question, idx) => (
         <Button
           key={question}
           variant="outline"
           onClick={() => onSelect(question)}
           disabled={disabled}
-          className="text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary animate-fade-in"
+          className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary animate-fade-in"
           style={{ animationDelay: `${idx * 100}ms` }}
         >
           {question}

@@ -82,9 +82,9 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
   };
 
   return (
-    <div className="mb-3">
+    <div className="mb-2 sm:mb-3">
       {!currentFile ? (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -94,25 +94,26 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
             id="file-upload"
             disabled={isLoading}
           />
-          <label htmlFor="file-upload">
+          <label htmlFor="file-upload" className="w-full sm:w-auto">
             <Button
               type="button"
               variant="outline"
               size="sm"
               disabled={isLoading}
               asChild
-              className="cursor-pointer"
+              className="cursor-pointer w-full sm:w-auto text-xs sm:text-sm"
             >
               <span>
                 {isLoading ? (
                   <>
-                    <Upload className="h-4 w-4 mr-2 animate-pulse" aria-hidden="true" />
+                    <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-2 animate-pulse" aria-hidden="true" />
                     Wczytuję...
                   </>
                 ) : (
                   <>
-                    <Upload className="h-4 w-4 mr-2" aria-hidden="true" />
-                    Załącz plik (TXT, PDF)
+                    <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-2" aria-hidden="true" />
+                    <span className="hidden sm:inline">Załącz plik (TXT, PDF)</span>
+                    <span className="sm:hidden">Załącz plik</span>
                   </>
                 )}
               </span>
@@ -123,18 +124,18 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
           </p>
         </div>
       ) : (
-        <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-3 py-2">
-          <FileText className="h-4 w-4 text-primary flex-shrink-0" aria-hidden="true" />
-          <span className="text-sm text-foreground flex-1 truncate">{currentFile}</span>
+        <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2">
+          <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" aria-hidden="true" />
+          <span className="text-xs sm:text-sm text-foreground flex-1 truncate">{currentFile}</span>
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={handleRemoveFile}
             aria-label="Usuń załączony plik"
-            className="h-7 w-7 p-0"
+            className="h-6 w-6 sm:h-7 sm:w-7 p-0"
           >
-            <X className="h-4 w-4" aria-hidden="true" />
+            <X className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
           </Button>
         </div>
       )}
