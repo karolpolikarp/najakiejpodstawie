@@ -38,8 +38,30 @@ const Index = () => {
     messagesStartRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const scrollToLastMessage = () => {
+    // Sprawdź czy są wiadomości
+    if (messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+
+    // Jeśli ostatnia wiadomość to odpowiedź AI, przewiń do jej początku
+    // żeby użytkownik mógł czytać od góry
+    if (lastMessage.role === 'assistant') {
+      // Użyj querySelector żeby znaleźć ostatni element wiadomości
+      const messageElements = document.querySelectorAll('[role="log"] > div');
+      const lastElement = messageElements[messageElements.length - 1];
+
+      if (lastElement) {
+        lastElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      // Dla wiadomości użytkownika przewiń normalnie na dół
+      scrollToBottom();
+    }
+  };
+
   useEffect(() => {
-    scrollToBottom();
+    scrollToLastMessage();
   }, [messages]);
 
   useEffect(() => {
