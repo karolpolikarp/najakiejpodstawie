@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
 import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { toast } from 'sonner';
+import { CONSTANTS } from '@/lib/constants';
 
 interface ChatMessageProps {
   role: 'user' | 'assistant';
@@ -201,14 +202,22 @@ const formatAssistantMessage = (content: string) => {
   });
 };
 
-export const ChatMessage = ({ role, content }: ChatMessageProps) => {
+export const ChatMessage = memo(({ role, content }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
+
+  // Memoize formatted content to avoid re-parsing on every render
+  const formattedContent = useMemo(() => {
+    if (role === 'assistant') {
+      return formatAssistantMessage(content);
+    }
+    return content;
+  }, [role, content]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
     setCopied(true);
     toast.success('Skopiowano do schowka');
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), CONSTANTS.UI.COPY_FEEDBACK_DURATION_MS);
   };
 
   return (
@@ -226,10 +235,10 @@ export const ChatMessage = ({ role, content }: ChatMessageProps) => {
         }`}
       >
         {role === 'user' ? (
-          <div className="whitespace-pre-wrap break-words">{content}</div>
+          <div className="whitespace-pre-wrap break-words">{formattedContent}</div>
         ) : (
           <div className="space-y-2">
-            {formatAssistantMessage(content)}
+            {formattedContent}
           </div>
         )}
         {role === 'assistant' && (
@@ -257,4 +266,6 @@ export const ChatMessage = ({ role, content }: ChatMessageProps) => {
       </div>
     </motion.div>
   );
-};
+});
+
+ChatMessage.displayName = 'ChatMessage';

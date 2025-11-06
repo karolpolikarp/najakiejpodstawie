@@ -1,12 +1,35 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// CORS configuration - restrict to specific domains for security
+// In production, set ALLOWED_ORIGINS environment variable (comma-separated)
+// Example: "https://najakiejpodstawie.pl,https://www.najakiejpodstawie.pl"
+const getAllowedOrigin = (requestOrigin: string | null): string => {
+  const allowedOrigins = Deno.env.get('ALLOWED_ORIGINS')?.split(',') || [
+    'http://localhost:8080',
+    'http://localhost:5173',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:5173',
+  ];
+
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  // Default to first allowed origin if request origin not in whitelist
+  return allowedOrigins[0];
 };
 
+const getCorsHeaders = (requestOrigin: string | null) => ({
+  'Access-Control-Allow-Origin': getAllowedOrigin(requestOrigin),
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Credentials': 'true',
+});
+
 serve(async (req) => {
+  const requestOrigin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(requestOrigin);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

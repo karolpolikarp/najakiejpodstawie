@@ -802,6 +802,29 @@ export class LegalAssistantAPI {
 
 ---
 
+## ✅ Zaimplementowane ulepszenia (2025-11-06)
+
+Poniższe ulepszenia zostały już zaimplementowane:
+
+1. ✅ **PasswordGate** - hasło można teraz ustawić przez zmienną środowiskową `VITE_APP_PASSWORD`
+2. ✅ **CORS** - ograniczony do whitelisty domen (localhost dla dev, można ustawić `ALLOWED_ORIGINS` w Supabase)
+3. ✅ **Constants.ts** - wszystkie magic values przeniesione do centralnego pliku
+4. ✅ **localStorage persist** - usunięto `attachedFile` z persystencji (fix limitu 5MB)
+5. ✅ **Memoization** - dodano `React.memo` i `useMemo` do `ChatMessage`
+6. ✅ **Error Boundary** - globalna obsługa błędów React z przyjaznym UI
+7. ✅ **Retry logic** - exponential backoff dla błędów 429 i network errors (max 3 próby)
+8. ✅ **Error handling** - szczegółowe komunikaty błędów (429, network, 401, timeout)
+9. ✅ **Env validation** - walidacja zmiennych środowiskowych z Zod
+10. ✅ **TypeScript strict mode** - włączono `noImplicitAny`, `strictNullChecks`, `strictFunctionTypes`
+11. ✅ **Cleanup dependencies** - usunięto nieużywane paczki (@hookform/resolvers, date-fns, @tailwindcss/typography)
+
+### 📝 Pozostałe do zrobienia:
+
+**Naprawa czytania PDF** - obecna implementacja używa `file.text()` co nie działa dla większości PDF-ów.
+Zalecane rozwiązanie: zainstaluj `pdfjs-dist` i zaimplementuj poprawne wyciąganie tekstu (patrz punkt 10 w raporcie).
+
+---
+
 ## 📋 Podsumowanie priorytetów
 
 ### 🔴 Krytyczne (do naprawienia natychmiast):
