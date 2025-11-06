@@ -7,6 +7,7 @@ import { ExampleQuestions } from '@/components/ExampleQuestions';
 import { Footer } from '@/components/Footer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { FileUpload } from '@/components/FileUpload';
+import { GDPRWarningModal } from '@/components/GDPRWarningModal';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -391,6 +392,15 @@ const Index = () => {
                 currentFile={attachedFile?.name || null}
               />
               <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+
+              {/* AI Disclaimer - AI Act Art. 13 compliance */}
+              <div className="mt-2 pt-2 border-t border-border/50">
+                <p className="text-xs text-muted-foreground text-center">
+                  🤖 Odpowiedzi generowane przez AI (Anthropic Claude) •
+                  Wymaga weryfikacji prawnika •
+                  Nie przesyłaj danych osobowych
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -428,6 +438,9 @@ const Index = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* GDPR Warning Modal - shown on first visit */}
+      <GDPRWarningModal />
     </div>
   );
 };

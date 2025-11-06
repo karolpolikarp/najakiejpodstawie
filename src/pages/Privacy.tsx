@@ -66,21 +66,86 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">2. Usługi zewnętrzne</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">2. Przetwarzanie przez sztuczną inteligencję (AI)</h2>
+
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-2">⚠️ WAŻNE OSTRZEŻENIE</h3>
+                <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">
+                  <strong>NIE PRZESYŁAJ DANYCH OSOBOWYCH</strong> do serwisu. Twoje pytania są przetwarzane przez
+                  system sztucznej inteligencji Anthropic Claude. Mimo że Anthropic zapewnia zgodność z RODO i nie wykorzystuje
+                  danych do treningu modeli, przesyłanie danych osobowych osób trzecich bez ich zgody narusza RODO.
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  <strong>Ponosisz pełną odpowiedzialność</strong> za treści, które przesyłasz do serwisu.
+                  Zanim wgrasz dokument lub zadasz pytanie, upewnij się, że nie zawiera danych osobowych
+                  (imiona, nazwiska, PESEL, NIP, adresy, itp.) lub uzyskaj zgodę osób, których dotyczą.
+                </p>
+              </div>
+
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Administrator i Procesor danych:</h3>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
+                <li><strong>Administrator danych:</strong> JakiePrawo.pl - odpowiada za przetwarzanie danych w serwisie</li>
+                <li><strong>Procesor danych (Podprocesor):</strong> Anthropic PBC (USA) - przetwarza dane w celu generowania odpowiedzi AI</li>
+                <li><strong>Model AI:</strong> Claude (system AI ogólnego przeznaczenia w rozumieniu AI Act)</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Podstawa prawna przetwarzania:</h3>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
+                <li><strong>Art. 6 ust. 1 lit. a RODO</strong> - zgoda użytkownika (akceptacja przy pierwszym użyciu serwisu)</li>
+                <li><strong>Art. 6 ust. 1 lit. f RODO</strong> - prawnie uzasadniony interes administratora (świadczenie usługi AI)</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Jak są przetwarzane Twoje dane:</h3>
+              <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground mb-4">
+                <li>Wpisujesz pytanie lub załączasz plik w serwisie JakiePrawo.pl</li>
+                <li>Treść jest wysyłana przez nasze serwery (Supabase) do API Anthropic</li>
+                <li>Anthropic Claude analizuje pytanie i generuje odpowiedź</li>
+                <li>Odpowiedź jest wyświetlana w Twojej przeglądarce</li>
+                <li>Historia rozmowy jest zapisywana <strong>tylko lokalnie w Twojej przeglądarce</strong></li>
+                <li>Anthropic przechowuje dane przez max. 30 dni w celach bezpieczeństwa, potem są trwale usuwane</li>
+              </ol>
+
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Gwarancje Anthropic:</h3>
+              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground mb-4">
+                <li>✅ <strong>Zero Retention</strong> - dane użytkowników API nie są wykorzystywane do treningu modeli AI</li>
+                <li>✅ <strong>GDPR Compliant</strong> - zgodność z europejskim RODO</li>
+                <li>✅ <strong>Data Processing Addendum (DPA)</strong> - umowa powierzenia przetwarzania danych</li>
+                <li>✅ <strong>30-dniowa retencja</strong> - dane usuwane po 30 dniach</li>
+                <li>Zobacz: <a href="https://www.anthropic.com/legal/commercial-terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Commercial Terms Anthropic</a></li>
+                <li>Zobacz: <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Polityka prywatności Anthropic</a></li>
+              </ul>
+            </section>
+
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">3. Zgodność z AI Act (Rozporządzenie UE 2024/1689)</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Aplikacja korzysta z następujących usług zewnętrznych:
+                Nasz system AI spełnia wymogi transparentności określone w AI Act:
+              </p>
+
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
+                <li><strong>Art. 13 AI Act</strong> - Informujemy, że korzystasz z systemu AI (Anthropic Claude)</li>
+                <li><strong>Transparentność</strong> - Wszystkie odpowiedzi są oznaczone jako generowane przez AI</li>
+                <li><strong>Nadzór człowieka</strong> - Odpowiedzi AI wymagają weryfikacji przez prawnika</li>
+                <li><strong>Nie jest systemem wysokiego ryzyka</strong> - nasz system nie podejmuje automatycznych decyzji prawnych</li>
+                <li><strong>GPAI (General Purpose AI)</strong> - Anthropic Claude jest modelem AI ogólnego przeznaczenia</li>
+              </ul>
+
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-sm text-blue-900 dark:text-blue-100">
+                  <strong>Ważne:</strong> Serwis JakiePrawo.pl nie zastępuje profesjonalnej porady prawnej.
+                  Odpowiedzi AI służą wyłącznie celom informacyjnym i edukacyjnym. Przed podjęciem jakichkolwiek
+                  decyzji prawnych skonsultuj się z wykwalifikowanym prawnikiem.
+                </p>
+              </div>
+            </section>
+
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Inne usługi zewnętrzne</h2>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                Oprócz Anthropic Claude, aplikacja korzysta z następujących usług zewnętrznych:
               </p>
 
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Anthropic Claude (AI)</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Twoje pytania są wysyłane do API Anthropic w celu wygenerowania odpowiedzi.
-                    Anthropic nie przechowuje treści zapytań dłużej niż 30 dni i nie używa ich do treningu modeli.
-                    Zobacz: <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Polityka prywatności Anthropic</a>
-                  </p>
-                </div>
-
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">Supabase (infrastruktura)</h3>
                   <p className="text-sm text-muted-foreground">
@@ -100,7 +165,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">3. Twoje prawa</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">5. Twoje prawa</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Zgodnie z RODO (Ogólne Rozporządzenie o Ochronie Danych) masz prawo do:
               </p>
@@ -117,7 +182,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Retencja danych</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">6. Retencja danych</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Informujemy o okresach przechowywania danych w kontekście ewentualnych przyszłych funkcji:
               </p>
@@ -155,7 +220,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">5. Zgłaszanie naruszeń danych osobowych</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">7. Zgłaszanie naruszeń danych osobowych</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Twoja prywatność i bezpieczeństwo danych są dla nas priorytetem. W przypadku podejrzenia naruszenia
                 ochrony danych osobowych lub incydentu bezpieczeństwa:
@@ -195,7 +260,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">6. Bezpieczeństwo</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">8. Bezpieczeństwo</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Aplikacja korzysta z szyfrowania HTTPS. Twoje zapytania są przesyłane bezpiecznie.
                 Nie przechowujemy haseł ani danych logowania w niezabezpieczony sposób.
@@ -203,14 +268,14 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">7. Zmiany w polityce</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">9. Zmiany w polityce</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Możemy aktualizować tę politykę. Zmiany będą publikowane na tej stronie z nową datą aktualizacji.
               </p>
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">8. Kontakt</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">10. Kontakt</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Pytania dotyczące prywatności? Skontaktuj się przez <Link to="/kontakt" className="text-primary hover:underline">stronę kontaktu</Link>.
               </p>
