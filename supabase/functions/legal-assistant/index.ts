@@ -49,15 +49,6 @@ serve(async (req) => {
     const { message, fileContext } = await req.json();
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
-    // DEBUG LOGS
-    console.log('=== LEGAL ASSISTANT DEBUG ===');
-    console.log('Message received:', message);
-    console.log('FileContext exists:', !!fileContext);
-    console.log('FileContext length:', fileContext?.length || 0);
-    if (fileContext) {
-      console.log('FileContext preview (first 200 chars):', fileContext.substring(0, 200));
-    }
-
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
@@ -153,93 +144,14 @@ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikie
 
 Wyjątki od 14-dniowego zwrotu istnieją dla niektórych towarów (np. produkty higieniczne, spersonalizowane).`;
 
-    // If user attached a file, modify system prompt to STRONGLY prioritize it
+    // If user attached a file, modify system prompt
     if (fileContext) {
-      systemPrompt = `🔴 KRYTYCZNIE WAŻNE: UŻYTKOWNIK ZAŁĄCZYŁ WŁASNY DOKUMENT PRAWNY 🔴
+      systemPrompt += `
 
-ABSOLUTNY PRIORYTET: Pracujesz BEZPOŚREDNIO z dokumentem użytkownika. To jest JEGO umowa/ustawa/kodeks/akt prawny.
-
-═══════════════════════════════════════════════════════════════════
-ZASADA GŁÓWNA (90% przypadków):
-═══════════════════════════════════════════════════════════════════
-
-Użytkownik chce pracować Z TYM KONKRETNYM DOKUMENTEM, a nie z ogólną wiedzą prawną.
-
-PRZYKŁADY PYTAŃ UŻYTKOWNIKA:
-- "Który artykuł mówi o wypowiedzeniu?"
-- "Co mówi ta umowa o okresie wypowiedzenia?"
-- "Znajdź paragraf dotyczący kar umownych"
-- "Jaka jest podstawa prawna dla..."
-- "Co dokument mówi o..."
-
-W TAKICH PRZYPADKACH:
-✅ ZAWSZE SZUKAJ W ZAŁĄCZONYM DOKUMENCIE
-✅ CYTUJ DOKŁADNIE fragmenty z dokumentu
-✅ PODAJ numer artykułu/paragrafu/sekcji/punktu
-✅ W sekcji PODSTAWA PRAWNA napisz: "📎 Załączony dokument: [Art. X / §X / Punkt X]"
-✅ ZACYTUJ pełną treść przepisu z dokumentu
-
-STRUKTURA ODPOWIEDZI DLA DOKUMENTU:
-
-PODSTAWA PRAWNA
-📎 Załączony dokument: [nazwa artykułu/paragrafu]
-"[PEŁNY CYTAT z dokumentu]"
-
-CO TO OZNACZA
-[Wyjaśnienie w prostym języku, co oznacza ten fragment dokumentu]
-
-POWIĄZANE PRZEPISY
-[Inne artykuły z TEGO SAMEGO dokumentu, które są związane]
-
-ŹRÓDŁO
-Załączony przez użytkownika dokument
-
-═══════════════════════════════════════════════════════════════════
-TYLKO jeśli dokumentu NIE ZAWIERA odpowiedzi (10% przypadków):
-═══════════════════════════════════════════════════════════════════
-
-Jeśli przeszukałeś dokument i NIE ma tam odpowiedzi, WYRAŹNIE to powiedz:
-
-"⚠️ Załączony dokument nie zawiera informacji na ten temat. Oto co mówi ogólne prawo polskie:"
-
-[Wtedy dopiero użyj swojej wiedzy prawnej]
-
-W sekcji UWAGA dodaj:
-"Odpowiedź oparta na ogólnej wiedzy prawnej, NIE na załączonym dokumencie."
-
-═══════════════════════════════════════════════════════════════════
-
-PRZYKŁADY DOBRYCH ODPOWIEDZI:
-
-Pytanie: "Który artykuł mówi o okresie wypowiedzenia?"
-
-PODSTAWA PRAWNA
-📎 Załączony dokument: Artykuł 12 § 2
-"Okres wypowiedzenia umowy wynosi 3 miesiące i rozpoczyna się pierwszego dnia miesiąca następującego po miesiącu, w którym wypowiedzenie zostało złożone."
-
-CO TO OZNACZA
-Zgodnie z załączonym dokumentem, okres wypowiedzenia to 3 miesiące kalendarzowe. Liczy się od początku miesiąca następującego po złożeniu wypowiedzenia.
-
-POWIĄZANE PRZEPISY
-- Art. 12 § 1 - forma wypowiedzenia (pisemna)
-- Art. 12 § 3 - skutki niewłaściwego wypowiedzenia
-- Art. 13 - rozwiązanie umowy bez wypowiedzenia
-
-ŹRÓDŁO
-Załączony przez użytkownika dokument
-
-UWAGA
-To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem.
-
-═══════════════════════════════════════════════════════════════════
-
-PAMIĘTAJ:
-- Użytkownik PRZYSZEDŁ z własnym dokumentem, bo chce go PRZEANALIZOWAĆ
-- Nie odwołuj się do ogólnego prawa, jeśli dokument ma odpowiedź
-- Cytuj DOKŁADNIE to, co jest w dokumencie
-- Podaj KONKRETNY numer artykułu/paragrafu/punktu
-
-` + systemPrompt;
+📄 KONTEKST Z ZAŁĄCZONEGO DOKUMENTU:
+Użytkownik załączył dokument. PRIORYTETOWO wykorzystuj ten dokument do odpowiedzi.
+Jeśli odpowiedź znajduje się w załączonym dokumencie, cytuj konkretne fragmenty.
+Jeśli pytanie wykracza poza załączony dokument, powiedz o tym wyraźnie i użyj swojej wiedzy.`;
     }
 
     // Build user message
