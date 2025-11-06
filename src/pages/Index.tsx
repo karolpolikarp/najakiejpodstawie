@@ -7,6 +7,7 @@ import { ExampleQuestions } from '@/components/ExampleQuestions';
 import { Footer } from '@/components/Footer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { FileUpload } from '@/components/FileUpload';
+import { ShareConversation } from '@/components/ShareConversation';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -202,17 +203,20 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               {messages.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowClearDialog(true)}
-                  disabled={isLoading}
-                  aria-label="Wyczyść historię rozmowy i załączniki"
-                  className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 sm:w-auto p-0 sm:px-3"
-                >
-                  <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" />
-                  <span className="hidden sm:inline">Wyczyść</span>
-                </Button>
+                <>
+                  <ShareConversation messages={messages} disabled={isLoading} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowClearDialog(true)}
+                    disabled={isLoading}
+                    aria-label="Wyczyść historię rozmowy i załączniki"
+                    className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 sm:w-auto p-0 sm:px-3"
+                  >
+                    <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+                    <span className="hidden sm:inline">Wyczyść</span>
+                  </Button>
+                </>
               )}
               <ThemeToggle />
               <Button

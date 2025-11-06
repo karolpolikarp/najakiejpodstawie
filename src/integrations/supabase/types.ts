@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      shared_conversations: {
+        Row: {
+          id: string
+          title: string | null
+          messages: Json
+          created_at: string | null
+          expires_at: string | null
+          view_count: number | null
+          last_viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          title?: string | null
+          messages: Json
+          created_at?: string | null
+          expires_at?: string | null
+          view_count?: number | null
+          last_viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string | null
+          messages?: Json
+          created_at?: string | null
+          expires_at?: string | null
+          view_count?: number | null
+          last_viewed_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
