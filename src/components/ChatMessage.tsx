@@ -81,6 +81,34 @@ const parseMessage = (content: string): Section[] => {
   return sections;
 };
 
+// Helper function to parse inline markdown formatting
+const parseInlineMarkdown = (text: string) => {
+  const parts: React.ReactNode[] = [];
+  let currentIndex = 0;
+
+  // Regex to match **bold** text
+  const boldRegex = /\*\*(.+?)\*\*/g;
+  let match;
+
+  while ((match = boldRegex.exec(text)) !== null) {
+    // Add text before the match
+    if (match.index > currentIndex) {
+      parts.push(text.substring(currentIndex, match.index));
+    }
+
+    // Add bold text
+    parts.push(<strong key={`bold-${match.index}`}>{match[1]}</strong>);
+    currentIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (currentIndex < text.length) {
+    parts.push(text.substring(currentIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+};
+
 const formatContent = (content: string) => {
   const lines = content.split('\n').filter(line => line.trim());
 
@@ -89,26 +117,29 @@ const formatContent = (content: string) => {
 
     // Numbered list
     if (/^\d+\.\s/.test(trimmed)) {
+      const number = trimmed.match(/^\d+\./)?.[0];
+      const text = trimmed.replace(/^\d+\.\s/, '');
       return (
         <div key={idx} className="flex gap-2 mb-1">
-          <span className="font-medium text-primary">{trimmed.match(/^\d+\./)?.[0]}</span>
-          <span>{trimmed.replace(/^\d+\.\s/, '')}</span>
+          <span className="font-medium text-primary">{number}</span>
+          <span>{parseInlineMarkdown(text)}</span>
         </div>
       );
     }
 
     // Bullet list
     if (/^[-•]\s/.test(trimmed)) {
+      const text = trimmed.replace(/^[-•]\s/, '');
       return (
         <div key={idx} className="flex gap-2 mb-1 ml-2">
           <span className="text-primary">•</span>
-          <span>{trimmed.replace(/^[-•]\s/, '')}</span>
+          <span>{parseInlineMarkdown(text)}</span>
         </div>
       );
     }
 
     // Regular paragraph
-    return <p key={idx} className="mb-2 last:mb-0">{trimmed}</p>;
+    return <p key={idx} className="mb-2 last:mb-0">{parseInlineMarkdown(trimmed)}</p>;
   });
 };
 
