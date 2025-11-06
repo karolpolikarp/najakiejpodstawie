@@ -19,6 +19,7 @@ interface ChatState {
   isLoading: boolean;
   attachedFile: AttachedFile | null;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
+  updateMessageContent: (messageId: string, content: string) => void;
   removeMessage: (messageId: string) => void;
   clearMessages: () => void;
   setLoading: (loading: boolean) => void;
@@ -42,6 +43,12 @@ export const useChatStore = create<ChatState>()(
               timestamp: new Date(),
             },
           ],
+        })),
+      updateMessageContent: (messageId, content) =>
+        set((state) => ({
+          messages: state.messages.map((msg) =>
+            msg.id === messageId ? { ...msg, content } : msg
+          ),
         })),
       removeMessage: (messageId) =>
         set((state) => ({
