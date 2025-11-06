@@ -37,7 +37,7 @@ const About = () => {
                 i podaje Ci konkretny artykuł wraz z wyjaśnieniem.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                <strong>Technologia:</strong> Używamy modelu Claude firmy Anthropic - jednego z najbardziej zaawansowanych systemów AI na świecie.
+                <strong>Technologia:</strong> Używamy modeli AI firmy Anthropic - jednego z najbardziej zaawansowanych systemów AI na świecie.
               </p>
             </section>
 

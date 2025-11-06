@@ -54,7 +54,7 @@ export function GDPRWarningModal() {
                       NIE PRZESYŁAJ DANYCH OSOBOWYCH
                     </p>
                     <p className="text-sm text-amber-800 dark:text-amber-200">
-                      Twoje pytania są przetwarzane przez sztuczną inteligencję (Anthropic Claude).
+                      Twoje pytania są przetwarzane przez sztuczną inteligencję (Anthropic).
                       Chociaż Anthropic nie wykorzystuje danych do treningu modeli, zalecamy maksymalną ostrożność.
                     </p>
                   </div>

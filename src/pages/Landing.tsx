@@ -143,7 +143,7 @@ const Landing = () => {
         <div className="max-w-4xl mx-auto">
           <h3 className="text-3xl md:text-4xl font-bold text-center mb-6">Przykładowe pytania</h3>
           <p className="text-center text-muted-foreground mb-8 text-lg">
-            Zobacz, jakie pytania możesz zadać naszemu asystentowi prawnemu
+            Zobacz, jakie pytania możesz zadać
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {exampleQuestions.map((question, idx) => (
