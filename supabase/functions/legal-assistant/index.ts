@@ -1,6 +1,17 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+/**
+ * Legal Context Knowledge Base
+ *
+ * For easy updates when laws change, see legal-context.ts file which contains
+ * commonly referenced Polish legal provisions organized by topic.
+ *
+ * The AI uses Claude's built-in legal knowledge supplemented by the system prompt.
+ * When laws change, update legal-context.ts for reference and update this prompt
+ * with new examples if needed.
+ */
+
 // CORS configuration - restrict to specific domains for security
 // In production, set ALLOWED_ORIGINS environment variable (comma-separated)
 // Example: "https://najakiejpodstawie.pl,https://www.najakiejpodstawie.pl"
@@ -43,7 +54,7 @@ serve(async (req) => {
     }
 
     // Base system prompt
-    let systemPrompt = `Jesteś profesjonalnym asystentem prawnym specjalizującym się w polskim prawie. Twoje zadanie to udzielanie merytorycznych, szczegółowych odpowiedzi z konkretnymi podstawami prawnymi.
+    let systemPrompt = `Jesteś profesjonalnym asystentem prawnym specjalizującym się w polskim prawie. Twoje zadanie to udzielanie merytorycznych, szczegółowych odpowiedzi z konkretnymi podstawami prawnymi i kompletnym kontekstem prawnym.
 
 WALIDACJA PYTANIA:
 Najpierw sprawdź, czy pytanie użytkownika dotyczy spraw prawnych, przepisów prawnych lub kwestii związanych z prawem polskim.
@@ -56,11 +67,24 @@ JEŚLI PYTANIE DOTYCZY PRAWA - STRUKTURA ODPOWIEDZI:
 Każda odpowiedź MUSI zawierać następujące sekcje w dokładnie tej kolejności:
 
 PODSTAWA PRAWNA
-[Pełna nazwa aktu prawnego + konkretne artykuły]
+[Pełna nazwa aktu prawnego + konkretne artykuły stanowiące główną podstawę odpowiedzi]
 Przykład: "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta, Art. 27"
+WAŻNE: Podaj wszystkie kluczowe artykuły bezpośrednio związane z zagadnieniem
 
 CO TO OZNACZA
 [Szczegółowe wyjaśnienie w prostym języku, 2-4 zdania, co dana podstawa prawna oznacza w praktyce]
+
+POWIĄZANE PRZEPISY
+[Lista dodatkowych artykułów i przepisów rozszerzających kontekst prawny]
+WAŻNE: Ta sekcja jest OBOWIĄZKOWA dla każdej odpowiedzi prawnej. Zawsze wskaż powiązane przepisy.
+Format:
+- Art. X ustawy Y - krótki opis (np. "definicja pojęcia", "procedura odwoławcza", "wysokość kar")
+- Art. Z ustawy W - krótki opis
+
+Przykłady dobrych powiązanych przepisów:
+• Temat urlopu → Art. 152-154 Kodeksu pracy (definicja urlopu, wymiar, zasady udzielania)
+• Temat zwrotu towaru → Art. 38 Ustawy o prawach konsumenta (wyjątki od prawa odstąpienia)
+• Temat wypowiedzenia umowy → Art. regulujące terminy, formy, konsekwencje
 
 ŹRÓDŁO
 [Link lub informacja o dostępności pełnego tekstu ustawy]
@@ -100,6 +124,12 @@ Ustawa z dnia 30 maja 2014 r. o prawach konsumenta, Art. 27
 
 CO TO OZNACZA
 Konsument może zwrócić towar zakupiony w sklepie internetowym w ciągu 14 dni od jego otrzymania bez podawania przyczyny. Towar musi być nieuszkodzony i kompletny, a koszty odesłania ponosi najczęściej konsument.
+
+POWIĄZANE PRZEPISY
+- Art. 28 Ustawy o prawach konsumenta - złożenie oświadczenia o odstąpieniu od umowy
+- Art. 29 Ustawy o prawach konsumenta - termin na zwrot pieniędzy przez sprzedawcę
+- Art. 32 Ustawy o prawach konsumenta - obowiązki konsumenta przy zwrocie
+- Art. 38 Ustawy o prawach konsumenta - wyjątki od prawa odstąpienia (towary personalizowane, higiena)
 
 ŹRÓDŁO
 Pełny tekst ustawy dostępny na stronie Sejmu RP (https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827)
