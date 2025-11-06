@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks } from 'lucide-react';
+import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, RotateCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -7,6 +7,10 @@ import { toast } from 'sonner';
 interface ChatMessageProps {
   role: 'user' | 'assistant';
   content: string;
+  messageId?: string;
+  userContent?: string;
+  onRetry?: (content: string) => void;
+  onRemove?: (messageId: string) => void;
 }
 
 interface Section {
@@ -201,14 +205,40 @@ const formatAssistantMessage = (content: string) => {
   });
 };
 
-export const ChatMessage = ({ role, content }: ChatMessageProps) => {
+// Funkcja sprawdzająca, czy wiadomość jest błędem/niezrozumiałym zapytaniem
+const isErrorMessage = (content: string): boolean => {
+  return (
+    content.includes('❌') ||
+    content.toLowerCase().includes('przepraszam') ||
+    content.toLowerCase().includes('nie udało się') ||
+    content.toLowerCase().includes('coś poszło nie tak') ||
+    content.toLowerCase().includes('nie dotyczy prawa') ||
+    content.toLowerCase().includes('zadaj proszę pytanie prawne')
+  );
+};
+
+export const ChatMessage = ({ role, content, messageId, userContent, onRetry, onRemove }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
+  const isError = role === 'assistant' && isErrorMessage(content);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
     setCopied(true);
     toast.success('Skopiowano do schowka');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRetry = () => {
+    if (onRetry && userContent) {
+      onRetry(userContent);
+    }
+  };
+
+  const handleRemove = () => {
+    if (onRemove && messageId) {
+      onRemove(messageId);
+      toast.success('Wiadomość usunięta');
+    }
   };
 
   return (
@@ -233,25 +263,53 @@ export const ChatMessage = ({ role, content }: ChatMessageProps) => {
           </div>
         )}
         {role === 'assistant' && (
-          <div className="mt-4 pt-3 border-t border-border/50 flex justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCopy}
-              className="h-8 text-xs"
-            >
-              {copied ? (
-                <>
-                  <CheckCheck className="h-3.5 w-3.5 mr-1.5 text-accent" />
-                  Skopiowano
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5 mr-1.5" />
-                  Kopiuj
-                </>
-              )}
-            </Button>
+          <div className="mt-4 pt-3 border-t border-border/50 flex justify-between items-center">
+            {isError && (
+              <div className="flex gap-2">
+                {onRetry && userContent && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetry}
+                    className="h-8 text-xs hover:bg-primary/10"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                    Ponów pytanie
+                  </Button>
+                )}
+                {onRemove && messageId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemove}
+                    className="h-8 text-xs hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5 mr-1.5" />
+                    Usuń
+                  </Button>
+                )}
+              </div>
+            )}
+            <div className={isError ? 'ml-auto' : ''}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                className="h-8 text-xs"
+              >
+                {copied ? (
+                  <>
+                    <CheckCheck className="h-3.5 w-3.5 mr-1.5 text-accent" />
+                    Skopiowano
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5 mr-1.5" />
+                    Kopiuj
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </div>
