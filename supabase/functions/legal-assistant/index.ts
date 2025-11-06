@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
  * Legal Context Knowledge Base
@@ -47,42 +46,11 @@ serve(async (req) => {
   }
 
   try {
-    const { message, documentId } = await req.json();
+    const { message, fileContext } = await req.json();
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
-    }
-
-    // Initialize Supabase client if we need to fetch document
-    let fileContext = null;
-    if (documentId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-      // Fetch document metadata from database
-      const { data: docData, error: docError } = await supabase
-        .from('legal_documents')
-        .select('file_path')
-        .eq('id', documentId)
-        .single();
-
-      if (docError) {
-        console.error('Error fetching document metadata:', docError);
-      } else if (docData) {
-        // Download file content from storage
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from('legal-documents')
-          .download(docData.file_path);
-
-        if (fileError) {
-          console.error('Error downloading file:', fileError);
-        } else if (fileData) {
-          // Convert blob to text
-          fileContext = await fileData.text();
-        }
-      }
     }
 
     // Base system prompt
@@ -176,28 +144,91 @@ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikie
 
 Wyjątki od 14-dniowego zwrotu istnieją dla niektórych towarów (np. produkty higieniczne, spersonalizowane).`;
 
-    // If user attached a file, modify system prompt
+    // If user attached a file, modify system prompt to STRONGLY prioritize it
     if (fileContext) {
-      systemPrompt = `📄 WAŻNE: PRACA Z ZAŁĄCZONYM DOKUMENTEM PRAWNYM
+      systemPrompt = `🔴 KRYTYCZNIE WAŻNE: UŻYTKOWNIK ZAŁĄCZYŁ WŁASNY DOKUMENT PRAWNY 🔴
 
-Użytkownik załączył własny dokument prawny (umowa, ustawa, akt prawny). TWÓJ NAJWYŻSZY PRIORYTET to wykorzystanie tego dokumentu jako GŁÓWNEGO ŹRÓDŁA odpowiedzi.
+ABSOLUTNY PRIORYTET: Pracujesz BEZPOŚREDNIO z dokumentem użytkownika. To jest JEGO umowa/ustawa/kodeks/akt prawny.
 
-ZASADY PRACY Z ZAŁĄCZONYM DOKUMENTEM:
-1. **PIERWSZEŃSTWO DOKUMENTU**: Zawsze najpierw szukaj odpowiedzi w załączonym dokumencie
-2. **CYTUJ BEZPOŚREDNIO**: Jeśli odpowiedź jest w dokumencie, cytuj konkretne fragmenty
-3. **WSKAŻ LOKALIZACJĘ**: Podaj numer artykułu/paragrafu/sekcji z załączonego dokumentu
-4. **JASNE ŹRÓDŁO**: W sekcji PODSTAWA PRAWNA wyraźnie zaznacz, że informacja pochodzi z załączonego dokumentu
-5. **DODATKOWY KONTEKST**: Możesz uzupełnić odpowiedź o dodatkowy kontekst prawny z polskiego systemu prawnego, ale TYLKO jako uzupełnienie, nie jako główna odpowiedź
+═══════════════════════════════════════════════════════════════════
+ZASADA GŁÓWNA (90% przypadków):
+═══════════════════════════════════════════════════════════════════
 
-JEŚLI ODPOWIEDŹ JEST W DOKUMENCIE:
-- Rozpocznij sekcję PODSTAWA PRAWNA od: "📎 Załączony dokument: [nazwa artykułu/paragrafu]"
-- Cytuj konkretne fragmenty
-- Dodaj kontekst prawny z polskiego systemu, jeśli jest to pomocne
+Użytkownik chce pracować Z TYM KONKRETNYM DOKUMENTEM, a nie z ogólną wiedzą prawną.
 
-JEŚLI ODPOWIEDZI NIE MA W DOKUMENCIE:
-- Wyraźnie powiedz: "Załączony dokument nie zawiera informacji na ten temat."
-- Następnie odpowiedz na podstawie swojej wiedzy prawnej
-- W sekcji UWAGA zaznacz: "Odpowiedź oparta na ogólnej wiedzy prawnej, nie na załączonym dokumencie"
+PRZYKŁADY PYTAŃ UŻYTKOWNIKA:
+- "Który artykuł mówi o wypowiedzeniu?"
+- "Co mówi ta umowa o okresie wypowiedzenia?"
+- "Znajdź paragraf dotyczący kar umownych"
+- "Jaka jest podstawa prawna dla..."
+- "Co dokument mówi o..."
+
+W TAKICH PRZYPADKACH:
+✅ ZAWSZE SZUKAJ W ZAŁĄCZONYM DOKUMENCIE
+✅ CYTUJ DOKŁADNIE fragmenty z dokumentu
+✅ PODAJ numer artykułu/paragrafu/sekcji/punktu
+✅ W sekcji PODSTAWA PRAWNA napisz: "📎 Załączony dokument: [Art. X / §X / Punkt X]"
+✅ ZACYTUJ pełną treść przepisu z dokumentu
+
+STRUKTURA ODPOWIEDZI DLA DOKUMENTU:
+
+PODSTAWA PRAWNA
+📎 Załączony dokument: [nazwa artykułu/paragrafu]
+"[PEŁNY CYTAT z dokumentu]"
+
+CO TO OZNACZA
+[Wyjaśnienie w prostym języku, co oznacza ten fragment dokumentu]
+
+POWIĄZANE PRZEPISY
+[Inne artykuły z TEGO SAMEGO dokumentu, które są związane]
+
+ŹRÓDŁO
+Załączony przez użytkownika dokument
+
+═══════════════════════════════════════════════════════════════════
+TYLKO jeśli dokumentu NIE ZAWIERA odpowiedzi (10% przypadków):
+═══════════════════════════════════════════════════════════════════
+
+Jeśli przeszukałeś dokument i NIE ma tam odpowiedzi, WYRAŹNIE to powiedz:
+
+"⚠️ Załączony dokument nie zawiera informacji na ten temat. Oto co mówi ogólne prawo polskie:"
+
+[Wtedy dopiero użyj swojej wiedzy prawnej]
+
+W sekcji UWAGA dodaj:
+"Odpowiedź oparta na ogólnej wiedzy prawnej, NIE na załączonym dokumencie."
+
+═══════════════════════════════════════════════════════════════════
+
+PRZYKŁADY DOBRYCH ODPOWIEDZI:
+
+Pytanie: "Który artykuł mówi o okresie wypowiedzenia?"
+
+PODSTAWA PRAWNA
+📎 Załączony dokument: Artykuł 12 § 2
+"Okres wypowiedzenia umowy wynosi 3 miesiące i rozpoczyna się pierwszego dnia miesiąca następującego po miesiącu, w którym wypowiedzenie zostało złożone."
+
+CO TO OZNACZA
+Zgodnie z załączonym dokumentem, okres wypowiedzenia to 3 miesiące kalendarzowe. Liczy się od początku miesiąca następującego po złożeniu wypowiedzenia.
+
+POWIĄZANE PRZEPISY
+- Art. 12 § 1 - forma wypowiedzenia (pisemna)
+- Art. 12 § 3 - skutki niewłaściwego wypowiedzenia
+- Art. 13 - rozwiązanie umowy bez wypowiedzenia
+
+ŹRÓDŁO
+Załączony przez użytkownika dokument
+
+UWAGA
+To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem.
+
+═══════════════════════════════════════════════════════════════════
+
+PAMIĘTAJ:
+- Użytkownik PRZYSZEDŁ z własnym dokumentem, bo chce go PRZEANALIZOWAĆ
+- Nie odwołuj się do ogólnego prawa, jeśli dokument ma odpowiedź
+- Cytuj DOKŁADNIE to, co jest w dokumencie
+- Podaj KONKRETNY numer artykułu/paragrafu/punktu
 
 ` + systemPrompt;
     }

@@ -3,10 +3,9 @@ import { FileText, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { CONSTANTS } from '@/lib/constants';
-import { uploadDocument, type DocumentMetadata } from '@/lib/documentService';
 
 interface FileUploadProps {
-  onFileLoad: (document: DocumentMetadata) => void;
+  onFileLoad: (content: string, filename: string) => void;
   onFileRemove: () => void;
   currentFile: string | null;
 }
@@ -34,15 +33,40 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
     setIsLoading(true);
 
     try {
-      // Upload document to Supabase Storage and save metadata
-      const document = await uploadDocument(file);
+      let content = '';
 
-      onFileLoad(document);
+      if (file.type === 'text/plain') {
+        // Read text file
+        content = await file.text();
+      } else if (file.type === 'application/pdf') {
+        // For PDF, we'll need to extract text
+        // Simple approach: read as text (works for some PDFs)
+        content = await file.text();
+
+        // Note: For better PDF support, we'd need a library like pdf.js
+        // For now, show a message that PDF support is basic
+        if (!content || content.length < 50) {
+          toast.error('Nie udało się odczytać PDF. Spróbuj przekonwertować na TXT');
+          return;
+        }
+      }
+
+      if (!content || content.trim().length === 0) {
+        toast.error('Plik jest pusty');
+        return;
+      }
+
+      // Limit content length (to avoid API limits)
+      if (content.length > CONSTANTS.FILE_UPLOAD.MAX_CONTENT_LENGTH) {
+        content = content.substring(0, CONSTANTS.FILE_UPLOAD.MAX_CONTENT_LENGTH);
+        toast.info(`Plik został skrócony do pierwszych ${CONSTANTS.FILE_UPLOAD.MAX_CONTENT_LENGTH.toLocaleString('pl-PL')} znaków`);
+      }
+
+      onFileLoad(content, file.name);
       toast.success(`Załączono: ${file.name}`);
     } catch (error) {
-      console.error('File upload error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Nie udało się wczytać pliku';
-      toast.error(errorMessage);
+      console.error('File read error:', error);
+      toast.error('Nie udało się wczytać pliku');
     } finally {
       setIsLoading(false);
       // Reset input

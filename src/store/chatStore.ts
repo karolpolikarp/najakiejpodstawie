@@ -9,11 +9,8 @@ export interface Message {
 }
 
 export interface AttachedFile {
-  id: string;
   name: string;
-  filePath: string;
-  fileSize: number;
-  fileType: string;
+  content: string;
 }
 
 interface ChatState {
