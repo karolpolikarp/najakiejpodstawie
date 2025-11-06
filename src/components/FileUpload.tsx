@@ -6,8 +6,8 @@ import { CONSTANTS } from '@/lib/constants';
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Configure PDF.js worker - use specific version that works with bundlers
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 interface FileUploadProps {
   onFileLoad: (content: string, filename: string) => void;
@@ -46,23 +46,31 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
       } else if (file.type === 'application/pdf') {
         // Extract text from PDF using pdf.js
         try {
+          console.log('📄 Starting PDF parsing...');
           const arrayBuffer = await file.arrayBuffer();
+          console.log('✓ ArrayBuffer created, size:', arrayBuffer.byteLength);
+
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          console.log('✓ PDF loaded, pages:', pdf.numPages);
+
           const textParts: string[] = [];
 
           for (let i = 1; i <= pdf.numPages; i++) {
+            console.log(`📄 Reading page ${i}/${pdf.numPages}...`);
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
             const pageText = textContent.items
               .map((item: any) => item.str)
               .join(' ');
             textParts.push(pageText);
+            console.log(`✓ Page ${i} extracted, chars:`, pageText.length);
           }
 
           content = textParts.join('\n\n');
+          console.log('✓ PDF parsing complete! Total chars:', content.length);
         } catch (pdfError) {
-          console.error('PDF parsing error:', pdfError);
-          toast.error('Nie udało się odczytać PDF. Sprawdź czy plik nie jest zaszyfrowany.');
+          console.error('❌ PDF parsing error:', pdfError);
+          toast.error(`Nie udało się odczytać PDF: ${pdfError instanceof Error ? pdfError.message : 'Nieznany błąd'}`);
           return;
         }
       } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
