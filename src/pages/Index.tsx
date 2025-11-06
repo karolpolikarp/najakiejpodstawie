@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Scale, Trash2 } from 'lucide-react';
+import { Scale, Trash2, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
@@ -52,6 +52,11 @@ const Index = () => {
     toast.success('Czat wyczyszczony');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('app_authenticated');
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-main">
       {/* Header */}
@@ -65,17 +70,27 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Znajdź podstawę prawną w 5 sekund</p>
               </div>
             </div>
-            {messages.length > 0 && (
+            <div className="flex items-center gap-2">
+              {messages.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearChat}
+                  disabled={isLoading}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Wyczyść
+                </Button>
+              )}
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                onClick={handleClearChat}
-                disabled={isLoading}
+                onClick={handleLogout}
+                title="Wyloguj się"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Wyczyść
+                <LogOut className="h-4 w-4" />
               </Button>
-            )}
+            </div>
           </div>
         </div>
       </header>
