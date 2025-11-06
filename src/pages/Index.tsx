@@ -277,9 +277,9 @@ const Index = () => {
 
         toast.success('Wszystkie dane lokalne zostały usunięte');
 
-        // Reload the page to reset the application state
+        // Redirect to landing page instead of reloading to avoid 404 on /czat
         setTimeout(() => {
-          window.location.reload();
+          window.location.href = '/';
         }, 1000);
       } catch (error) {
         console.error('Error deleting local data:', error);
