@@ -101,34 +101,99 @@ const getContextualQuestions = (lastQuestion: string, count: number = 3): string
 
 export const ExampleQuestions = ({ onSelect, disabled, lastUserQuestion }: ExampleQuestionsProps) => {
   // Oblicz pytania do wyświetlenia
-  const questionsToShow = useMemo(() => {
+  const { contextual, general } = useMemo(() => {
     if (lastUserQuestion) {
       // Jeśli jest pytanie kontekstowe, wygeneruj pytania nawiązujące
       const contextual = getContextualQuestions(lastUserQuestion, 3);
-      const popular = getRandomQuestions(3, contextual);
+      const general = getRandomQuestions(3, contextual);
 
-      // Zwróć najpierw kontekstowe, potem popularne
-      return [...contextual, ...popular];
+      return { contextual, general };
     } else {
       // Jeśli nie ma kontekstu, pokaż tylko popularne pytania
-      return getRandomQuestions(6);
+      return { contextual: [], general: getRandomQuestions(6) };
     }
   }, [lastUserQuestion]);
 
+  // Jeśli są pytania kontekstowe, pokaż dwie sekcje
+  if (contextual.length > 0) {
+    return (
+      <div className="w-full max-w-4xl mx-auto mb-4 sm:mb-6 px-2 space-y-4">
+        {/* Sekcja pytań kontekstowych */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            <span>Pytania powiązane</span>
+          </div>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {contextual.map((question, idx) => (
+              <Button
+                key={`contextual-${question}-${idx}`}
+                variant="outline"
+                onClick={() => onSelect(question)}
+                disabled={disabled}
+                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 border-primary/50 bg-primary/5 hover:bg-primary/10 hover:border-primary hover:text-primary animate-fade-in"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                {question}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Sekcja pytań ogólnych */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>
+            <span>Inne pytania</span>
+          </div>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {general.map((question, idx) => (
+              <Button
+                key={`general-${question}-${idx}`}
+                variant="outline"
+                onClick={() => onSelect(question)}
+                disabled={disabled}
+                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary animate-fade-in"
+                style={{ animationDelay: `${(contextual.length + idx) * 100}ms` }}
+              >
+                {question}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Jeśli nie ma pytań kontekstowych, pokaż tylko ogólne pytania
   return (
-    <div className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-4 sm:mb-6 px-2">
-      {questionsToShow.map((question, idx) => (
-        <Button
-          key={`${question}-${idx}`}
-          variant="outline"
-          onClick={() => onSelect(question)}
-          disabled={disabled}
-          className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary animate-fade-in"
-          style={{ animationDelay: `${idx * 100}ms` }}
-        >
-          {question}
-        </Button>
-      ))}
+    <div className="w-full max-w-4xl mx-auto mb-4 sm:mb-6 px-2">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-2">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Przykładowe pytania</span>
+        </div>
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          {general.map((question, idx) => (
+            <Button
+              key={`general-${question}-${idx}`}
+              variant="outline"
+              onClick={() => onSelect(question)}
+              disabled={disabled}
+              className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary animate-fade-in"
+              style={{ animationDelay: `${idx * 100}ms` }}
+            >
+              {question}
+            </Button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
