@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { CONSTANTS } from '@/lib/constants';
 
 const Index = () => {
-  const { messages, isLoading, addMessage, clearMessages, setLoading, attachedFile, setAttachedFile } = useChatStore();
+  const { messages, isLoading, addMessage, removeMessage, clearMessages, setLoading, attachedFile, setAttachedFile } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -23,6 +23,22 @@ const Index = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleRetry = (content: string) => {
+    // Ponów wysłanie pytania
+    handleSendMessage(content);
+  };
+
+  const handleRemoveMessage = (messageId: string) => {
+    // Usuń wiadomość błędu oraz poprzedzające ją pytanie użytkownika
+    const messageIndex = messages.findIndex((msg) => msg.id === messageId);
+    if (messageIndex > 0 && messages[messageIndex - 1].role === 'user') {
+      // Usuń poprzednie pytanie użytkownika
+      removeMessage(messages[messageIndex - 1].id);
+    }
+    // Usuń wiadomość asystenta
+    removeMessage(messageId);
+  };
 
   const handleSendMessage = async (content: string, retryCount = 0) => {
     // Only add user message on first attempt
@@ -223,9 +239,28 @@ const Index = () => {
           {messages.length > 0 && (
             <div className="mb-8">
               <div className="space-y-4 mb-6" role="log" aria-live="polite" aria-label="Historia rozmowy">
-                {messages.map((message) => (
-                  <ChatMessage key={message.id} role={message.role} content={message.content} />
-                ))}
+                {messages.map((message, index) => {
+                  // Znajdź poprzednie pytanie użytkownika dla wiadomości asystenta
+                  let userContent: string | undefined;
+                  if (message.role === 'assistant' && index > 0) {
+                    const previousMessage = messages[index - 1];
+                    if (previousMessage.role === 'user') {
+                      userContent = previousMessage.content;
+                    }
+                  }
+
+                  return (
+                    <ChatMessage
+                      key={message.id}
+                      role={message.role}
+                      content={message.content}
+                      messageId={message.id}
+                      userContent={userContent}
+                      onRetry={handleRetry}
+                      onRemove={handleRemoveMessage}
+                    />
+                  );
+                })}
                 {isLoading && (
                   <div className="flex justify-start mb-6">
                     <div className="bg-assistant text-assistant-foreground border border-border rounded-lg p-5 max-w-[85%]" role="status" aria-live="polite">
