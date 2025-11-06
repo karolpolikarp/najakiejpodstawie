@@ -49,10 +49,25 @@ serve(async (req) => {
     const requestBody = await req.json();
     const { message, fileContext } = requestBody || {};
 
+    // Log incoming request for debugging
+    console.log('Received request:', {
+      hasMessage: !!message,
+      messageType: typeof message,
+      messageLength: message?.length,
+      hasFileContext: !!fileContext,
+    });
+
     // Validate required fields
-    if (!message || typeof message !== 'string') {
+    if (typeof message !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Pole "message" jest wymagane i musi być tekstem' }),
+        JSON.stringify({ error: 'Pole "message" musi być tekstem' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (message.trim().length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Wiadomość nie może być pusta' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
