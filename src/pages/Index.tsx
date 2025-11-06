@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Scale, Trash2, LogOut } from 'lucide-react';
+import { Scale, Trash2, LogOut, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
@@ -62,6 +62,41 @@ const Index = () => {
     window.location.reload();
   };
 
+  const handleDeleteAllData = () => {
+    const confirmed = window.confirm(
+      'Czy na pewno chcesz usunąć wszystkie dane lokalne?\n\n' +
+      'To działanie usunie:\n' +
+      '• Historię czatu\n' +
+      '• Sesję logowania\n' +
+      '• Preferencje motywu\n' +
+      '• Wszystkie inne dane przechowywane lokalnie\n\n' +
+      'Ta operacja jest nieodwracalna.'
+    );
+
+    if (confirmed) {
+      try {
+        // Clear all localStorage data
+        localStorage.clear();
+
+        // Clear sessionStorage as well (in case any data is stored there)
+        sessionStorage.clear();
+
+        // Clear any Supabase-specific storage
+        supabase.auth.signOut();
+
+        toast.success('Wszystkie dane lokalne zostały usunięte');
+
+        // Reload the page to reset the application state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } catch (error) {
+        console.error('Error deleting local data:', error);
+        toast.error('Wystąpił błąd podczas usuwania danych');
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-main">
       {/* Header */}
@@ -90,6 +125,16 @@ const Index = () => {
                 </Button>
               )}
               <ThemeToggle />
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteAllData}
+                aria-label="Usuń wszystkie dane lokalne"
+                title="Usuń wszystkie dane lokalne (historia, ustawienia, sesja)"
+                className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <Database className="h-4 w-4" aria-hidden="true" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
