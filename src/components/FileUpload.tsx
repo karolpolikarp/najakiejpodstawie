@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 // Configure PDF.js worker - use specific version that works with bundlers
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.394/pdf.worker.min.js`;
 
 interface FileUploadProps {
   onFileLoad: (content: string, filename: string) => void;
