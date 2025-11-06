@@ -7,6 +7,8 @@ import { ExampleQuestions } from '@/components/ExampleQuestions';
 import { Footer } from '@/components/Footer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { FileUpload } from '@/components/FileUpload';
+import { GDPRWarningModal } from '@/components/GDPRWarningModal';
+import { AINoticeBanner } from '@/components/AINoticeBanner';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -332,6 +334,8 @@ const Index = () => {
           {messages.length > 0 && (
             <div className="mb-8">
               <div ref={messagesStartRef} />
+              {/* AI Notice Banner */}
+              <AINoticeBanner />
               <div className="space-y-4 mb-6" role="log" aria-live="polite" aria-label="Historia rozmowy">
                 {messages.map((message, index) => {
                   // Znajdź poprzednie pytanie użytkownika dla wiadomości asystenta
@@ -391,6 +395,15 @@ const Index = () => {
                 currentFile={attachedFile?.name || null}
               />
               <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+
+              {/* AI Disclaimer - AI Act Art. 13 compliance */}
+              <div className="mt-2 pt-2 border-t border-border/50">
+                <p className="text-xs text-muted-foreground text-center">
+                  🤖 Odpowiedzi generowane przez AI (Anthropic Claude) •
+                  Wymaga weryfikacji prawnika •
+                  Nie przesyłaj danych osobowych
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -428,6 +441,9 @@ const Index = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* GDPR Warning Modal - shown on first visit */}
+      <GDPRWarningModal />
     </div>
   );
 };

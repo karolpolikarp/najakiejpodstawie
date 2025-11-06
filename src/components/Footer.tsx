@@ -18,7 +18,7 @@ export const Footer = () => {
               <span className="font-semibold text-foreground">JakiePrawo.pl</span>
             </span>
           </div>
-          <nav className="flex gap-6 text-sm" aria-label="Stopka">
+          <nav className="flex flex-wrap gap-4 sm:gap-6 text-sm justify-center" aria-label="Stopka">
             <Link
               to="/o-nas"
               className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-1"
@@ -26,10 +26,22 @@ export const Footer = () => {
               O nas
             </Link>
             <Link
+              to="/faq"
+              className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-1"
+            >
+              FAQ
+            </Link>
+            <Link
               to="/kontakt"
               className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-1"
             >
               Kontakt
+            </Link>
+            <Link
+              to="/regulamin"
+              className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-1"
+            >
+              Regulamin
             </Link>
             <Link
               to="/polityka-prywatnosci"
