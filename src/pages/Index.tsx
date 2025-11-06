@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Scale, Trash2, LogOut, Database, ArrowUp } from 'lucide-react';
+import { Scale, Trash2, LogOut, Database, ArrowUp, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
@@ -7,6 +7,7 @@ import { ExampleQuestions } from '@/components/ExampleQuestions';
 import { Footer } from '@/components/Footer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { FileUpload } from '@/components/FileUpload';
+import { DocumentManager } from '@/components/DocumentManager';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ const Index = () => {
   const messagesStartRef = useRef<HTMLDivElement>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showDocuments, setShowDocuments] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -78,7 +80,7 @@ const Index = () => {
       const { data, error } = await supabase.functions.invoke('legal-assistant', {
         body: {
           message: content,
-          fileContext: attachedFile?.content || null,
+          documentId: attachedFile?.id || null,
         },
       });
 
@@ -201,6 +203,17 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <Button
+                variant={showDocuments ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowDocuments(!showDocuments)}
+                aria-label="Zarządzaj dokumentami"
+                title="Zarządzaj dokumentami"
+                className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 sm:w-auto p-0 sm:px-3"
+              >
+                <FileText className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+                <span className="hidden sm:inline">Dokumenty</span>
+              </Button>
               {messages.length > 0 && (
                 <Button
                   variant="outline"
@@ -323,9 +336,15 @@ const Index = () => {
 
           {/* Chat Input */}
           <div className="sticky bottom-0 pb-2 sm:pb-4">
-            <div className="bg-card/80 backdrop-blur-sm rounded-lg border border-border p-3 sm:p-4 shadow-lg">
+            <div className="bg-card/80 backdrop-blur-sm rounded-lg border border-border p-3 sm:p-4 shadow-lg space-y-3">
+              {showDocuments && (
+                <DocumentManager
+                  selectedDocumentId={attachedFile?.id || null}
+                  onSelectDocument={(document) => setAttachedFile(document)}
+                />
+              )}
               <FileUpload
-                onFileLoad={(content, filename) => setAttachedFile({ content, name: filename })}
+                onFileLoad={(document) => setAttachedFile(document)}
                 onFileRemove={() => setAttachedFile(null)}
                 currentFile={attachedFile?.name || null}
               />

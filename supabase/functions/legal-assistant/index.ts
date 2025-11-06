@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
  * Legal Context Knowledge Base
@@ -46,11 +47,42 @@ serve(async (req) => {
   }
 
   try {
-    const { message, fileContext } = await req.json();
+    const { message, documentId } = await req.json();
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
+    }
+
+    // Initialize Supabase client if we need to fetch document
+    let fileContext = null;
+    if (documentId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      // Fetch document metadata from database
+      const { data: docData, error: docError } = await supabase
+        .from('legal_documents')
+        .select('file_path')
+        .eq('id', documentId)
+        .single();
+
+      if (docError) {
+        console.error('Error fetching document metadata:', docError);
+      } else if (docData) {
+        // Download file content from storage
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from('legal-documents')
+          .download(docData.file_path);
+
+        if (fileError) {
+          console.error('Error downloading file:', fileError);
+        } else if (fileData) {
+          // Convert blob to text
+          fileContext = await fileData.text();
+        }
+      }
     }
 
     // Base system prompt
@@ -146,12 +178,28 @@ Wyjątki od 14-dniowego zwrotu istnieją dla niektórych towarów (np. produkty 
 
     // If user attached a file, modify system prompt
     if (fileContext) {
-      systemPrompt += `
+      systemPrompt = `📄 WAŻNE: PRACA Z ZAŁĄCZONYM DOKUMENTEM PRAWNYM
 
-📄 KONTEKST Z ZAŁĄCZONEGO DOKUMENTU:
-Użytkownik załączył dokument. PRIORYTETOWO wykorzystuj ten dokument do odpowiedzi.
-Jeśli odpowiedź znajduje się w załączonym dokumencie, cytuj konkretne fragmenty.
-Jeśli pytanie wykracza poza załączony dokument, powiedz o tym wyraźnie i użyj swojej wiedzy.`;
+Użytkownik załączył własny dokument prawny (umowa, ustawa, akt prawny). TWÓJ NAJWYŻSZY PRIORYTET to wykorzystanie tego dokumentu jako GŁÓWNEGO ŹRÓDŁA odpowiedzi.
+
+ZASADY PRACY Z ZAŁĄCZONYM DOKUMENTEM:
+1. **PIERWSZEŃSTWO DOKUMENTU**: Zawsze najpierw szukaj odpowiedzi w załączonym dokumencie
+2. **CYTUJ BEZPOŚREDNIO**: Jeśli odpowiedź jest w dokumencie, cytuj konkretne fragmenty
+3. **WSKAŻ LOKALIZACJĘ**: Podaj numer artykułu/paragrafu/sekcji z załączonego dokumentu
+4. **JASNE ŹRÓDŁO**: W sekcji PODSTAWA PRAWNA wyraźnie zaznacz, że informacja pochodzi z załączonego dokumentu
+5. **DODATKOWY KONTEKST**: Możesz uzupełnić odpowiedź o dodatkowy kontekst prawny z polskiego systemu prawnego, ale TYLKO jako uzupełnienie, nie jako główna odpowiedź
+
+JEŚLI ODPOWIEDŹ JEST W DOKUMENCIE:
+- Rozpocznij sekcję PODSTAWA PRAWNA od: "📎 Załączony dokument: [nazwa artykułu/paragrafu]"
+- Cytuj konkretne fragmenty
+- Dodaj kontekst prawny z polskiego systemu, jeśli jest to pomocne
+
+JEŚLI ODPOWIEDZI NIE MA W DOKUMENCIE:
+- Wyraźnie powiedz: "Załączony dokument nie zawiera informacji na ten temat."
+- Następnie odpowiedz na podstawie swojej wiedzy prawnej
+- W sekcji UWAGA zaznacz: "Odpowiedź oparta na ogólnej wiedzy prawnej, nie na załączonym dokumencie"
+
+` + systemPrompt;
     }
 
     // Build user message
