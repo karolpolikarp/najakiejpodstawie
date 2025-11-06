@@ -103,6 +103,16 @@ const Index = () => {
       setLoading(true);
     }
 
+    // DEBUG LOGS
+    console.log('=== SENDING MESSAGE DEBUG ===');
+    console.log('Message:', content);
+    console.log('AttachedFile exists:', !!attachedFile);
+    console.log('AttachedFile name:', attachedFile?.name);
+    console.log('AttachedFile content length:', attachedFile?.content?.length || 0);
+    if (attachedFile?.content) {
+      console.log('AttachedFile content preview (first 200 chars):', attachedFile.content.substring(0, 200));
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('legal-assistant', {
         body: {
