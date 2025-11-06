@@ -11,8 +11,13 @@ export const CONSTANTS = {
     MAX_SIZE_MB: 5,
     MAX_SIZE_BYTES: 5 * 1024 * 1024,
     MAX_CONTENT_LENGTH: 50000,
-    ALLOWED_TYPES: ['text/plain', 'application/pdf'] as const,
-    ALLOWED_EXTENSIONS: ['.txt', '.pdf'] as const,
+    ALLOWED_TYPES: [
+      'text/plain',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ] as const,
+    ALLOWED_EXTENSIONS: ['.txt', '.pdf', '.doc', '.docx'] as const,
   },
 
   /**

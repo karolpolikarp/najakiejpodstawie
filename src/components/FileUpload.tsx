@@ -3,6 +3,11 @@ import { FileText, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { CONSTANTS } from '@/lib/constants';
+import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface FileUploadProps {
   onFileLoad: (content: string, filename: string) => void;
@@ -20,7 +25,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
 
     // Check file type
     if (!CONSTANTS.FILE_UPLOAD.ALLOWED_TYPES.includes(file.type as any)) {
-      toast.error('Wspierane formaty: TXT, PDF');
+      toast.error('Wspierane formaty: TXT, PDF, DOC, DOCX');
       return;
     }
 
@@ -39,20 +44,46 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
         // Read text file
         content = await file.text();
       } else if (file.type === 'application/pdf') {
-        // For PDF, we'll need to extract text
-        // Simple approach: read as text (works for some PDFs)
-        content = await file.text();
+        // Extract text from PDF using pdf.js
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const textParts: string[] = [];
 
-        // Note: For better PDF support, we'd need a library like pdf.js
-        // For now, show a message that PDF support is basic
-        if (!content || content.length < 50) {
-          toast.error('Nie udało się odczytać PDF. Spróbuj przekonwertować na TXT');
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items
+              .map((item: any) => item.str)
+              .join(' ');
+            textParts.push(pageText);
+          }
+
+          content = textParts.join('\n\n');
+        } catch (pdfError) {
+          console.error('PDF parsing error:', pdfError);
+          toast.error('Nie udało się odczytać PDF. Sprawdź czy plik nie jest zaszyfrowany.');
           return;
         }
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        // Extract text from DOCX using mammoth
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          content = result.value;
+        } catch (docxError) {
+          console.error('DOCX parsing error:', docxError);
+          toast.error('Nie udało się odczytać DOCX');
+          return;
+        }
+      } else if (file.type === 'application/msword') {
+        // DOC format is not fully supported by mammoth, show warning
+        toast.error('Format DOC nie jest w pełni wspierany. Proszę przekonwertować na DOCX lub TXT.');
+        return;
       }
 
       if (!content || content.trim().length === 0) {
-        toast.error('Plik jest pusty');
+        toast.error('Plik jest pusty lub nie zawiera tekstu');
         return;
       }
 
@@ -112,7 +143,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
                 ) : (
                   <>
                     <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-2" aria-hidden="true" />
-                    <span className="hidden sm:inline">Załącz plik (TXT, PDF)</span>
+                    <span className="hidden sm:inline">Załącz plik (TXT, PDF, DOCX)</span>
                     <span className="sm:hidden">Załącz plik</span>
                   </>
                 )}
