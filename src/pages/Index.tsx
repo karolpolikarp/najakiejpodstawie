@@ -6,12 +6,13 @@ import { ChatInput } from '@/components/ChatInput';
 import { ExampleQuestions } from '@/components/ExampleQuestions';
 import { Footer } from '@/components/Footer';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { FileUpload } from '@/components/FileUpload';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const Index = () => {
-  const { messages, isLoading, addMessage, clearMessages, setLoading } = useChatStore();
+  const { messages, isLoading, addMessage, clearMessages, setLoading, attachedFile, setAttachedFile } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -28,7 +29,10 @@ const Index = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('legal-assistant', {
-        body: { message: content },
+        body: {
+          message: content,
+          fileContext: attachedFile?.content || null,
+        },
       });
 
       if (error) throw error;
@@ -137,7 +141,9 @@ const Index = () => {
                     <div className="bg-assistant text-assistant-foreground border border-border rounded-lg p-5 max-w-[85%]" role="status" aria-live="polite">
                       <div className="flex items-center gap-3 mb-3">
                         <Scale className="h-5 w-5 text-primary animate-pulse" aria-hidden="true" />
-                        <span className="text-sm font-medium text-muted-foreground">Przeszukuję polskie prawo...</span>
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {attachedFile ? 'Analizuję załączony dokument...' : 'Przeszukuję polskie prawo...'}
+                        </span>
                       </div>
                       <div className="space-y-2" aria-hidden="true">
                         <div className="h-3 bg-muted rounded animate-pulse w-full" />
@@ -156,6 +162,11 @@ const Index = () => {
           {/* Chat Input */}
           <div className="sticky bottom-0 pb-4">
             <div className="bg-card/80 backdrop-blur-sm rounded-lg border border-border p-4 shadow-lg">
+              <FileUpload
+                onFileLoad={(content, filename) => setAttachedFile({ content, name: filename })}
+                onFileRemove={() => setAttachedFile(null)}
+                currentFile={attachedFile?.name || null}
+              />
               <ChatInput onSend={handleSendMessage} disabled={isLoading} />
             </div>
           </div>
