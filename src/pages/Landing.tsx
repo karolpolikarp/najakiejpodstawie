@@ -1,8 +1,8 @@
-import { Scale, MessageSquare, Zap, Shield, BookOpen, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, Zap, Shield, BookOpen, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Header } from '@/components/Header';
 import { CookieBanner } from '@/components/CookieBanner';
 
 const Landing = () => {
@@ -63,30 +63,15 @@ const Landing = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-main">
+    <div className="min-h-screen flex flex-col bg-gradient-main relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+      </div>
+
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Scale className="h-7 w-7 text-primary" />
-              <div>
-                <h1 className="text-2xl font-bold text-primary">JakiePrawo.pl</h1>
-                <p className="text-sm text-muted-foreground hidden sm:block">Wyszukiwarka podstaw prawnych</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <Button asChild variant="outline" size="sm">
-                <Link to="/o-nas">O projekcie</Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link to="/czat">Rozpocznij</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-24 text-center">
@@ -118,15 +103,23 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-16 bg-card/30">
-        <h3 className="text-3xl md:text-4xl font-bold text-center mb-12">Dlaczego JakiePrawo.pl?</h3>
+      <section className="container mx-auto px-4 py-16 relative z-10">
+        <h3 className="text-3xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+          Dlaczego JakiePrawo.pl?
+        </h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {features.map((feature, idx) => {
             const Icon = feature.icon;
             return (
-              <Card key={idx} className="border-border hover:border-primary transition-colors">
+              <Card
+                key={idx}
+                className="glass-card hover-lift shadow-soft hover:shadow-soft-lg border-border/50 hover:border-primary/50 transition-all duration-300 group"
+              >
                 <CardHeader>
-                  <Icon className="h-10 w-10 text-primary mb-2" />
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-primary/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <Icon className="h-10 w-10 text-primary mb-2 relative z-10 transform group-hover:scale-110 transition-transform duration-300" />
+                  </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -139,7 +132,7 @@ const Landing = () => {
       </section>
 
       {/* Example Questions Section */}
-      <section className="container mx-auto px-4 py-16">
+      <section className="container mx-auto px-4 py-16 relative z-10">
         <div className="max-w-4xl mx-auto">
           <h3 className="text-3xl md:text-4xl font-bold text-center mb-6">Przykładowe pytania</h3>
           <p className="text-center text-muted-foreground mb-8 text-lg">
@@ -151,7 +144,7 @@ const Landing = () => {
                 key={idx}
                 variant="outline"
                 asChild
-                className="h-auto py-4 text-left justify-start hover:border-primary hover:text-primary transition-all hover:scale-105"
+                className="h-auto py-4 text-left justify-start hover:border-primary hover:text-primary transition-all hover:scale-105 hover:shadow-soft glass-card"
               >
                 <Link to="/czat">
                   <CheckCircle2 className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -161,7 +154,7 @@ const Landing = () => {
             ))}
           </div>
           <div className="text-center mt-8">
-            <Button asChild size="lg">
+            <Button asChild size="lg" className="shadow-soft-lg hover:shadow-soft-xl transition-all duration-300">
               <Link to="/czat">
                 Zadaj własne pytanie
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -172,7 +165,7 @@ const Landing = () => {
       </section>
 
       {/* Case Studies Section */}
-      <section className="container mx-auto px-4 py-16 bg-card/30">
+      <section className="container mx-auto px-4 py-16 relative z-10">
         <div className="max-w-6xl mx-auto">
           <h3 className="text-3xl md:text-4xl font-bold text-center mb-6">Historie użycia</h3>
           <p className="text-center text-muted-foreground mb-12 text-lg">
@@ -182,10 +175,16 @@ const Landing = () => {
             {caseStudies.map((study, idx) => {
               const Icon = study.icon;
               return (
-                <Card key={idx} className="border-border hover:shadow-lg transition-shadow">
+                <Card
+                  key={idx}
+                  className="glass-card hover-lift shadow-soft hover:shadow-soft-lg border-border/50 transition-all duration-300 group"
+                >
                   <CardHeader>
                     <div className="flex items-center gap-3 mb-2">
-                      <Icon className="h-8 w-8 text-primary" />
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-primary/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <Icon className="h-8 w-8 text-primary relative z-10 transform group-hover:scale-110 transition-transform duration-300" />
+                      </div>
                       <CardTitle className="text-xl">{study.title}</CardTitle>
                     </div>
                   </CardHeader>

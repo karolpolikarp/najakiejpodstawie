@@ -1,28 +1,25 @@
-import { Scale, Mail, Github } from 'lucide-react';
+import { Github } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Header } from '@/components/Header';
 
 const About = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-main">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Scale className="h-7 w-7 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold text-primary">JakiePrawo.pl</h1>
-              <p className="text-sm text-muted-foreground">Wyszukiwarka podstaw prawnych</p>
-            </div>
-          </Link>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col bg-gradient-main relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+      </div>
 
-      <main className="flex-1 container mx-auto px-4 py-12">
+      <Header />
+
+      <main className="flex-1 container mx-auto px-4 py-12 relative z-10">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl font-bold text-foreground mb-6">O projekcie</h1>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text mb-6">O projekcie</h1>
 
           <div className="prose prose-lg max-w-none space-y-6">
-            <section className="bg-card border border-border rounded-lg p-6">
+            <section className="glass-card shadow-soft hover:shadow-soft-lg transition-all rounded-lg p-6">
               <h2 className="text-2xl font-semibold text-foreground mb-4">Czym jest JakiePrawo.pl?</h2>
               <p className="text-muted-foreground leading-relaxed">
                 JakiePrawo.pl to narzędzie wspierające wyszukiwanie informacji prawnych w polskim systemie prawnym.
