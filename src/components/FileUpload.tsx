@@ -121,7 +121,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
             </Button>
           </label>
           <p className="text-xs text-muted-foreground">
-            Opcjonalnie: załącz ustawę aby AI miało pełny kontekst
+            Załącz dokument (np. umowę najmu), a AI przeanalizuje go i wskaże kluczowe zapisy
           </p>
         </div>
       ) : (
