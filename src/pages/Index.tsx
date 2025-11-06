@@ -37,10 +37,10 @@ const Index = () => {
       }
     } catch (error: any) {
       console.error('Error calling legal assistant:', error);
-      toast.error('Wystąpił błąd podczas przetwarzania zapytania');
+      toast.error('Nie udało się przetworzyć pytania');
       addMessage({
         role: 'assistant',
-        content: 'Przepraszam, wystąpił błąd podczas przetwarzania zapytania. Spróbuj ponownie.',
+        content: 'Niestety coś poszło nie tak. Spróbuj zadać pytanie ponownie lub sformułuj je inaczej.',
       });
     } finally {
       setLoading(false);
@@ -49,7 +49,7 @@ const Index = () => {
 
   const handleClearChat = () => {
     clearMessages();
-    toast.success('Czat wyczyszczony');
+    toast.success('Historia rozmowy wyczyszczona');
   };
 
   const handleLogout = () => {
@@ -60,14 +60,14 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-main">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10" role="banner">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Scale className="h-7 w-7 text-primary" />
+              <Scale className="h-7 w-7 text-primary" aria-hidden="true" />
               <div>
                 <h1 className="text-2xl font-bold text-primary">NaJakiejPodstawie.pl</h1>
-                <p className="text-sm text-muted-foreground">Znajdź podstawę prawną w 5 sekund</p>
+                <p className="text-sm text-muted-foreground">Wyszukiwarka podstaw prawnych</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -77,8 +77,10 @@ const Index = () => {
                   size="sm"
                   onClick={handleClearChat}
                   disabled={isLoading}
+                  aria-label="Wyczyść historię rozmowy"
+                  className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
                   Wyczyść
                 </Button>
               )}
@@ -86,9 +88,10 @@ const Index = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                title="Wyloguj się"
+                aria-label="Wyloguj się z aplikacji"
+                className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -96,22 +99,25 @@ const Index = () => {
       </header>
 
       {/* Main Chat Area */}
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8" role="main">
         <div className="max-w-4xl mx-auto">
           {/* Welcome Message */}
           {messages.length === 0 && (
             <div className="text-center mb-12 animate-fade-in">
               <div className="mb-6">
-                <Scale className="h-16 w-16 text-primary mx-auto mb-4 animate-scale-in" />
+                <Scale className="h-16 w-16 text-primary mx-auto mb-4 animate-scale-in" aria-hidden="true" />
               </div>
               <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-                Witaj w asystencie prawnym
+                Znajdź podstawę prawną
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground mb-2">
-                Zadaj pytanie, a znajdę dla Ciebie podstawę prawną
+                Wpisz pytanie zwykłym językiem, a wskażemy Ci konkretny artykuł ustawy
               </p>
-              <p className="text-sm text-muted-foreground/70 mb-10">
-                ⚡ Odpowiedzi w kilka sekund • 📚 Polskie prawo • 🔒 Bezpieczne
+              <p className="text-sm text-muted-foreground/70 mb-2">
+                ⚡ Szybkie odpowiedzi • 📚 Polskie prawo • 🔒 Prywatne
+              </p>
+              <p className="text-xs text-muted-foreground/60 mb-10 max-w-2xl mx-auto">
+                To narzędzie wspomagające, nie zastępuje porady prawnika
               </p>
               <ExampleQuestions onSelect={handleSendMessage} disabled={isLoading} />
             </div>
@@ -120,18 +126,18 @@ const Index = () => {
           {/* Chat Messages */}
           {messages.length > 0 && (
             <div className="mb-8">
-              <div className="space-y-4 mb-6">
+              <div className="space-y-4 mb-6" role="log" aria-live="polite" aria-label="Historia rozmowy">
                 {messages.map((message) => (
                   <ChatMessage key={message.id} role={message.role} content={message.content} />
                 ))}
                 {isLoading && (
                   <div className="flex justify-start mb-6">
-                    <div className="bg-assistant text-assistant-foreground border border-border rounded-lg p-5 max-w-[85%]">
+                    <div className="bg-assistant text-assistant-foreground border border-border rounded-lg p-5 max-w-[85%]" role="status" aria-live="polite">
                       <div className="flex items-center gap-3 mb-3">
-                        <Scale className="h-5 w-5 text-primary animate-pulse" />
-                        <span className="text-sm font-medium text-muted-foreground">Szukam podstawy prawnej...</span>
+                        <Scale className="h-5 w-5 text-primary animate-pulse" aria-hidden="true" />
+                        <span className="text-sm font-medium text-muted-foreground">Przeszukuję polskie prawo...</span>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2" aria-hidden="true">
                         <div className="h-3 bg-muted rounded animate-pulse w-full" />
                         <div className="h-3 bg-muted rounded animate-pulse w-5/6" />
                         <div className="h-3 bg-muted rounded animate-pulse w-4/6" />
