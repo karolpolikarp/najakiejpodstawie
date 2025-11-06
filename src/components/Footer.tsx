@@ -15,7 +15,7 @@ export const Footer = () => {
           <div className="text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
               <Scale className="h-4 w-4 text-primary" />
-              <span className="font-semibold text-foreground">NaJakiejPodstawie.pl</span>
+              <span className="font-semibold text-foreground">JakiePrawo.pl</span>
             </span>
           </div>
           <nav className="flex gap-6 text-sm" aria-label="Stopka">

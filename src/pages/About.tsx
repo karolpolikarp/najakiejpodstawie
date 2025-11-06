@@ -10,7 +10,7 @@ const About = () => {
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Scale className="h-7 w-7 text-primary" />
             <div>
-              <h1 className="text-2xl font-bold text-primary">NaJakiejPodstawie.pl</h1>
+              <h1 className="text-2xl font-bold text-primary">JakiePrawo.pl</h1>
               <p className="text-sm text-muted-foreground">Wyszukiwarka podstaw prawnych</p>
             </div>
           </Link>
@@ -23,9 +23,9 @@ const About = () => {
 
           <div className="prose prose-lg max-w-none space-y-6">
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">Czym jest NaJakiejPodstawie.pl?</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">Czym jest JakiePrawo.pl?</h2>
               <p className="text-muted-foreground leading-relaxed">
-                NaJakiejPodstawie.pl to narzędzie wspierające wyszukiwanie informacji prawnych w polskim systemie prawnym.
+                JakiePrawo.pl to narzędzie wspierające wyszukiwanie informacji prawnych w polskim systemie prawnym.
                 Używamy sztucznej inteligencji (AI), żeby pomóc Ci szybciej znaleźć konkretny artykuł lub ustawę.
               </p>
             </section>

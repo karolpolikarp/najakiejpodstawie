@@ -33,7 +33,7 @@ export const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Zapytaj np. 'na jakiej podstawie mogę zwrócić towar?'"
+          placeholder="Zapytaj np. 'jakie prawo pozwala mi zwrócić towar?'"
           disabled={disabled}
           className="min-h-[50px] sm:min-h-[60px] max-h-[200px] resize-none text-sm sm:text-base"
         />
