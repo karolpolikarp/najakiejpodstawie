@@ -5,6 +5,7 @@ import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
 import { ExampleQuestions } from '@/components/ExampleQuestions';
 import { Footer } from '@/components/Footer';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -84,6 +85,7 @@ const Index = () => {
                   Wyczyść
                 </Button>
               )}
+              <ThemeToggle />
               <Button
                 variant="ghost"
                 size="sm"

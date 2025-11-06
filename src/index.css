@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Ciepłe, kościste tło - jak w Claude */
+    /* LIGHT MODE - Ciepłe, kościste tło - jak w Claude */
     --background: 40 20% 96%;
     --foreground: 25 25% 20%;
 
@@ -57,6 +57,55 @@ All colors MUST be HSL.
     --gradient-start: 40 25% 97%;
     --gradient-end: 40 20% 94%;
   }
+
+  .dark {
+    /* DARK MODE - Ciemny, elegancki z zielonymi akcentami */
+    --background: 145 10% 8%;
+    --foreground: 40 20% 92%;
+
+    /* Karty - ciemniejsze od tła */
+    --card: 145 8% 12%;
+    --card-foreground: 40 20% 92%;
+
+    --popover: 145 8% 12%;
+    --popover-foreground: 40 20% 92%;
+
+    /* Jaśniejszy zielony dla lepszego kontrastu */
+    --primary: 145 55% 55%;
+    --primary-foreground: 145 10% 8%;
+
+    /* Stonowane secondary */
+    --secondary: 145 8% 18%;
+    --secondary-foreground: 145 55% 65%;
+
+    /* Muted */
+    --muted: 145 8% 18%;
+    --muted-foreground: 40 10% 65%;
+
+    /* Accent */
+    --accent: 145 60% 50%;
+    --accent-foreground: 145 10% 8%;
+
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Subtelne bordery */
+    --border: 145 10% 20%;
+    --input: 145 10% 22%;
+    --ring: 145 55% 55%;
+
+    /* Wiadomości użytkownika - zielone */
+    --user-message: 145 55% 45%;
+    --user-message-foreground: 0 0% 100%;
+
+    /* Wiadomości asystenta - ciemny panel */
+    --assistant-message: 145 8% 15%;
+    --assistant-message-foreground: 40 20% 92%;
+
+    /* Gradient tła - ciemny */
+    --gradient-start: 145 10% 8%;
+    --gradient-end: 145 12% 10%;
+  }
 }
 
 @layer base {
@@ -65,7 +114,7 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
   }
 }
 
