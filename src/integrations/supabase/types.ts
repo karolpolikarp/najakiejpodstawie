@@ -14,7 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      message_feedback: {
+        Row: {
+          id: string
+          message_id: string
+          feedback_type: 'positive' | 'negative'
+          user_question: string | null
+          assistant_response: string | null
+          created_at: string
+          session_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          feedback_type: 'positive' | 'negative'
+          user_question?: string | null
+          assistant_response?: string | null
+          created_at?: string
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          feedback_type?: 'positive' | 'negative'
+          user_question?: string | null
+          assistant_response?: string | null
+          created_at?: string
+          session_id?: string | null
+          user_agent?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never

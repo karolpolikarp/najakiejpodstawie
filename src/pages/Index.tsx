@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Index = () => {
-  const { messages, isLoading, addMessage, removeMessage, clearMessages, setLoading, attachedFile, setAttachedFile } = useChatStore();
+  const { messages, isLoading, addMessage, removeMessage, clearMessages, setLoading, attachedFile, setAttachedFile, setMessageFeedback } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesStartRef = useRef<HTMLDivElement>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -119,6 +119,43 @@ const Index = () => {
     }
     // Usuń wiadomość asystenta
     removeMessage(messageId);
+  };
+
+  const handleFeedback = async (messageId: string, feedbackType: 'positive' | 'negative' | null) => {
+    // Update local state immediately for better UX
+    setMessageFeedback(messageId, feedbackType);
+
+    // If feedback is removed, we don't need to send to backend
+    if (feedbackType === null) {
+      return;
+    }
+
+    // Find the message and previous user message for context
+    const messageIndex = messages.findIndex((msg) => msg.id === messageId);
+    const message = messages[messageIndex];
+    const previousUserMessage = messageIndex > 0 && messages[messageIndex - 1].role === 'user'
+      ? messages[messageIndex - 1]
+      : null;
+
+    try {
+      const { error } = await supabase.functions.invoke('submit-feedback', {
+        body: {
+          messageId,
+          feedbackType,
+          userQuestion: previousUserMessage?.content,
+          assistantResponse: message?.content,
+          sessionId: localStorage.getItem('session_id') || undefined,
+        },
+      });
+
+      if (error) {
+        console.error('Error submitting feedback:', error);
+        // Don't show error to user - feedback is saved locally anyway
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      // Don't show error to user - feedback is saved locally anyway
+    }
   };
 
   const handleSendMessage = async (content: string, retryCount = 0) => {
@@ -355,8 +392,10 @@ const Index = () => {
                       content={message.content}
                       messageId={message.id}
                       userContent={userContent}
+                      feedback={message.feedback}
                       onRetry={handleRetry}
                       onRemove={handleRemoveMessage}
+                      onFeedback={handleFeedback}
                     />
                   );
                 })}
