@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-const CORRECT_PASSWORD = 'lex';
+// Password can be set via VITE_APP_PASSWORD env variable, defaults to 'lex' for easy MVP access
+const CORRECT_PASSWORD = import.meta.env.VITE_APP_PASSWORD || 'lex';
 const PASSWORD_KEY = 'app_authenticated';
 
 interface PasswordGateProps {

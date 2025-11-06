@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { FileText, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { CONSTANTS } from '@/lib/constants';
 
 interface FileUploadProps {
   onFileLoad: (content: string, filename: string) => void;
@@ -18,16 +19,14 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
     if (!file) return;
 
     // Check file type
-    const allowedTypes = ['text/plain', 'application/pdf'];
-    if (!allowedTypes.includes(file.type)) {
+    if (!CONSTANTS.FILE_UPLOAD.ALLOWED_TYPES.includes(file.type as any)) {
       toast.error('Wspierane formaty: TXT, PDF');
       return;
     }
 
-    // Check file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error('Plik jest za duży (max 5MB)');
+    // Check file size
+    if (file.size > CONSTANTS.FILE_UPLOAD.MAX_SIZE_BYTES) {
+      toast.error(`Plik jest za duży (max ${CONSTANTS.FILE_UPLOAD.MAX_SIZE_MB}MB)`);
       return;
     }
 
@@ -58,10 +57,9 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
       }
 
       // Limit content length (to avoid API limits)
-      const maxLength = 50000; // ~50k chars
-      if (content.length > maxLength) {
-        content = content.substring(0, maxLength);
-        toast.info('Plik został skrócony do pierwszych 50 000 znaków');
+      if (content.length > CONSTANTS.FILE_UPLOAD.MAX_CONTENT_LENGTH) {
+        content = content.substring(0, CONSTANTS.FILE_UPLOAD.MAX_CONTENT_LENGTH);
+        toast.info(`Plik został skrócony do pierwszych ${CONSTANTS.FILE_UPLOAD.MAX_CONTENT_LENGTH.toLocaleString('pl-PL')} znaków`);
       }
 
       onFileLoad(content, file.name);
@@ -90,7 +88,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
           <input
             ref={fileInputRef}
             type="file"
-            accept=".txt,.pdf"
+            accept={CONSTANTS.FILE_UPLOAD.ALLOWED_EXTENSIONS.join(',')}
             onChange={handleFileChange}
             className="hidden"
             id="file-upload"

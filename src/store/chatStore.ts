@@ -46,6 +46,10 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: 'chat-storage',
+      // Only persist messages, not loading states or attached files
+      partialize: (state) => ({
+        messages: state.messages,
+      }),
     }
   )
 );
