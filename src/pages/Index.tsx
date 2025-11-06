@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Index = () => {
-  const { messages, isLoading, addMessage, removeMessage, clearMessages, setLoading, attachedFile, setAttachedFile, setMessageFeedback } = useChatStore();
+  const { messages, isLoading, addMessage, updateMessageContent, removeMessage, clearMessages, setLoading, attachedFile, setAttachedFile, setMessageFeedback } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesStartRef = useRef<HTMLDivElement>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -175,46 +175,119 @@ const Index = () => {
       console.log('AttachedFile content preview (first 200 chars):', attachedFile.content.substring(0, 200));
     }
 
+    // Create a temporary message ID for streaming updates
+    const tempMessageId = crypto.randomUUID();
+    let streamedContent = '';
+
     try {
-      const { data, error } = await supabase.functions.invoke('legal-assistant', {
-        body: {
+      // Get Supabase URL and auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      // Make a direct fetch call to support streaming
+      const response = await fetch(`${supabaseUrl}/functions/v1/legal-assistant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+          ...(session?.access_token && { 'Authorization': `Bearer ${session.access_token}` }),
+        },
+        body: JSON.stringify({
           message: content,
           fileContext: attachedFile?.content || null,
-        },
+        }),
       });
 
-      if (error) {
-        // Check for specific error types
-        const errorMessage = error.message?.toLowerCase() || '';
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `HTTP error ${response.status}`;
 
         // Rate limit error - retry with exponential backoff
-        if ((errorMessage.includes('429') || errorMessage.includes('rate limit')) &&
-            retryCount < CONSTANTS.API.MAX_RETRIES) {
+        if (response.status === 429 && retryCount < CONSTANTS.API.MAX_RETRIES) {
           const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
           toast.info(`Zbyt wiele zapytań. Ponawiam za ${delay / 1000}s...`);
-
           await new Promise(resolve => setTimeout(resolve, delay));
           return handleSendMessage(content, retryCount + 1);
         }
 
-        // Network error - retry
-        if ((errorMessage.includes('network') || errorMessage.includes('fetch')) &&
-            retryCount < CONSTANTS.API.MAX_RETRIES) {
-          const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
-          toast.info(`Błąd połączenia. Ponawiam za ${delay / 1000}s...`);
-
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return handleSendMessage(content, retryCount + 1);
-        }
-
-        throw error;
+        throw new Error(errorMessage);
       }
 
-      if (data?.message) {
-        addMessage({ role: 'assistant', content: data.message });
+      // Check if response is streaming (text/event-stream) or regular JSON
+      const contentType = response.headers.get('content-type');
+
+      if (contentType?.includes('text/event-stream')) {
+        // Handle streaming response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          throw new Error('Response body is not readable');
+        }
+
+        // Add an empty assistant message that we'll update
+        addMessage({ role: 'assistant', content: '' });
+
+        // Get the last message ID (the one we just added)
+        const currentMessages = useChatStore.getState().messages;
+        const assistantMessageId = currentMessages[currentMessages.length - 1].id;
+
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            break;
+          }
+
+          // Decode chunk
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete SSE messages
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6); // Remove 'data: ' prefix
+
+              // Skip empty data or event markers
+              if (!data || data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+
+                // Anthropic streaming format
+                if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                  streamedContent += parsed.delta.text;
+                  updateMessageContent(assistantMessageId, streamedContent);
+                }
+              } catch (e) {
+                // Ignore JSON parse errors for malformed chunks
+                console.warn('Failed to parse SSE data:', data);
+              }
+            }
+          }
+        }
+
+        // If no content was streamed, throw an error
+        if (!streamedContent) {
+          throw new Error('Brak odpowiedzi od asystenta');
+        }
+
       } else {
-        throw new Error('Brak odpowiedzi od asystenta');
+        // Handle regular JSON response (fallback)
+        const data = await response.json();
+
+        if (data?.message) {
+          addMessage({ role: 'assistant', content: data.message });
+        } else {
+          throw new Error('Brak odpowiedzi od asystenta');
+        }
       }
+
     } catch (error: any) {
       console.error('Error calling legal assistant:', error);
       const errorMessage = error.message?.toLowerCase() || '';
@@ -223,6 +296,13 @@ const Index = () => {
       if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
         toast.error('Przekroczono limit zapytań. Spróbuj za chwilę.');
       } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        // Retry on network error
+        if (retryCount < CONSTANTS.API.MAX_RETRIES) {
+          const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
+          toast.info(`Błąd połączenia. Ponawiam za ${delay / 1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return handleSendMessage(content, retryCount + 1);
+        }
         toast.error('Błąd połączenia. Sprawdź połączenie z internetem.');
       } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
         toast.error('Błąd autoryzacji. Skontaktuj się z administratorem.');

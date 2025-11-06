@@ -188,6 +188,7 @@ ${message}`;
           { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
+        stream: true, // Enable streaming
       }),
     });
 
@@ -212,13 +213,45 @@ ${message}`;
       throw new Error(`Anthropic API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const assistantMessage = data.content[0].text;
+    // Stream the response to the client
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('Response body is not readable');
+    }
 
-    return new Response(
-      JSON.stringify({ message: assistantMessage }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              controller.close();
+              break;
+            }
+
+            // Decode the chunk and forward it to the client
+            const chunk = decoder.decode(value, { stream: true });
+            controller.enqueue(encoder.encode(chunk));
+          }
+        } catch (error) {
+          console.error('Error streaming response:', error);
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
   } catch (error) {
     console.error('Error in legal-assistant function:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
