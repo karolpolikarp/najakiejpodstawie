@@ -1,0 +1,93 @@
+import { Scale, Mail, Github } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+
+const About = () => {
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-main">
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Scale className="h-7 w-7 text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold text-primary">NaJakiejPodstawie.pl</h1>
+              <p className="text-sm text-muted-foreground">Wyszukiwarka podstaw prawnych</p>
+            </div>
+          </Link>
+        </div>
+      </header>
+
+      <main className="flex-1 container mx-auto px-4 py-12">
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-4xl font-bold text-foreground mb-6">O projekcie</h1>
+
+          <div className="prose prose-lg max-w-none space-y-6">
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">Czym jest NaJakiejPodstawie.pl?</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                NaJakiejPodstawie.pl to narzędzie wspierające wyszukiwanie informacji prawnych w polskim systemie prawnym.
+                Używamy sztucznej inteligencji (AI), żeby pomóc Ci szybciej znaleźć konkretny artykuł lub ustawę.
+              </p>
+            </section>
+
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">Jak to działa?</h2>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                Wpisujesz pytanie zwykłym językiem (np. "Czy pracodawca może odmówić urlopu?"), a AI przeszukuje polskie prawo
+                i podaje Ci konkretny artykuł wraz z wyjaśnieniem.
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                <strong>Technologia:</strong> Używamy modelu Claude firmy Anthropic - jednego z najbardziej zaawansowanych systemów AI na świecie.
+              </p>
+            </section>
+
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">Dla kogo?</h2>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                <li>Przedsiębiorców szukających szybkiej odpowiedzi prawnej</li>
+                <li>Studentów prawa do nauki i sprawdzania wiedzy</li>
+                <li>Osób prywatnych z pytaniami o swoje prawa</li>
+                <li>Każdego, kto potrzebuje szybko zweryfikować podstawę prawną</li>
+              </ul>
+            </section>
+
+            <section className="bg-destructive/10 border border-destructive/30 rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-destructive mb-4">⚠️ Ważne zastrzeżenie</h2>
+              <p className="text-foreground leading-relaxed font-medium">
+                To NIE jest porada prawna ani zastępstwo profesjonalnego prawnika. Informacje mają charakter
+                edukacyjny i pomocniczy. W poważnych sprawach zawsze skonsultuj się z prawnikiem lub radcą prawnym.
+              </p>
+            </section>
+
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">Kto to stworzył?</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                Projekt otwartoźródłowy (open source) stworzony jako narzędzie pomocnicze dla osób poszukujących
+                informacji prawnych. Kod dostępny publicznie na GitHub.
+              </p>
+              <div className="mt-4">
+                <Button variant="outline" asChild>
+                  <a href="https://github.com/karolpolikarp/najakiejpodstawie" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
+                    <Github className="h-4 w-4" />
+                    Zobacz kod na GitHub
+                  </a>
+                </Button>
+              </div>
+            </section>
+          </div>
+
+          <div className="mt-8 flex gap-4">
+            <Button asChild variant="outline">
+              <Link to="/">← Wróć do wyszukiwarki</Link>
+            </Button>
+            <Button asChild variant="default">
+              <Link to="/kontakt">Skontaktuj się</Link>
+            </Button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default About;

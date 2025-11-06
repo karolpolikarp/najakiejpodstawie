@@ -8,44 +8,54 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 217 33% 17%;
+    /* Ciepłe, kościste tło - jak w Claude */
+    --background: 40 20% 96%;
+    --foreground: 25 25% 20%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 217 33% 17%;
+    /* Karty - lekko kremowe zamiast białych */
+    --card: 40 15% 98%;
+    --card-foreground: 25 25% 20%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 217 33% 17%;
+    --popover: 40 15% 98%;
+    --popover-foreground: 25 25% 20%;
 
-    --primary: 217 91% 38%;
+    /* Zielony jako główny kolor - przyjemny dla oczu */
+    --primary: 145 63% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 95%;
-    --secondary-foreground: 217 91% 38%;
+    /* Stonowane secondary */
+    --secondary: 40 15% 92%;
+    --secondary-foreground: 145 63% 35%;
 
-    --muted: 210 20% 95%;
-    --muted-foreground: 217 20% 55%;
+    /* Łagodne muted */
+    --muted: 40 15% 92%;
+    --muted-foreground: 25 15% 45%;
 
-    --accent: 25 95% 53%;
+    /* Zielony accent */
+    --accent: 145 70% 45%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 38%;
+    /* Delikatne bordery */
+    --border: 40 20% 88%;
+    --input: 40 20% 90%;
+    --ring: 145 63% 42%;
 
     --radius: 0.75rem;
 
-    --user-message: 217 91% 38%;
+    /* Wiadomości użytkownika - zielone */
+    --user-message: 145 63% 42%;
     --user-message-foreground: 0 0% 100%;
-    
-    --assistant-message: 0 0% 100%;
-    --assistant-message-foreground: 217 33% 17%;
 
-    --gradient-start: 0 0% 100%;
-    --gradient-end: 210 20% 97%;
+    /* Wiadomości asystenta - ciepły krem */
+    --assistant-message: 40 30% 96%;
+    --assistant-message-foreground: 25 25% 20%;
+
+    /* Gradient tła - ciepły */
+    --gradient-start: 40 25% 97%;
+    --gradient-end: 40 20% 94%;
   }
 }
 
