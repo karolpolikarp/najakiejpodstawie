@@ -183,7 +183,7 @@ const Index = () => {
       // Get Supabase URL and auth token
       const { data: { session } } = await supabase.auth.getSession();
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
       // Debug logs
       console.log('=== AUTH DEBUG ===');
