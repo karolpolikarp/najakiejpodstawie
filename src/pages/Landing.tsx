@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { CookieBanner } from '@/components/CookieBanner';
 
 const Landing = () => {
   const exampleQuestions = [
@@ -309,6 +310,9 @@ const Landing = () => {
           </div>
         </div>
       </footer>
+
+      {/* Cookie Banner */}
+      <CookieBanner />
     </div>
   );
 };

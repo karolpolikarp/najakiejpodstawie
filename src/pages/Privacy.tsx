@@ -66,7 +66,55 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">2. Przetwarzanie przez sztuczną inteligencję (AI)</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">2. Cookies i localStorage</h2>
+
+              <h3 className="text-lg font-semibold text-foreground mb-2">Czym jest localStorage?</h3>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                LocalStorage to technologia podobna do cookies, która pozwala przechowywać dane w Twojej przeglądarce.
+                Dane te <strong>nie są wysyłane na serwer</strong> i pozostają tylko na Twoim urządzeniu.
+              </p>
+
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Co zapisujemy w localStorage?</h3>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
+                <li><strong>Akceptacja regulaminu i cookies</strong> - informacja, że zaakceptowałeś regulamin i komunikat o cookies</li>
+                <li><strong>Historia czatu</strong> - Twoje pytania i odpowiedzi AI (tylko lokalnie, nigdy nie wysyłane na serwer)</li>
+                <li><strong>Preferencje motywu</strong> - wybór jasnego lub ciemnego motywu strony</li>
+                <li><strong>Sesja</strong> - informacja czy jesteś zalogowany (jeśli funkcja logowania jest aktywna)</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Czy używamy cookies śledzących?</h3>
+              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  <strong>NIE.</strong> Nie używamy cookies marketingowych, analitycznych ani śledzących.
+                  Nie profilujemy użytkowników i nie przekazujemy danych do Google Analytics, Facebook Pixel ani podobnych narzędzi.
+                </p>
+              </div>
+
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Cookies techniczne niezbędne</h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                Używamy wyłącznie <strong>cookies technicznych niezbędnych</strong> do działania serwisu:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground mb-4">
+                <li>Zapamiętanie preferencji użytkownika (motyw)</li>
+                <li>Zapisanie historii czatu lokalnie</li>
+                <li>Informacja o akceptacji regulaminu</li>
+              </ul>
+              <p className="text-xs text-muted-foreground">
+                Zgodnie z dyrektywą ePrivacy (2002/58/WE) i RODO, cookies niezbędne do świadczenia usługi
+                <strong> nie wymagają zgody użytkownika</strong>. Mimo to informujemy o nich transparentnie.
+              </p>
+
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Jak usunąć localStorage?</h3>
+              <p className="text-sm text-muted-foreground mb-2">Możesz usunąć dane localStorage na kilka sposobów:</p>
+              <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                <li>Kliknij przycisk <strong>"Usuń wszystkie dane lokalne"</strong> w aplikacji (ikona bazy danych w górnym menu)</li>
+                <li>Wyczyść historię przeglądarki i dane stron</li>
+                <li>Użyj narzędzi deweloperskich przeglądarki (F12 → Application → Local Storage)</li>
+              </ol>
+            </section>
+
+            <section className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">3. Przetwarzanie przez sztuczną inteligencję (AI)</h2>
 
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
                 <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-2">⚠️ WAŻNE OSTRZEŻENIE</h3>
@@ -117,7 +165,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">3. Zgodność z AI Act (Rozporządzenie UE 2024/1689)</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Zgodność z AI Act (Rozporządzenie UE 2024/1689)</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Nasz system AI spełnia wymogi transparentności określone w AI Act:
               </p>
@@ -140,7 +188,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Inne usługi zewnętrzne</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">5. Inne usługi zewnętrzne</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Oprócz Anthropic Claude, aplikacja korzysta z następujących usług zewnętrznych:
               </p>
@@ -165,7 +213,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">5. Twoje prawa</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">6. Twoje prawa</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Zgodnie z RODO (Ogólne Rozporządzenie o Ochronie Danych) masz prawo do:
               </p>
@@ -182,7 +230,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">6. Retencja danych</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">7. Retencja danych</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Informujemy o okresach przechowywania danych w kontekście ewentualnych przyszłych funkcji:
               </p>
@@ -220,7 +268,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">7. Zgłaszanie naruszeń danych osobowych</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">8. Zgłaszanie naruszeń danych osobowych</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Twoja prywatność i bezpieczeństwo danych są dla nas priorytetem. W przypadku podejrzenia naruszenia
                 ochrony danych osobowych lub incydentu bezpieczeństwa:
@@ -260,7 +308,7 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">8. Bezpieczeństwo</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">9. Bezpieczeństwo</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Aplikacja korzysta z szyfrowania HTTPS. Twoje zapytania są przesyłane bezpiecznie.
                 Nie przechowujemy haseł ani danych logowania w niezabezpieczony sposób.
@@ -268,14 +316,14 @@ const Privacy = () => {
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">9. Zmiany w polityce</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">10. Zmiany w polityce</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Możemy aktualizować tę politykę. Zmiany będą publikowane na tej stronie z nową datą aktualizacji.
               </p>
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">10. Kontakt</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">11. Kontakt</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Pytania dotyczące prywatności? Skontaktuj się przez <Link to="/kontakt" className="text-primary hover:underline">stronę kontaktu</Link>.
               </p>
