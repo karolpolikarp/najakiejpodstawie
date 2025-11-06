@@ -10,6 +10,7 @@ import { FileUpload } from '@/components/FileUpload';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CONSTANTS } from '@/lib/constants';
 
 const Index = () => {
   const { messages, isLoading, addMessage, clearMessages, setLoading, attachedFile, setAttachedFile } = useChatStore();
@@ -23,9 +24,12 @@ const Index = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async (content: string) => {
-    addMessage({ role: 'user', content });
-    setLoading(true);
+  const handleSendMessage = async (content: string, retryCount = 0) => {
+    // Only add user message on first attempt
+    if (retryCount === 0) {
+      addMessage({ role: 'user', content });
+      setLoading(true);
+    }
 
     try {
       const { data, error } = await supabase.functions.invoke('legal-assistant', {
@@ -35,14 +39,55 @@ const Index = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check for specific error types
+        const errorMessage = error.message?.toLowerCase() || '';
+
+        // Rate limit error - retry with exponential backoff
+        if ((errorMessage.includes('429') || errorMessage.includes('rate limit')) &&
+            retryCount < CONSTANTS.API.MAX_RETRIES) {
+          const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
+          toast.info(`Zbyt wiele zapytań. Ponawiam za ${delay / 1000}s...`);
+
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return handleSendMessage(content, retryCount + 1);
+        }
+
+        // Network error - retry
+        if ((errorMessage.includes('network') || errorMessage.includes('fetch')) &&
+            retryCount < CONSTANTS.API.MAX_RETRIES) {
+          const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
+          toast.info(`Błąd połączenia. Ponawiam za ${delay / 1000}s...`);
+
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return handleSendMessage(content, retryCount + 1);
+        }
+
+        throw error;
+      }
 
       if (data?.message) {
         addMessage({ role: 'assistant', content: data.message });
+      } else {
+        throw new Error('Brak odpowiedzi od asystenta');
       }
     } catch (error: any) {
       console.error('Error calling legal assistant:', error);
-      toast.error('Nie udało się przetworzyć pytania');
+      const errorMessage = error.message?.toLowerCase() || '';
+
+      // Specific error messages based on error type
+      if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+        toast.error('Przekroczono limit zapytań. Spróbuj za chwilę.');
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        toast.error('Błąd połączenia. Sprawdź połączenie z internetem.');
+      } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+        toast.error('Błąd autoryzacji. Skontaktuj się z administratorem.');
+      } else if (errorMessage.includes('timeout')) {
+        toast.error('Przekroczono limit czasu. Spróbuj ponownie.');
+      } else {
+        toast.error('Nie udało się przetworzyć pytania');
+      }
+
       addMessage({
         role: 'assistant',
         content: 'Niestety coś poszło nie tak. Spróbuj zadać pytanie ponownie lub sformułuj je inaczej.',

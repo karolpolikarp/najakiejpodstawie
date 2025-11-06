@@ -6,11 +6,15 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
+    // Gradually enabling strict mode - start with basic type safety
+    "noImplicitAny": true,  // Enabled: catch untyped 'any' usage
+    "strictNullChecks": true,  // Enabled: prevent null/undefined bugs
+    "noUnusedParameters": false,  // Keep disabled for now (cosmetic)
+    "noUnusedLocals": false,  // Keep disabled for now (cosmetic)
     "skipLibCheck": true,
     "allowJs": true,
-    "noUnusedLocals": false,
-    "strictNullChecks": false
+    // Additional useful strictness options
+    "strictFunctionTypes": true,
+    "noUncheckedIndexedAccess": false  // Would be good but may break existing code
   }
 }
