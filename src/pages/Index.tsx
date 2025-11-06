@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { FileUpload } from '@/components/FileUpload';
 import { GDPRWarningModal } from '@/components/GDPRWarningModal';
 import { AINoticeBanner } from '@/components/AINoticeBanner';
+import { CookieBanner } from '@/components/CookieBanner';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -444,6 +445,9 @@ const Index = () => {
 
       {/* GDPR Warning Modal - shown on first visit */}
       <GDPRWarningModal />
+
+      {/* Cookie Banner */}
+      <CookieBanner />
     </div>
   );
 };
