@@ -21,6 +21,10 @@ const getAllowedOrigin = (requestOrigin: string | null): string => {
     'http://localhost:5173',
     'http://127.0.0.1:8080',
     'http://127.0.0.1:5173',
+    'https://jakieprawo.pl',
+    'https://www.jakieprawo.pl/czat',
+    'https://najakiejpodstawie.pl',
+    'https://najakiejpodstawie.vercel.app',
   ];
 
   if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
