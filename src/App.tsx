@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PasswordGate } from "@/components/PasswordGate";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -21,18 +22,21 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <PasswordGate>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/o-nas" element={<About />} />
-                <Route path="/kontakt" element={<Contact />} />
-                <Route path="/polityka-prywatnosci" element={<Privacy />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </PasswordGate>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/czat" element={
+                <PasswordGate>
+                  <Index />
+                </PasswordGate>
+              } />
+              <Route path="/o-nas" element={<About />} />
+              <Route path="/kontakt" element={<Contact />} />
+              <Route path="/polityka-prywatnosci" element={<Privacy />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
