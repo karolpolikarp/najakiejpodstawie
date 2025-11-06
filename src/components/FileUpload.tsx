@@ -120,7 +120,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
             </Button>
           </label>
           <p className="text-xs text-muted-foreground">
-            Załącz dokument (np. umowę najmu), a AI przeanalizuje go i wskaże kluczowe zapisy
+            Opcjonalnie: załącz dokument, aby AI miało pełny kontekst
           </p>
         </div>
       ) : (
