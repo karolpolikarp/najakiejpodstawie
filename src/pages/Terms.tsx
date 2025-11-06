@@ -1,21 +1,12 @@
-import { Scale, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Header } from '@/components/Header';
 
 const Terms = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-main">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Scale className="h-7 w-7 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold text-primary">JakiePrawo.pl</h1>
-              <p className="text-sm text-muted-foreground">Wyszukiwarka podstaw prawnych</p>
-            </div>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto">

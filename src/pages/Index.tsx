@@ -5,11 +5,11 @@ import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
 import { ExampleQuestions } from '@/components/ExampleQuestions';
 import { Footer } from '@/components/Footer';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { FileUpload } from '@/components/FileUpload';
 import { GDPRWarningModal } from '@/components/GDPRWarningModal';
 import { AINoticeBanner } from '@/components/AINoticeBanner';
 import { CookieBanner } from '@/components/CookieBanner';
+import { Header } from '@/components/Header';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -427,71 +427,67 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-main">
+    <div className="min-h-screen flex flex-col bg-gradient-main relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 left-10 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
+      </div>
+
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10" role="banner">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <button
-              onClick={() => window.location.href = '/'}
-              className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity cursor-pointer"
-              aria-label="Przejdź do strony głównej"
+      <Header
+        showActions
+        actions={
+          <>
+            {messages.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowClearDialog(true)}
+                disabled={isLoading}
+                aria-label="Wyczyść historię rozmowy i załączniki"
+                className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 sm:w-auto p-0 sm:px-3 hover:bg-primary/10"
+              >
+                <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+                <span className="hidden sm:inline">Wyczyść</span>
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteAllData}
+              aria-label="Usuń wszystkie dane lokalne"
+              title="Usuń wszystkie dane lokalne (historia, ustawienia, sesja)"
+              className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 p-0 shadow-soft hover:shadow-soft-lg transition-all"
             >
-              <Scale className="h-6 w-6 sm:h-7 sm:w-7 text-primary flex-shrink-0" aria-hidden="true" />
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-bold text-primary truncate">JakiePrawo.pl</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground">Wyszukiwarka podstaw prawnych</p>
-              </div>
-            </button>
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              {messages.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowClearDialog(true)}
-                  disabled={isLoading}
-                  aria-label="Wyczyść historię rozmowy i załączniki"
-                  className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 sm:w-auto p-0 sm:px-3"
-                >
-                  <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" />
-                  <span className="hidden sm:inline">Wyczyść</span>
-                </Button>
-              )}
-              <ThemeToggle />
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDeleteAllData}
-                aria-label="Usuń wszystkie dane lokalne"
-                title="Usuń wszystkie dane lokalne (historia, ustawienia, sesja)"
-                className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 p-0"
-              >
-                <Database className="h-4 w-4" aria-hidden="true" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                aria-label="Wyloguj się z aplikacji"
-                className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 p-0"
-              >
-                <LogOut className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+              <Database className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              aria-label="Wyloguj się z aplikacji"
+              className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 w-8 p-0"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </>
+        }
+      />
 
       {/* Main Chat Area */}
-      <main className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-8" role="main">
-        <div className="max-w-4xl mx-auto bg-card/40 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-4 sm:p-6 md:p-8">
+      <main className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-8 relative z-10" role="main">
+        <div className="max-w-4xl mx-auto glass-card rounded-2xl shadow-soft-xl p-4 sm:p-6 md:p-8">
           {/* Welcome Message */}
           {messages.length === 0 && (
             <div className="text-center mb-8 sm:mb-12 animate-fade-in px-2">
-              <div className="mb-4 sm:mb-6">
-                <Scale className="h-12 w-12 sm:h-16 sm:w-16 text-primary mx-auto mb-3 sm:mb-4 animate-scale-in" aria-hidden="true" />
+              <div className="mb-4 sm:mb-6 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-primary/20 rounded-full blur-2xl animate-pulse" />
+                </div>
+                <Scale className="h-12 w-12 sm:h-16 sm:w-16 text-primary mx-auto mb-3 sm:mb-4 animate-scale-in relative z-10" aria-hidden="true" />
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3 sm:mb-4">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text mb-3 sm:mb-4">
                 Znajdź podstawę prawną
               </h2>
               <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-2 px-2">
@@ -570,7 +566,7 @@ const Index = () => {
 
           {/* Chat Input */}
           <div className="sticky bottom-0 pb-2 sm:pb-4">
-            <div className="bg-card/80 backdrop-blur-sm rounded-lg border border-border p-3 sm:p-4 shadow-lg">
+            <div className="glass-card rounded-lg p-3 sm:p-4 shadow-soft-lg">
               <FileUpload
                 onFileLoad={(content, filename) => setAttachedFile({ content, name: filename })}
                 onFileRemove={() => setAttachedFile(null)}
@@ -599,7 +595,7 @@ const Index = () => {
           variant="default"
           size="icon"
           onClick={scrollToTop}
-          className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50 shadow-lg rounded-full h-11 w-11 sm:h-12 sm:w-12"
+          className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50 shadow-soft-xl hover:shadow-glow rounded-full h-11 w-11 sm:h-12 sm:w-12 transition-all duration-300 hover:scale-110"
           aria-label="Przewiń do góry"
         >
           <ArrowUp className="h-5 w-5" />
