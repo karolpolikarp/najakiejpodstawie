@@ -260,7 +260,10 @@ const Index = () => {
               <p className="text-xs text-muted-foreground/60 mb-6 sm:mb-10 max-w-2xl mx-auto px-4">
                 To narzędzie wspomagające, nie zastępuje porady prawnika
               </p>
-              <ExampleQuestions onSelect={handleSendMessage} disabled={isLoading} />
+              <ExampleQuestions
+                onSelect={handleSendMessage}
+                disabled={isLoading}
+              />
             </div>
           )}
 
@@ -310,7 +313,11 @@ const Index = () => {
                 )}
                 <div ref={messagesEndRef} />
               </div>
-              <ExampleQuestions onSelect={handleSendMessage} disabled={isLoading} />
+              <ExampleQuestions
+                onSelect={handleSendMessage}
+                disabled={isLoading}
+                lastUserQuestion={messages.filter(m => m.role === 'user').slice(-1)[0]?.content}
+              />
             </div>
           )}
 
