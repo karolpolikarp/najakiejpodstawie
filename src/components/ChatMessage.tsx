@@ -27,13 +27,13 @@ const parseMessage = (content: string): Section[] => {
   const lines = content.split('\n');
   let currentSection: Section | null = null;
 
-  // Regex patterns for section headers
+  // Regex patterns for section headers (after markdown removal)
   const sectionPatterns = [
-    { pattern: /^(📜\s*)?PODSTAWA PRAWNA:?$/i, type: 'legal-basis' },
-    { pattern: /^(📝\s*)?CO TO OZNACZA:?$/i, type: 'explanation' },
-    { pattern: /^(📚\s*)?POWIĄZANE PRZEPISY:?$/i, type: 'related-provisions' },
-    { pattern: /^(🔗\s*)?ŹRÓDŁO:?$/i, type: 'source' },
-    { pattern: /^(⚠️\s*)?UWAGA:?$/i, type: 'warning' },
+    { pattern: /^PODSTAWA PRAWNA:?$/i, type: 'legal-basis' },
+    { pattern: /^CO TO OZNACZA:?$/i, type: 'explanation' },
+    { pattern: /^POWIĄZANE PRZEPISY:?$/i, type: 'related-provisions' },
+    { pattern: /^ŹRÓDŁO:?$/i, type: 'source' },
+    { pattern: /^UWAGA:?$/i, type: 'warning' },
     { pattern: /^(KLUCZOWE INFORMACJE|SZCZEGÓŁY|SZCZEGÓŁOWY TRYB ZWROTU|WARUNKI SKORZYSTANIA|WARUNKI):?$/i, type: 'details' },
     { pattern: /^(DODATKOWE INFORMACJE|PRZYKŁADY|ZASADY):?$/i, type: 'additional' },
   ];
@@ -41,8 +41,12 @@ const parseMessage = (content: string): Section[] => {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
+    // Remove markdown bold markers for pattern matching
+    // Handles: **TEXT:** or **TEXT** or TEXT
+    const cleanLine = line.replace(/\*\*/g, '').trim();
+
     // Check if this line is a section header
-    const matchedPattern = sectionPatterns.find(p => p.pattern.test(line));
+    const matchedPattern = sectionPatterns.find(p => p.pattern.test(cleanLine));
 
     if (matchedPattern) {
       // Save previous section
@@ -50,10 +54,10 @@ const parseMessage = (content: string): Section[] => {
         sections.push(currentSection);
       }
 
-      // Start new section
+      // Start new section - remove markdown and emojis
       currentSection = {
         type: matchedPattern.type,
-        title: line.replace(/^(📜|📝|📚|🔗|⚠️)\s*/, '').replace(/:$/, ''),
+        title: cleanLine.replace(/^(📜|📝|📚|🔗|⚠️)\s*/, '').replace(/:$/, ''),
         content: ''
       };
     } else if (currentSection) {
