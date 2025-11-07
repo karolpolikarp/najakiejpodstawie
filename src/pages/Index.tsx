@@ -123,7 +123,7 @@ const Index = () => {
     removeMessage(messageId);
   };
 
-  const handleFeedback = async (messageId: string, feedbackType: 'positive' | 'negative' | null) => {
+  const handleFeedback = async (messageId: string, feedbackType: 'positive' | 'negative' | null, retryCount = 0) => {
     // Update local state immediately for better UX
     setMessageFeedback(messageId, feedbackType);
 
@@ -131,6 +131,7 @@ const Index = () => {
     console.log('=== FEEDBACK DEBUG ===');
     console.log('messageId:', messageId);
     console.log('feedbackType:', feedbackType);
+    console.log('retryCount:', retryCount);
 
     try {
       const { data, error } = await supabase.functions.invoke('submit-feedback', {
@@ -145,7 +146,22 @@ const Index = () => {
         console.error('Error details:', error);
         toast.error('Nie udało się zapisać feedbacku');
       } else {
-        console.log('Feedback saved successfully:', data);
+        console.log('Feedback response:', data);
+
+        // Check if the response indicates the question is still being saved
+        if (data?.pending === true && retryCount < 3) {
+          const delay = 2000 * (retryCount + 1); // 2s, 4s, 6s
+          console.log(`Question not yet saved, retrying in ${delay}ms...`);
+
+          setTimeout(() => {
+            handleFeedback(messageId, feedbackType, retryCount + 1);
+          }, delay);
+        } else if (data?.pending === true) {
+          console.warn('Question still not saved after 3 retries');
+          toast.info('Feedback zostanie zapisany wkrótce');
+        } else {
+          console.log('Feedback saved successfully:', data);
+        }
       }
     } catch (error) {
       console.error('Error submitting feedback:', error);
