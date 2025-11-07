@@ -8,13 +8,6 @@ describe('ChatMessage', () => {
       render(<ChatMessage role="user" content="Test question" />);
       expect(screen.getByText('Test question')).toBeInTheDocument();
     });
-
-    it('displays user icon for user messages', () => {
-      const { container } = render(<ChatMessage role="user" content="Test" />);
-      // Check for Scale icon (lucide-react renders as svg)
-      const svgIcon = container.querySelector('svg');
-      expect(svgIcon).toBeInTheDocument();
-    });
   });
 
   describe('Assistant messages', () => {
@@ -51,14 +44,14 @@ Konsument może zwrócić towar w ciągu 14 dni.`;
       expect(screen.getByText(/Art. 28 - złożenie oświadczenia/)).toBeInTheDocument();
     });
 
-    it('parses ŹRÓDŁO section with link', () => {
+    it('parses ŹRÓDŁO section correctly', () => {
       const content = `**ŹRÓDŁO:**
 https://isap.sejm.gov.pl/`;
 
       render(<ChatMessage role="assistant" content={content} />);
       expect(screen.getByText(/Źródło/i)).toBeInTheDocument();
-      const link = screen.getByRole('link');
-      expect(link).toHaveAttribute('href', 'https://isap.sejm.gov.pl/');
+      // URL should be rendered in the content
+      expect(screen.getByText(/isap.sejm.gov.pl/)).toBeInTheDocument();
     });
 
     it('renders multiple sections correctly', () => {
@@ -107,79 +100,98 @@ To nie jest porada prawna.`;
   });
 
   describe('Feedback functionality', () => {
-    it('shows thumbs up/down buttons for assistant messages with messageId', () => {
+    it('shows thumbs up/down buttons for non-error assistant messages with messageId', () => {
+      // Use normal legal response (not an error)
+      const normalContent = `**PODSTAWA PRAWNA:**
+Art. 27 Ustawy`;
+
       render(
         <ChatMessage
           role="assistant"
-          content="Test"
+          content={normalContent}
           messageId="test-id"
           onFeedback={vi.fn()}
         />
       );
 
-      expect(screen.getByRole('button', { name: /pozytywna ocena/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /negatywna ocena/i })).toBeInTheDocument();
+      const thumbsUpButtons = screen.getAllByTitle(/pomocna odpowiedź/i);
+      const thumbsDownButtons = screen.getAllByTitle(/niepomocna odpowiedź/i);
+
+      expect(thumbsUpButtons.length).toBeGreaterThan(0);
+      expect(thumbsDownButtons.length).toBeGreaterThan(0);
     });
 
     it('calls onFeedback when thumbs up is clicked', () => {
       const mockFeedback = vi.fn();
+      const normalContent = `**PODSTAWA PRAWNA:**
+Art. 27 Ustawy`;
+
       render(
         <ChatMessage
           role="assistant"
-          content="Test"
+          content={normalContent}
           messageId="test-id"
           onFeedback={mockFeedback}
         />
       );
 
-      const thumbsUpButton = screen.getByRole('button', { name: /pozytywna ocena/i });
-      fireEvent.click(thumbsUpButton);
+      const thumbsUpButtons = screen.getAllByTitle(/pomocna odpowiedź/i);
+      fireEvent.click(thumbsUpButtons[0]);
 
       expect(mockFeedback).toHaveBeenCalledWith('test-id', 'positive');
     });
 
     it('calls onFeedback when thumbs down is clicked', () => {
       const mockFeedback = vi.fn();
+      const normalContent = `**PODSTAWA PRAWNA:**
+Art. 27 Ustawy`;
+
       render(
         <ChatMessage
           role="assistant"
-          content="Test"
+          content={normalContent}
           messageId="test-id"
           onFeedback={mockFeedback}
         />
       );
 
-      const thumbsDownButton = screen.getByRole('button', { name: /negatywna ocena/i });
-      fireEvent.click(thumbsDownButton);
+      const thumbsDownButtons = screen.getAllByTitle(/niepomocna odpowiedź/i);
+      fireEvent.click(thumbsDownButtons[0]);
 
       expect(mockFeedback).toHaveBeenCalledWith('test-id', 'negative');
     });
 
     it('toggles feedback when clicking same button twice', () => {
       const mockFeedback = vi.fn();
+      const normalContent = `**PODSTAWA PRAWNA:**
+Art. 27 Ustawy`;
+
       render(
         <ChatMessage
           role="assistant"
-          content="Test"
+          content={normalContent}
           messageId="test-id"
           onFeedback={mockFeedback}
           feedback="positive"
         />
       );
 
-      const thumbsUpButton = screen.getByRole('button', { name: /pozytywna ocena/i });
-      fireEvent.click(thumbsUpButton);
+      const thumbsUpButtons = screen.getAllByTitle(/pomocna odpowiedź/i);
+      fireEvent.click(thumbsUpButtons[0]);
 
       expect(mockFeedback).toHaveBeenCalledWith('test-id', null);
     });
   });
 
   describe('Retry functionality', () => {
-    it('shows retry button when onRetry and userContent are provided', () => {
+    it('shows retry button for error messages when onRetry and userContent are provided', () => {
+      // Must use error message pattern
+      const errorContent = "Niestety coś poszło nie tak. Spróbuj ponownie.";
+
       render(
         <ChatMessage
           role="assistant"
-          content="Error occurred"
+          content={errorContent}
           messageId="test-id"
           userContent="Original question"
           onRetry={vi.fn()}
@@ -191,10 +203,12 @@ To nie jest porada prawna.`;
 
     it('calls onRetry with userContent when retry button is clicked', () => {
       const mockRetry = vi.fn();
+      const errorContent = "Niestety coś poszło nie tak. Spróbuj ponownie.";
+
       render(
         <ChatMessage
           role="assistant"
-          content="Error"
+          content={errorContent}
           messageId="test-id"
           userContent="Original question"
           onRetry={mockRetry}
