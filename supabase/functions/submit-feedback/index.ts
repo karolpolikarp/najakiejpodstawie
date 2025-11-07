@@ -133,6 +133,24 @@ serve(async (req) => {
       result = data
     }
 
+    // Also update user_questions table with feedback
+    try {
+      const { error: updateError } = await supabaseClient
+        .from('user_questions')
+        .update({ feedback: feedbackType })
+        .eq('message_id', messageId)
+
+      if (updateError) {
+        console.error('Error updating user_questions feedback:', updateError)
+        // Don't fail the request - feedback is already saved in message_feedback
+      } else {
+        console.log('Feedback also saved to user_questions table')
+      }
+    } catch (updateError) {
+      console.error('Error updating user_questions:', updateError)
+      // Don't fail the request
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

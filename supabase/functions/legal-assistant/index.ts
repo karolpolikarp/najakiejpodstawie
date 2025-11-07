@@ -2,46 +2,29 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
-/**
- * Legal Context Knowledge Base
- *
- * For easy updates when laws change, see legal-context.ts file which contains
- * commonly referenced Polish legal provisions organized by topic.
- *
- * The AI uses Claude's built-in legal knowledge supplemented by the system prompt.
- * When laws change, update legal-context.ts for reference and update this prompt
- * with new examples if needed.
- */
-
 // CORS configuration - restrict to specific domains for security
-// In production, set ALLOWED_ORIGINS environment variable (comma-separated)
-// Example: "https://jakieprawo.pl,https://www.jakieprawo.pl"
 const getAllowedOrigin = (requestOrigin: string | null): string => {
   const allowedOrigins = Deno.env.get('ALLOWED_ORIGINS')?.split(',') || [
     'https://jakieprawo.pl',
     'https://www.jakieprawo.pl',
+    'https://www.jakieprawo.pl/czat',
     'http://localhost:8080',
     'http://localhost:5173',
     'http://127.0.0.1:8080',
     'http://127.0.0.1:5173',
-    'https://jakieprawo.pl',
-    'https://www.jakieprawo.pl/czat',
     'https://najakiejpodstawie.pl',
     'https://najakiejpodstawie.vercel.app',
   ];
-
   if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
     return requestOrigin;
   }
-
-  // Default to first allowed origin if request origin not in whitelist
   return allowedOrigins[0];
 };
 
 const getCorsHeaders = (requestOrigin: string | null) => ({
   'Access-Control-Allow-Origin': getAllowedOrigin(requestOrigin),
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Allow-Credentials': 'true'
 });
 
 serve(async (req) => {
@@ -54,7 +37,7 @@ serve(async (req) => {
 
   try {
     const requestBody = await req.json();
-    const { message, fileContext } = requestBody || {};
+    const { message, fileContext, sessionId, messageId } = requestBody || {};
 
     // Log incoming request for debugging
     console.log('Received request:', {
@@ -62,30 +45,34 @@ serve(async (req) => {
       messageType: typeof message,
       messageLength: message?.length,
       hasFileContext: !!fileContext,
+      hasSessionId: !!sessionId,
+      hasMessageId: !!messageId
     });
 
     // Validate required fields
     if (typeof message !== 'string') {
-      return new Response(
-        JSON.stringify({ error: 'Pole "message" musi być tekstem' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({
+        error: 'Pole "message" musi być tekstem'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     if (message.trim().length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'Wiadomość nie może być pusta' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({
+        error: 'Wiadomość nie może być pusta'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
-    // Base system prompt
     let systemPrompt = `Jesteś profesjonalnym asystentem prawnym specjalizującym się w polskim prawie. Twoje zadanie to udzielanie merytorycznych, szczegółowych odpowiedzi z konkretnymi podstawami prawnymi i kompletnym kontekstem prawnym.
 
 WALIDACJA PYTANIA:
@@ -176,7 +163,6 @@ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikie
 
 Wyjątki od 14-dniowego zwrotu istnieją dla niektórych towarów (np. produkty higieniczne, spersonalizowane).`;
 
-    // If user attached a file, modify system prompt
     if (fileContext && typeof fileContext === 'string' && fileContext.length > 0) {
       systemPrompt += `
 
@@ -186,12 +172,8 @@ Jeśli odpowiedź znajduje się w załączonym dokumencie, cytuj konkretne fragm
 Jeśli pytanie wykracza poza załączony dokument, powiedz o tym wyraźnie i użyj swojej wiedzy.`;
     }
 
-    // Build user message
     let userMessage = message;
-
-    // If file context exists, prepend it to the message
     if (fileContext && typeof fileContext === 'string' && fileContext.length > 0) {
-      // Limit file context to avoid token limits (keep first 30k chars)
       const limitedContext = fileContext.length > 30000
         ? fileContext.substring(0, 30000) + "\n\n[...dokument został skrócony...]"
         : fileContext;
@@ -210,58 +192,43 @@ ${message}`;
       headers: {
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2048,
         system: systemPrompt,
-        messages: [
-          { role: 'user', content: userMessage }
-        ],
+        messages: [{ role: 'user', content: userMessage }],
         temperature: 0.7,
-        stream: true, // Enable streaming
-      }),
+        stream: true
+      })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Anthropic API error:', response.status, errorText);
-      console.error('Request details:', {
-        model: 'claude-3-5-haiku-20241022',
-        stream: true,
-        messageLength: userMessage.length,
-        systemPromptLength: systemPrompt.length,
-      });
 
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Osiągnięto limit zapytań. Spróbuj ponownie za chwilę.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({
+          error: 'Osiągnięto limit zapytań. Spróbuj ponownie za chwilę.'
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
       if (response.status === 401) {
-        return new Response(
-          JSON.stringify({ error: 'Nieprawidłowy klucz API. Sprawdź konfigurację.' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      if (response.status === 400) {
-        return new Response(
-          JSON.stringify({
-            error: `Błąd zapytania do API: ${errorText}`,
-            details: errorText
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({
+          error: 'Nieprawidłowy klucz API. Sprawdź konfigurację.'
+        }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
       throw new Error(`Anthropic API error: ${response.status}`);
     }
 
-    // Stream the response to the client
     const reader = response.body?.getReader();
     if (!reader) {
       throw new Error('Response body is not readable');
@@ -299,21 +266,21 @@ ${message}`;
                 );
 
                 const userAgent = req.headers.get('user-agent') || 'unknown';
-                const sessionId = requestBody.sessionId || null;
 
                 await supabaseClient
                   .from('user_questions')
                   .insert({
+                    message_id: messageId || null,
                     question: message,
                     answer: fullResponse,
                     has_file_context: !!fileContext,
                     file_name: fileContext ? 'document.pdf/docx' : null,
-                    session_id: sessionId,
+                    session_id: sessionId || null,
                     user_agent: userAgent,
                     response_time_ms: responseTime,
                   });
 
-                console.log('Question and answer saved to database');
+                console.log('Question and answer saved to database with message_id:', messageId);
               } catch (dbError) {
                 // Don't fail the request if DB save fails
                 console.error('Failed to save to database:', dbError);
@@ -322,7 +289,6 @@ ${message}`;
               break;
             }
 
-            // Decode the chunk and forward it to the client
             const chunk = decoder.decode(value, { stream: true });
 
             // Extract text content from SSE events for database storage
@@ -352,7 +318,7 @@ ${message}`;
           console.error('Error streaming response:', error);
           controller.error(error);
         }
-      },
+      }
     });
 
     return new Response(stream, {
@@ -360,8 +326,8 @@ ${message}`;
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+        'Connection': 'keep-alive'
+      }
     });
   } catch (error) {
     console.error('Error in legal-assistant function:', error);
@@ -369,12 +335,12 @@ ${message}`;
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    return new Response(
-      JSON.stringify({
-        error: errorMessage,
-        details: error instanceof Error ? error.stack : undefined
-      }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({
+      error: errorMessage,
+      details: error instanceof Error ? error.stack : undefined
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });
