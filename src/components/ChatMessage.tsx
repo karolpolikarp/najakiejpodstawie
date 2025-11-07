@@ -206,15 +206,13 @@ const formatAssistantMessage = (content: string) => {
 
       case 'warning':
         return (
-          <div key={idx} className="mb-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-sm text-destructive mb-1">{section.title}</h3>
-                <div className="text-xs text-muted-foreground leading-relaxed">
-                  {formatContent(section.content)}
-                </div>
-              </div>
+          <div key={idx} className="mb-4 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <h3 className="font-semibold text-destructive">{section.title}</h3>
+            </div>
+            <div className="text-sm text-muted-foreground leading-relaxed">
+              {formatContent(section.content)}
             </div>
           </div>
         );
