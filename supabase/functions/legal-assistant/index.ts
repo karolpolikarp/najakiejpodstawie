@@ -37,7 +37,7 @@ serve(async (req) => {
 
   try {
     const requestBody = await req.json();
-    const { message, fileContext, sessionId } = requestBody || {};
+    const { message, fileContext, sessionId, messageId } = requestBody || {};
 
     // Log incoming request for debugging
     console.log('Received request:', {
@@ -45,7 +45,8 @@ serve(async (req) => {
       messageType: typeof message,
       messageLength: message?.length,
       hasFileContext: !!fileContext,
-      hasSessionId: !!sessionId
+      hasSessionId: !!sessionId,
+      hasMessageId: !!messageId
     });
 
     // Validate required fields
@@ -269,6 +270,7 @@ ${message}`;
                 await supabaseClient
                   .from('user_questions')
                   .insert({
+                    message_id: messageId || null,
                     question: message,
                     answer: fullResponse,
                     has_file_context: !!fileContext,
@@ -278,7 +280,7 @@ ${message}`;
                     response_time_ms: responseTime,
                   });
 
-                console.log('Question and answer saved to database');
+                console.log('Question and answer saved to database with message_id:', messageId);
               } catch (dbError) {
                 // Don't fail the request if DB save fails
                 console.error('Failed to save to database:', dbError);

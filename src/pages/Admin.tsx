@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Database, Search, FileText, Calendar, Clock } from 'lucide-react';
+import { Database, Search, FileText, Calendar, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,11 +18,15 @@ interface UserQuestion {
   user_agent: string;
   response_time_ms: number | null;
   created_at: string;
+  feedback: 'positive' | 'negative' | null;
+  message_id: string | null;
 }
 
 interface Statistics {
   total_questions: number;
   questions_with_files: number;
+  positive_feedback: number;
+  negative_feedback: number;
 }
 
 const Admin = () => {
@@ -98,7 +102,7 @@ const Admin = () => {
 
           {/* Statistics Cards */}
           {statistics && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -131,6 +135,30 @@ const Admin = () => {
                   <div className="text-3xl font-bold">
                     {statistics.total_questions - statistics.questions_with_files}
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-green-200 bg-green-50/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
+                    <ThumbsUp className="h-4 w-4" />
+                    Pozytywne
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-700">{statistics.positive_feedback}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-red-200 bg-red-50/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-red-700 flex items-center gap-2">
+                    <ThumbsDown className="h-4 w-4" />
+                    Negatywne
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-red-700">{statistics.negative_feedback}</div>
                 </CardContent>
               </Card>
             </div>
@@ -199,6 +227,18 @@ const Admin = () => {
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           <span>{(q.response_time_ms / 1000).toFixed(2)}s</span>
+                        </div>
+                      )}
+                      {q.feedback && (
+                        <div className={`flex items-center gap-1 ${
+                          q.feedback === 'positive' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {q.feedback === 'positive' ? (
+                            <ThumbsUp className="h-3 w-3" />
+                          ) : (
+                            <ThumbsDown className="h-3 w-3" />
+                          )}
+                          <span>{q.feedback === 'positive' ? 'Pozytywny' : 'Negatywny'}</span>
                         </div>
                       )}
                       {q.session_id && (

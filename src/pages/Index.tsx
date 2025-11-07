@@ -222,6 +222,7 @@ const Index = () => {
           message: content,
           fileContext: attachedFile?.content || null,
           sessionId: sessionId,
+          messageId: tempMessageId,
         }),
       });
 

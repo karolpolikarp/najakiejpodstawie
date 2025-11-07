@@ -55,14 +55,24 @@ serve(async (req) => {
     }
 
     // Get statistics
-    const { data: stats } = await supabaseClient
+    const { count: totalCount } = await supabaseClient
       .from('user_questions')
-      .select('id', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true })
 
-    const { data: withFilesStats } = await supabaseClient
+    const { count: withFilesCount } = await supabaseClient
       .from('user_questions')
-      .select('id', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true })
       .eq('has_file_context', true)
+
+    const { count: positiveFeedbackCount } = await supabaseClient
+      .from('user_questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('feedback', 'positive')
+
+    const { count: negativeFeedbackCount } = await supabaseClient
+      .from('user_questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('feedback', 'negative')
 
     return new Response(
       JSON.stringify({
@@ -74,8 +84,10 @@ serve(async (req) => {
           offset,
         },
         statistics: {
-          total_questions: stats?.length || 0,
-          questions_with_files: withFilesStats?.length || 0,
+          total_questions: totalCount || 0,
+          questions_with_files: withFilesCount || 0,
+          positive_feedback: positiveFeedbackCount || 0,
+          negative_feedback: negativeFeedbackCount || 0,
         }
       }),
       {
