@@ -52,6 +52,8 @@ serve(async (req) => {
     }
 
     // Update feedback in user_questions table
+    console.log('Attempting to update feedback for messageId:', messageId, 'to:', feedbackType)
+
     const { data, error } = await supabaseClient
       .from('user_questions')
       .update({ feedback: feedbackType })
@@ -61,11 +63,19 @@ serve(async (req) => {
 
     if (error) {
       console.error('Error updating feedback:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      console.error('Error details:', JSON.stringify(error, null, 2))
 
       // If no rows found, it might be that the question hasn't been saved yet
       if (error.code === 'PGRST116') {
+        console.error('No question found with messageId:', messageId)
         return new Response(
-          JSON.stringify({ error: 'Question not found with this messageId' }),
+          JSON.stringify({
+            error: 'Question not found with this messageId',
+            details: 'The question may not have been saved yet, or messageId column does not exist',
+            messageId: messageId
+          }),
           {
             status: 404,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -74,7 +84,11 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ error: 'Failed to update feedback' }),
+        JSON.stringify({
+          error: 'Failed to update feedback',
+          details: error.message,
+          code: error.code
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -82,7 +96,8 @@ serve(async (req) => {
       )
     }
 
-    console.log('Feedback updated for message:', messageId, 'to:', feedbackType)
+    console.log('Feedback updated successfully!')
+    console.log('Updated data:', JSON.stringify(data, null, 2))
 
     return new Response(
       JSON.stringify({
