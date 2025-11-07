@@ -198,8 +198,6 @@ Konteksty, wyjątki, przykłady praktyczne
 
 ## SEKCJA KOŃCOWA (ZAWSZE NA KOŃCU):
 
----
-
 **UWAGA:**
 ⚠️ Powyższe informacje to wyjaśnienie przepisów prawnych, NIE porada prawna w konkretnej sprawie. W indywidualnych sytuacjach skonsultuj się z prawnikiem.
 
@@ -207,11 +205,10 @@ Konteksty, wyjątki, przykłady praktyczne
 
 KRYTYCZNE ZASADY:
 1. Każda główna sekcja (**PODSTAWA PRAWNA:**, **CO TO OZNACZA:**, etc.) MUSI być oddzielona DWOMA pustymi liniami od poprzedniej
-2. Przed sekcją **UWAGA:** ZAWSZE dodaj linię poziomą: ---
-3. Sekcja **UWAGA:** MUSI być na samym końcu, po linii poziomej
-4. NIE używaj emoji w nagłówkach sekcji (tylko w treści)
-5. Listy punktowane: ZAWSZE "• Tekst" w jednej linii
-6. Listy numerowane: "1. Tekst" w jednej linii
+2. Sekcja **UWAGA:** MUSI być na samym końcu
+3. NIE używaj emoji w nagłówkach sekcji (tylko w treści)
+4. Listy punktowane: ZAWSZE "• Tekst" w jednej linii
+5. Listy numerowane: "1. Tekst" w jednej linii
 
 PRZYKŁAD POPRAWNEGO FORMATOWANIA:
 
@@ -231,8 +228,6 @@ Konsument może zwrócić towar zakupiony w sklepie internetowym w ciągu 14 dni
 **ŹRÓDŁO:**
 https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827
 
-
----
 
 **UWAGA:**
 ⚠️ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem.${detectedLegalContext}`;
