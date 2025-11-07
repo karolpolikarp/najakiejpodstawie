@@ -18,7 +18,7 @@ interface ChatState {
   messages: Message[];
   isLoading: boolean;
   attachedFile: AttachedFile | null;
-  addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
+  addMessage: (message: Omit<Message, 'id' | 'timestamp'> & { id?: string }) => void;
   updateMessageContent: (messageId: string, content: string) => void;
   removeMessage: (messageId: string) => void;
   clearMessages: () => void;
@@ -39,7 +39,7 @@ export const useChatStore = create<ChatState>()(
             ...state.messages,
             {
               ...message,
-              id: crypto.randomUUID(),
+              id: message.id || crypto.randomUUID(),
               timestamp: new Date(),
             },
           ],
