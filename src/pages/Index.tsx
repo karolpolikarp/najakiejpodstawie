@@ -591,18 +591,37 @@ const Index = () => {
           {/* Chat Input */}
           <div className="sticky bottom-0 pb-2 sm:pb-4">
             <div className="glass-card rounded-lg p-3 sm:p-4 shadow-soft-lg">
-              <FileUpload
-                onFileLoad={(content, filename) => setAttachedFile({ content, name: filename })}
-                onFileRemove={() => setAttachedFile(null)}
-                currentFile={attachedFile?.name || null}
-              />
+              {/* File Upload and Clear Button Row */}
+              <div className="flex items-start justify-between gap-2 mb-2 sm:mb-3">
+                <div className="flex-1">
+                  <FileUpload
+                    onFileLoad={(content, filename) => setAttachedFile({ content, name: filename })}
+                    onFileRemove={() => setAttachedFile(null)}
+                    currentFile={attachedFile?.name || null}
+                  />
+                </div>
+                {messages.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowClearDialog(true)}
+                    disabled={isLoading}
+                    aria-label="Wyczyść historię rozmowy i załączniki"
+                    className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 hover:bg-primary/10 whitespace-nowrap"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
+                    <span className="hidden sm:inline">Wyczyść konwersację</span>
+                    <span className="sm:hidden">Wyczyść</span>
+                  </Button>
+                )}
+              </div>
               <ChatInput onSend={handleSendMessage} disabled={isLoading} />
 
               {/* AI Disclaimer - AI Act Art. 13 compliance */}
               <div className="mt-2 pt-2 border-t border-border/50">
                 <p className="text-xs text-muted-foreground text-center">
-                  🤖 Odpowiedzi generowane przez AI (Anthropic) •
-                  Wymaga weryfikacji prawnika •
+                  🤖 Wyjaśnienia przepisów, NIE porady prawne •
+                  Odpowiedzi AI (Anthropic) wymagają weryfikacji •
                   Nie przesyłaj danych osobowych
                 </p>
               </div>

@@ -49,14 +49,16 @@ const Terms = () => {
 
               <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Serwis służy do:</h3>
               <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground mb-4">
-                <li>Wyszukiwania podstaw prawnych w polskim prawie</li>
-                <li>Uzyskiwania ogólnych informacji o przepisach prawnych</li>
+                <li>Wyszukiwania podstaw prawnych w polskim prawie (artykuły, ustawy, rozporządzenia)</li>
+                <li>Dostarczania ogólnych wyjaśnień przepisów prawnych</li>
                 <li>Edukacji prawnej i zwiększania świadomości prawnej</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">Serwis NIE służy do:</h3>
               <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
                 <li>Udzielania porad prawnych w konkretnych sprawach</li>
+                <li>Interpretowania indywidualnych sytuacji użytkowników</li>
+                <li>Doradzania konkretnych działań prawnych ("w Twoim przypadku powinieneś...")</li>
                 <li>Zastępowania profesjonalnej obsługi prawnej</li>
                 <li>Podejmowania wiążących decyzji prawnych bez konsultacji z prawnikiem</li>
                 <li>Reprezentowania w postępowaniach sądowych lub administracyjnych</li>

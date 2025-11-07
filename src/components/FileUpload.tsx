@@ -17,8 +17,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Configure PDF.js worker - use specific version that works with bundlers
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.394/pdf.worker.min.js`;
+// Configure PDF.js worker - use local worker from node_modules
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
 interface FileUploadProps {
   onFileLoad: (content: string, filename: string) => void;
@@ -149,7 +152,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
 
   return (
     <>
-      <div className="mb-2 sm:mb-3">
+      <div>
         {!currentFile ? (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             <input

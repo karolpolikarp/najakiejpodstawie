@@ -18,6 +18,8 @@ export default defineConfig({
         '**/*.config.*',
         '**/mockData',
         'src/main.tsx',
+        'dist/',
+        'supabase/',
       ],
     },
   },

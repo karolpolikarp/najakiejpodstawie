@@ -206,15 +206,13 @@ const formatAssistantMessage = (content: string) => {
 
       case 'warning':
         return (
-          <div key={idx} className="mb-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-sm text-destructive mb-1">{section.title}</h3>
-                <div className="text-xs text-muted-foreground leading-relaxed">
-                  {formatContent(section.content)}
-                </div>
-              </div>
+          <div key={idx} className="mb-4 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <h3 className="font-semibold text-destructive">{section.title}</h3>
+            </div>
+            <div className="text-sm text-muted-foreground leading-relaxed">
+              {formatContent(section.content)}
             </div>
           </div>
         );
@@ -370,41 +368,43 @@ export const ChatMessage = memo(({ role, content, messageId, userContent, feedba
               </div>
             )}
 
-            {/* Feedback buttons - always visible (unless it's an error) */}
-            {!isError && messageId && (
-              <div className="flex items-center gap-2 pb-2">
-                <span className="text-xs text-muted-foreground mr-1">Czy ta odpowiedź była pomocna?</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleFeedback('positive')}
-                  className={`h-7 px-2 ${
-                    feedback === 'positive'
-                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                      : 'hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-                  }`}
-                  title="Pomocna odpowiedź"
-                >
-                  <ThumbsUp className={`h-3.5 w-3.5 ${feedback === 'positive' ? 'fill-current' : ''}`} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleFeedback('negative')}
-                  className={`h-7 px-2 ${
-                    feedback === 'negative'
-                      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                      : 'hover:bg-red-50 dark:hover:bg-red-900/20'
-                  }`}
-                  title="Niepomocna odpowiedź"
-                >
-                  <ThumbsDown className={`h-3.5 w-3.5 ${feedback === 'negative' ? 'fill-current' : ''}`} />
-                </Button>
-              </div>
-            )}
+            {/* Feedback and copy buttons in one line */}
+            <div className="flex items-center justify-between gap-2">
+              {!isError && messageId ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground mr-1">Czy ta odpowiedź była pomocna?</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleFeedback('positive')}
+                    className={`h-7 px-2 ${
+                      feedback === 'positive'
+                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                        : 'hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                    }`}
+                    title="Pomocna odpowiedź"
+                  >
+                    <ThumbsUp className={`h-3.5 w-3.5 ${feedback === 'positive' ? 'fill-current' : ''}`} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleFeedback('negative')}
+                    className={`h-7 px-2 ${
+                      feedback === 'negative'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                        : 'hover:bg-red-50 dark:hover:bg-red-900/20'
+                    }`}
+                    title="Niepomocna odpowiedź"
+                  >
+                    <ThumbsDown className={`h-3.5 w-3.5 ${feedback === 'negative' ? 'fill-current' : ''}`} />
+                  </Button>
+                </div>
+              ) : (
+                <div />
+              )}
 
-            {/* Copy button - always visible */}
-            <div className="flex justify-end border-t border-border/30 pt-2">
+              {/* Copy button - always visible */}
               <Button
                 variant="ghost"
                 size="sm"
