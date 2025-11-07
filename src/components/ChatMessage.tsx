@@ -368,41 +368,43 @@ export const ChatMessage = memo(({ role, content, messageId, userContent, feedba
               </div>
             )}
 
-            {/* Feedback buttons - always visible (unless it's an error) */}
-            {!isError && messageId && (
-              <div className="flex items-center gap-2 pb-2">
-                <span className="text-xs text-muted-foreground mr-1">Czy ta odpowiedź była pomocna?</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleFeedback('positive')}
-                  className={`h-7 px-2 ${
-                    feedback === 'positive'
-                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                      : 'hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-                  }`}
-                  title="Pomocna odpowiedź"
-                >
-                  <ThumbsUp className={`h-3.5 w-3.5 ${feedback === 'positive' ? 'fill-current' : ''}`} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleFeedback('negative')}
-                  className={`h-7 px-2 ${
-                    feedback === 'negative'
-                      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                      : 'hover:bg-red-50 dark:hover:bg-red-900/20'
-                  }`}
-                  title="Niepomocna odpowiedź"
-                >
-                  <ThumbsDown className={`h-3.5 w-3.5 ${feedback === 'negative' ? 'fill-current' : ''}`} />
-                </Button>
-              </div>
-            )}
+            {/* Feedback and copy buttons in one line */}
+            <div className="flex items-center justify-between gap-2">
+              {!isError && messageId ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground mr-1">Czy ta odpowiedź była pomocna?</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleFeedback('positive')}
+                    className={`h-7 px-2 ${
+                      feedback === 'positive'
+                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                        : 'hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                    }`}
+                    title="Pomocna odpowiedź"
+                  >
+                    <ThumbsUp className={`h-3.5 w-3.5 ${feedback === 'positive' ? 'fill-current' : ''}`} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleFeedback('negative')}
+                    className={`h-7 px-2 ${
+                      feedback === 'negative'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                        : 'hover:bg-red-50 dark:hover:bg-red-900/20'
+                    }`}
+                    title="Niepomocna odpowiedź"
+                  >
+                    <ThumbsDown className={`h-3.5 w-3.5 ${feedback === 'negative' ? 'fill-current' : ''}`} />
+                  </Button>
+                </div>
+              ) : (
+                <div />
+              )}
 
-            {/* Copy button - always visible */}
-            <div className="flex justify-end border-t border-border/30 pt-2">
+              {/* Copy button - always visible */}
               <Button
                 variant="ghost"
                 size="sm"
