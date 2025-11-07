@@ -8,6 +8,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/supabase/**', // Supabase Edge Functions tests run in Deno, not Node
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
