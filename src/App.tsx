@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
+import Admin from "./pages/Admin";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
@@ -30,6 +31,11 @@ const App = () => (
               <Route path="/czat" element={
                 <PasswordGate>
                   <Index />
+                </PasswordGate>
+              } />
+              <Route path="/admin" element={
+                <PasswordGate>
+                  <Admin />
                 </PasswordGate>
               } />
               <Route path="/o-nas" element={<About />} />

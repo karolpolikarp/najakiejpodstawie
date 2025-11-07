@@ -208,12 +208,20 @@ const Index = () => {
         headers['Authorization'] = `Bearer ${anonKey}`;
       }
 
+      // Get or create session ID
+      let sessionId = localStorage.getItem('session_id');
+      if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        localStorage.setItem('session_id', sessionId);
+      }
+
       const response = await fetch(`${supabaseUrl}/functions/v1/legal-assistant`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           message: content,
           fileContext: attachedFile?.content || null,
+          sessionId: sessionId,
         }),
       });
 

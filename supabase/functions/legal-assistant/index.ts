@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 /**
  * Legal Context Knowledge Base
@@ -269,19 +270,82 @@ ${message}`;
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
+    // Track full response for database storage
+    let fullResponse = '';
+    const startTime = Date.now();
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          let buffer = '';
+
           while (true) {
             const { done, value } = await reader.read();
 
             if (done) {
               controller.close();
+
+              // Save question and answer to database
+              try {
+                const responseTime = Date.now() - startTime;
+                const supabaseClient = createClient(
+                  Deno.env.get('SUPABASE_URL') ?? '',
+                  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+                  {
+                    auth: {
+                      persistSession: false,
+                    },
+                  }
+                );
+
+                const userAgent = req.headers.get('user-agent') || 'unknown';
+                const sessionId = requestBody.sessionId || null;
+
+                await supabaseClient
+                  .from('user_questions')
+                  .insert({
+                    question: message,
+                    answer: fullResponse,
+                    has_file_context: !!fileContext,
+                    file_name: fileContext ? 'document.pdf/docx' : null,
+                    session_id: sessionId,
+                    user_agent: userAgent,
+                    response_time_ms: responseTime,
+                  });
+
+                console.log('Question and answer saved to database');
+              } catch (dbError) {
+                // Don't fail the request if DB save fails
+                console.error('Failed to save to database:', dbError);
+              }
+
               break;
             }
 
             // Decode the chunk and forward it to the client
             const chunk = decoder.decode(value, { stream: true });
+
+            // Extract text content from SSE events for database storage
+            buffer += chunk;
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data !== '[DONE]') {
+                  try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                      fullResponse += parsed.delta.text;
+                    }
+                  } catch (e) {
+                    // Ignore parse errors
+                  }
+                }
+              }
+            }
+
             controller.enqueue(encoder.encode(chunk));
           }
         } catch (error) {
