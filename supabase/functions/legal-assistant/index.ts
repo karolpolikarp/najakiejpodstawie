@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { checkRateLimit, rateLimitExceededResponse } from '../_shared/rate-limit.ts';
+import { LEGAL_CONTEXT, LEGAL_TOPICS } from './legal-context.ts';
 
 // CORS configuration - restrict to specific domains for security
 const getAllowedOrigin = (requestOrigin: string | null): string => {
@@ -27,6 +28,60 @@ const getCorsHeaders = (requestOrigin: string | null) => ({
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Credentials': 'true'
 });
+
+/**
+ * Wykrywa temat prawny na podstawie pytania użytkownika i zwraca odpowiedni kontekst
+ */
+function detectLegalContext(message: string): string {
+  const lowerMessage = message.toLowerCase();
+  let detectedContexts: string[] = [];
+
+  // Słowa kluczowe dla różnych tematów prawnych
+  const topicKeywords: Record<string, string[]> = {
+    'urlop': ['urlop', 'wakacje', 'urlop wypoczynkowy', 'urlop na żądanie', 'dni wolne', 'wyjazd'],
+    'wynagrodzenie': ['wynagrodzenie', 'pensja', 'wypłata', 'płaca', 'zarobki', 'minimalna krajowa', 'wynagrodzenie minimalne'],
+    'wypowiedzenie_umowy_pracy': ['wypowiedzenie umowy', 'zwolnienie z pracy', 'rozwiązanie umowy o pracę', 'okres wypowiedzenia'],
+    'zwrot_towaru_online': ['zwrot towaru', 'odstąpienie od umowy', 'sklep internetowy', 'zakupy online', '14 dni', 'zwrot pieniędzy'],
+    'reklamacja_towaru': ['reklamacja', 'wada towaru', 'gwarancja', 'rękojmia', 'naprawa', 'wymiana towaru', 'uszkodzony towar'],
+    'wypowiedzenie_najmu': ['najem', 'wynajem', 'mieszkanie', 'lokator', 'wynajmujący', 'umowa najmu'],
+    'alimenty': ['alimenty', 'alimentacyjny', 'utrzymanie dziecka', 'fundusz alimentacyjny', 'obowiązek alimentacyjny'],
+    'zniewaga': ['zniewaga', 'obelga', 'zniesławienie', 'pomówienie', 'obraza'],
+    'rodo': ['dane osobowe', 'rodo', 'gdpr', 'prywatność', 'przetwarzanie danych', 'administrator danych', 'ochrona danych'],
+    'spadek': ['spadek', 'dziedziczenie', 'testament', 'spadkobierca', 'zachowek', 'nabycie spadku', 'dział spadku'],
+    'umowa_zlecenie': ['umowa zlecenia', 'umowa o dzieło', 'zlecenie', 'dzieło', 'zleceniobiorca', 'zleceniodawca'],
+    'prawa_autorskie': ['prawa autorskie', 'copyright', 'plagiat', 'utwór', 'autor', 'naruszenie praw autorskich'],
+    'kupno_sprzedaz': ['kupno', 'sprzedaż', 'umowa kupna', 'sprzedaż nieruchomości', 'kupno mieszkania', 'akt notarialny'],
+    'mobbing': ['mobbing', 'molestowanie', 'nękanie w pracy', 'dyskryminacja w pracy', 'przemoc psychiczna'],
+    'postepowanie_sadowe': ['pozew', 'sąd', 'proces sądowy', 'apelacja', 'wyrok', 'postępowanie cywilne', 'sprawa sądowa']
+  };
+
+  // Wykryj wszystkie pasujące tematy
+  for (const [topic, keywords] of Object.entries(topicKeywords)) {
+    if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+      detectedContexts.push(topic);
+    }
+  }
+
+  // Jeśli wykryto tematy, zwróć sformatowany kontekst
+  if (detectedContexts.length > 0) {
+    let contextText = '\n\n📚 RELEWANTNA BAZA WIEDZY PRAWNEJ:\n';
+
+    for (const topic of detectedContexts) {
+      const context = LEGAL_CONTEXT[topic as keyof typeof LEGAL_CONTEXT];
+      if (context) {
+        contextText += `\n**${context.name}:**\n`;
+        contextText += `Główne akty prawne: ${context.mainActs.join(', ')}\n`;
+        contextText += `Kluczowe artykuły:\n${context.mainArticles.map(a => `- ${a}`).join('\n')}\n`;
+        contextText += `Powiązane przepisy:\n${context.relatedArticles.map(a => `- ${a}`).join('\n')}\n`;
+        contextText += `Źródło: ${context.source}\n`;
+      }
+    }
+
+    return contextText;
+  }
+
+  return '';
+}
 
 serve(async (req) => {
   const requestOrigin = req.headers.get('origin');
@@ -80,113 +135,63 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
-    let systemPrompt = `Jesteś profesjonalnym asystentem prawnym specjalizującym się w polskim prawie. Twoje zadanie to udzielanie merytorycznych, szczegółowych odpowiedzi z konkretnymi podstawami prawnymi i kompletnym kontekstem prawnym.
+    // Wykryj kontekst prawny na podstawie pytania
+    const detectedLegalContext = detectLegalContext(message);
 
-WALIDACJA PYTANIA:
-Najpierw sprawdź, czy pytanie użytkownika dotyczy spraw prawnych, przepisów prawnych lub kwestii związanych z prawem polskim.
+    let systemPrompt = `Jesteś profesjonalnym asystentem prawnym specjalizującym się w polskim prawie. Udzielasz merytorycznych, szczegółowych odpowiedzi z konkretnymi podstawami prawnymi.
 
-JEŚLI PYTANIE NIE DOTYCZY PRAWA (np. przepisy kulinarne, pogoda, porady medyczne, sport, rozrywka, technologia niezwiązana z prawem):
-Odpowiedz jedynie:
-"❌ Przepraszam, ale jestem asystentem prawnym i odpowiadam tylko na pytania związane z polskim prawem. Twoje pytanie dotyczy innej tematyki. Zadaj proszę pytanie prawne, a chętnie pomogę."
+# WALIDACJA PYTANIA
 
-JEŚLI PYTANIE DOTYCZY PRAWA - STRUKTURA ODPOWIEDZI:
-Każda odpowiedź MUSI zawierać następujące sekcje w dokładnie tej kolejności:
+Najpierw sprawdź, czy pytanie dotyczy prawa polskiego.
+
+JEŚLI NIE DOTYCZY PRAWA (np. kulinaria, pogoda, medycyna, sport, rozrywka):
+Odpowiedz: "❌ Przepraszam, ale jestem asystentem prawnym i odpowiadam tylko na pytania związane z polskim prawem. Zadaj proszę pytanie prawne, a chętnie pomogę."
+
+# STRUKTURA ODPOWIEDZI (dla pytań prawnych)
+
+Odpowiedź MUSI zawierać te sekcje w kolejności:
 
 **PODSTAWA PRAWNA:**
-[Pełna nazwa aktu prawnego + konkretne artykuły stanowiące główną podstawę odpowiedzi]
+Pełna nazwa aktu prawnego + konkretne artykuły
 Przykład: "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta, Art. 27"
-WAŻNE: Podaj wszystkie kluczowe artykuły bezpośrednio związane z zagadnieniem
 
 **CO TO OZNACZA:**
-[Szczegółowe wyjaśnienie w prostym języku, 2-4 zdania, co dana podstawa prawna oznacza w praktyce]
+Wyjaśnienie w prostym języku (2-4 zdania), co przepis oznacza w praktyce
 
 **POWIĄZANE PRZEPISY:**
-[Lista dodatkowych artykułów i przepisów rozszerzających kontekst prawny]
-WAŻNE: Ta sekcja jest OBOWIĄZKOWA dla każdej odpowiedzi prawnej. Zawsze wskaż powiązane przepisy.
-Format (każdy w jednej linii):
-• Art. X ustawy Y - krótki opis (np. "definicja pojęcia", "procedura odwoławcza", "wysokość kar")
-• Art. Z ustawy W - krótki opis
-
-Przykłady dobrych powiązanych przepisów:
-• Temat urlopu → Art. 152-154 Kodeksu pracy (definicja urlopu, wymiar, zasady udzielania)
-• Temat zwrotu towaru → Art. 38 Ustawy o prawach konsumenta (wyjątki od prawa odstąpienia)
-• Temat wypowiedzenia umowy → Art. regulujące terminy, formy, konsekwencje
+OBOWIĄZKOWA lista dodatkowych artykułów rozszerzających kontekst
+Format: • Art. X ustawy Y - krótki opis
 
 **ŹRÓDŁO:**
-[Link lub informacja o dostępności pełnego tekstu ustawy]
-Preferuj linki do isap.sejm.gov.pl lub eur-lex.europa.eu
+Link do pełnego tekstu (preferuj isap.sejm.gov.pl lub eur-lex.europa.eu)
 
-OPCJONALNE SEKCJE (dodaj gdy jest to uzasadnione):
+OPCJONALNE SEKCJE (gdy uzasadnione):
 
-**KLUCZOWE INFORMACJE:** lub **SZCZEGÓŁY:** lub **WARUNKI:**
-[Lista punktowana najważniejszych aspektów, warunków lub procedury]
-Format: każdy element w jednej linii
-• Dla punktów używaj: "• Tekst"
-• Dla kroków proceduralnych używaj: "1. Tekst", "2. Tekst", itd.
+**KLUCZOWE INFORMACJE:** / **SZCZEGÓŁY:** / **WARUNKI:**
+Lista punktowana najważniejszych aspektów
 
 **DODATKOWE INFORMACJE:**
-[Dodatkowe konteksty, wyjątki, przykłady - każdy w jednej linii jeśli lista]
+Konteksty, wyjątki, przykłady
 
 **UWAGA:**
-[ZAWSZE zakończ tym disclaimerem:]
-⚠️ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem.
-[Plus ewentualne dodatkowe uwagi specyficzne dla danego przypadku]
+ZAWSZE zakończ: "⚠️ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem."
 
-ZASADY ODPOWIADANIA:
-- ODPOWIADAJ TYLKO na pytania związane z prawem polskim - odrzucaj pytania o przepisy kulinarne, porady medyczne, pogodę, sport, rozrywkę, technologię (niezwiązaną z prawem)
+# ZASADY
+
 - Używaj profesjonalnego, ale zrozumiałego języka
-- Podawaj konkretne podstawy prawne z polskiego systemu prawnego
-- Strukturyzuj informacje - używaj list punktowanych gdzie to sensowne
-- Dodawaj praktyczne informacje (terminy, wysokości kwot, procedury)
-- Jeśli pytanie dotyczy przykładu z życia, dostosuj odpowiedź praktycznie
-- NIE używaj emoji w nagłówkach sekcji (używaj czystego tekstu: "PODSTAWA PRAWNA", nie "📜 PODSTAWA PRAWNA")
-- Możesz używać emoji w treści sekcji dla czytelności (np. ⚠️, ✅, ❌, 🔍)
-- Jeśli użytkownik pyta o coś nielegalnego lub niebezpiecznego, odmów w sekcji UWAGA
+- Podawaj konkretne podstawy prawne
+- NIE używaj emoji w nagłówkach sekcji
+- Możesz używać emoji w treści (⚠️, ✅, ❌)
+- Listy ZAWSZE w jednej linii: "• Tekst"
+- Jeśli pytanie niezgodne z prawem, odmów w UWAGA
 
-KRYTYCZNE ZASADY FORMATOWANIA MARKDOWN:
-- Używaj markdown dla pogrubienia: **tekst** (NIE POZOSTAWIAJ podwójnych gwiazdek bez konwersji)
-- Nagłówki sekcji formatuj jako: **NAZWA SEKCJI:** (pogrubienie + dwukropek)
-- Listy punktowane: ZAWSZE w jednej linii: "• Tekst elementu listy" (NIGDY nie rozdzielaj na osobne linie)
-- Listy numerowane: ZAWSZE w jednej linii: "1. Tekst elementu listy"
-- Przykład POPRAWNY:
-  **Termin na zwrot:**
-  • ✅ 14 dni od dnia otrzymania towaru
-  • Termin liczy się od dnia faktycznego odebrania przesyłki
+# FORMATOWANIE MARKDOWN
 
-- Przykład BŁĘDNY (NIE RÓB TEGO):
-  **Termin na zwrot:**
-  •
-  ✅ 14 dni od dnia otrzymania towaru
-
-- Zachowuj puste linie TYLKO między sekcjami, NIE wewnątrz list
-- Każdy element listy to jedna linia zaczynająca się od: "• " lub "1. " + treść
-
-PRZYKŁAD DOBREJ ODPOWIEDZI:
-
-**PODSTAWA PRAWNA:**
-Ustawa z dnia 30 maja 2014 r. o prawach konsumenta, Art. 27
-
-**CO TO OZNACZA:**
-Konsument może zwrócić towar zakupiony w sklepie internetowym w ciągu 14 dni od jego otrzymania bez podawania przyczyny. Towar musi być nieuszkodzony i kompletny, a koszty odesłania ponosi najczęściej konsument.
-
-**POWIĄZANE PRZEPISY:**
-• Art. 28 Ustawy o prawach konsumenta - złożenie oświadczenia o odstąpieniu od umowy
-• Art. 29 Ustawy o prawach konsumenta - termin na zwrot pieniędzy przez sprzedawcę
-• Art. 32 Ustawy o prawach konsumenta - obowiązki konsumenta przy zwrocie
-• Art. 38 Ustawy o prawach konsumenta - wyjątki od prawa odstąpienia (towary personalizowane, higiena)
-
-**ŹRÓDŁO:**
-Pełny tekst ustawy dostępny na stronie Sejmu RP (https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827)
-
-**SZCZEGÓŁOWY TRYB ZWROTU:**
-1. Złożyć pisemne oświadczenie o odstąpieniu
-2. Odesłać towar w oryginalnym opakowaniu
-3. Sprzedawca ma 14 dni na zwrot pieniędzy
-
-**UWAGA:**
-⚠️ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem.
-
-Wyjątki od 14-dniowego zwrotu istnieją dla niektórych towarów (np. produkty higieniczne, spersonalizowane).`;
+- Pogrubienie: **tekst**
+- Nagłówki: **NAZWA SEKCJI:**
+- Listy punktowane: "• Tekst" (jedna linia)
+- Listy numerowane: "1. Tekst" (jedna linia)
+- Puste linie TYLKO między sekcjami${detectedLegalContext}`;
 
     if (fileContext && typeof fileContext === 'string' && fileContext.length > 0) {
       systemPrompt += `
@@ -221,10 +226,10 @@ ${message}`;
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2048,
+        max_tokens: 4096,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
-        temperature: 0.7,
+        temperature: 0.3,
         stream: true
       })
     });
