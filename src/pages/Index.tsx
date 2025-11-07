@@ -284,11 +284,11 @@ const Index = () => {
         }
 
         // Add an empty assistant message that we'll update
-        addMessage({ role: 'assistant', content: '' });
+        // Use tempMessageId so it matches the messageId saved in the database
+        addMessage({ role: 'assistant', content: '', id: tempMessageId });
 
-        // Get the last message ID (the one we just added)
-        const currentMessages = useChatStore.getState().messages;
-        const assistantMessageId = currentMessages[currentMessages.length - 1].id;
+        // Use tempMessageId directly since we passed it to addMessage
+        const assistantMessageId = tempMessageId;
 
         let buffer = '';
 
@@ -355,7 +355,7 @@ const Index = () => {
         const data = await response.json();
 
         if (data?.message) {
-          addMessage({ role: 'assistant', content: data.message });
+          addMessage({ role: 'assistant', content: data.message, id: tempMessageId });
         } else {
           throw new Error('Brak odpowiedzi');
         }
