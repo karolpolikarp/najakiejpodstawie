@@ -61,3 +61,29 @@ global.DOMMatrix = class DOMMatrix {
   m43 = 0;
   m44 = 1;
 } as any;
+
+// Mock File.prototype.text() (not available in jsdom)
+if (typeof File !== 'undefined' && !File.prototype.text) {
+  File.prototype.text = function() {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.readAsText(this);
+    });
+  };
+}
+
+// Mock File.prototype.arrayBuffer() (needed for PDF parsing)
+if (typeof File !== 'undefined' && !File.prototype.arrayBuffer) {
+  File.prototype.arrayBuffer = function() {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result as ArrayBuffer);
+      };
+      reader.readAsArrayBuffer(this);
+    });
+  };
+}

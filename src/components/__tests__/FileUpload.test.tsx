@@ -4,6 +4,15 @@ import userEvent from '@testing-library/user-event';
 import { FileUpload } from '../FileUpload';
 import { CONSTANTS } from '@/lib/constants';
 
+// Mock sonner toast
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
 describe('FileUpload', () => {
   const mockOnFileLoad = vi.fn();
   const mockOnFileRemove = vi.fn();
@@ -213,8 +222,7 @@ describe('FileUpload', () => {
   });
 
   describe('File processing', () => {
-    // TODO: Fix async file processing tests - they timeout due to file.text() async behavior
-    it.skip('processes text file correctly', async () => {
+    it('processes text file correctly', async () => {
       const user = userEvent.setup();
       render(
         <FileUpload
@@ -246,11 +254,10 @@ describe('FileUpload', () => {
       // Wait for file to be processed with longer timeout
       await waitFor(() => {
         expect(mockOnFileLoad).toHaveBeenCalledWith(fileContent, 'test.txt');
-      }, { timeout: 3000 });
+      }, { timeout: 5000 });
     });
 
-    // TODO: Fix async file processing tests - they timeout due to file.text() async behavior
-    it.skip('truncates file content if it exceeds max length', async () => {
+    it('truncates file content if it exceeds max length', async () => {
       const user = userEvent.setup();
       render(
         <FileUpload
@@ -282,7 +289,7 @@ describe('FileUpload', () => {
       // Wait for file to be processed with longer timeout
       await waitFor(() => {
         expect(mockOnFileLoad).toHaveBeenCalled();
-      }, { timeout: 3000 });
+      }, { timeout: 5000 });
 
       const [content] = mockOnFileLoad.mock.calls[0];
       expect(content.length).toBe(CONSTANTS.FILE_UPLOAD.MAX_CONTENT_LENGTH);
