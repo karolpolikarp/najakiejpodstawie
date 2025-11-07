@@ -128,8 +128,12 @@ const Index = () => {
     setMessageFeedback(messageId, feedbackType);
 
     // Send feedback to backend (updates user_questions table)
+    console.log('=== FEEDBACK DEBUG ===');
+    console.log('messageId:', messageId);
+    console.log('feedbackType:', feedbackType);
+
     try {
-      const { error } = await supabase.functions.invoke('submit-feedback', {
+      const { data, error } = await supabase.functions.invoke('submit-feedback', {
         body: {
           messageId,
           feedbackType,
@@ -138,11 +142,14 @@ const Index = () => {
 
       if (error) {
         console.error('Error submitting feedback:', error);
-        // Don't show error to user - feedback is saved locally anyway
+        console.error('Error details:', error);
+        toast.error('Nie udało się zapisać feedbacku');
+      } else {
+        console.log('Feedback saved successfully:', data);
       }
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      // Don't show error to user - feedback is saved locally anyway
+      toast.error('Błąd podczas zapisywania feedbacku');
     }
   };
 
