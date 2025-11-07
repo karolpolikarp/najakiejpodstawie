@@ -224,6 +224,10 @@ const Index = () => {
         localStorage.setItem('session_id', sessionId);
       }
 
+      console.log('=== SENDING TO BACKEND ===');
+      console.log('tempMessageId:', tempMessageId);
+      console.log('sessionId:', sessionId);
+
       const response = await fetch(`${supabaseUrl}/functions/v1/legal-assistant`, {
         method: 'POST',
         headers,

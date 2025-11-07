@@ -46,7 +46,8 @@ serve(async (req) => {
       messageLength: message?.length,
       hasFileContext: !!fileContext,
       hasSessionId: !!sessionId,
-      hasMessageId: !!messageId
+      hasMessageId: !!messageId,
+      messageId: messageId // Log actual messageId value
     });
 
     // Validate required fields
