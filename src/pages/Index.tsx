@@ -620,8 +620,8 @@ const Index = () => {
               {/* AI Disclaimer - AI Act Art. 13 compliance */}
               <div className="mt-2 pt-2 border-t border-border/50">
                 <p className="text-xs text-muted-foreground text-center">
-                  🤖 Odpowiedzi generowane przez AI (Anthropic) •
-                  Wymaga weryfikacji prawnika •
+                  🤖 Wyjaśnienia przepisów, NIE porady prawne •
+                  Odpowiedzi AI (Anthropic) wymagają weryfikacji •
                   Nie przesyłaj danych osobowych
                 </p>
               </div>

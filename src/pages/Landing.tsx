@@ -221,12 +221,13 @@ const Landing = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="font-medium">
-                JakiePrawo.pl to narzędzie wspierające, nie zastępuje profesjonalnej porady prawnej.
+                JakiePrawo.pl dostarcza wyjaśnienia przepisów prawnych, NIE udziela porad prawnych w konkretnych sprawach.
               </p>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Informacje mają charakter edukacyjny i pomocniczy</li>
-                <li>• W poważnych sprawach prawnych zawsze skonsultuj się z prawnikiem lub radcą prawnym</li>
-                <li>• Nie bierzemy odpowiedzialności za decyzje podjęte na podstawie informacji z naszego serwisu</li>
+                <li>• Informacje mają charakter edukacyjny - pokazujemy podstawy prawne i ich ogólne wyjaśnienie</li>
+                <li>• NIE interpretujemy konkretnych sytuacji użytkowników ani nie doradzamy w indywidualnych przypadkach</li>
+                <li>• W sprawach wymagających porady prawnej zawsze skonsultuj się z prawnikiem lub radcą prawnym</li>
+                <li>• Nie bierzemy odpowiedzialności za decyzje podjęte na podstawie informacji z serwisu</li>
                 <li>• Prawo zmienia się - zawsze weryfikuj aktualność przepisów</li>
               </ul>
             </CardContent>
