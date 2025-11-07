@@ -127,26 +127,12 @@ const Index = () => {
     // Update local state immediately for better UX
     setMessageFeedback(messageId, feedbackType);
 
-    // If feedback is removed, we don't need to send to backend
-    if (feedbackType === null) {
-      return;
-    }
-
-    // Find the message and previous user message for context
-    const messageIndex = messages.findIndex((msg) => msg.id === messageId);
-    const message = messages[messageIndex];
-    const previousUserMessage = messageIndex > 0 && messages[messageIndex - 1].role === 'user'
-      ? messages[messageIndex - 1]
-      : null;
-
+    // Send feedback to backend (updates user_questions table)
     try {
       const { error } = await supabase.functions.invoke('submit-feedback', {
         body: {
           messageId,
           feedbackType,
-          userQuestion: previousUserMessage?.content,
-          assistantResponse: message?.content,
-          sessionId: localStorage.getItem('session_id') || undefined,
         },
       });
 
