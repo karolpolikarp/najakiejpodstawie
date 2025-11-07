@@ -144,11 +144,11 @@ const Landing = () => {
                 key={idx}
                 variant="outline"
                 asChild
-                className="h-auto py-4 text-left justify-start hover:border-primary hover:text-primary transition-all hover:scale-105 hover:shadow-soft glass-card"
+                className="h-auto py-4 text-left justify-start hover:border-primary hover:text-primary transition-all hover:scale-105 hover:shadow-soft glass-card whitespace-normal break-words"
               >
-                <Link to="/czat">
-                  <CheckCircle2 className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span>{question}</span>
+                <Link to="/czat" className="flex items-start">
+                  <CheckCircle2 className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="break-words">{question}</span>
                 </Link>
               </Button>
             ))}
