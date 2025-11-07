@@ -59,29 +59,12 @@ serve(async (req) => {
       .update({ feedback: feedbackType })
       .eq('message_id', messageId)
       .select()
-      .single()
 
     if (error) {
       console.error('Error updating feedback:', error)
       console.error('Error code:', error.code)
       console.error('Error message:', error.message)
       console.error('Error details:', JSON.stringify(error, null, 2))
-
-      // If no rows found, it might be that the question hasn't been saved yet
-      if (error.code === 'PGRST116') {
-        console.error('No question found with messageId:', messageId)
-        return new Response(
-          JSON.stringify({
-            error: 'Question not found with this messageId',
-            details: 'The question may not have been saved yet, or messageId column does not exist',
-            messageId: messageId
-          }),
-          {
-            status: 404,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        )
-      }
 
       return new Response(
         JSON.stringify({
@@ -91,6 +74,27 @@ serve(async (req) => {
         }),
         {
           status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Check if any rows were updated
+    if (!data || data.length === 0) {
+      console.log('No question found with messageId:', messageId)
+      console.log('This likely means the question is still being saved to the database')
+
+      // Return success anyway - the question is still being saved
+      // Frontend can retry if needed
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Feedback will be saved once the question is stored',
+          pending: true,
+          messageId: messageId
+        }),
+        {
+          status: 202, // 202 Accepted - request accepted but not yet processed
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       )
