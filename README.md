@@ -39,8 +39,11 @@ Każda odpowiedź zawiera odniesienie do konkretnego aktu prawnego.
 ### Dostępność 24/7
 Aplikacja dostępna zawsze, z dowolnego urządzenia z przeglądarką.
 
-### Prywatność
-Żadne pytania nie są zapisywane ani udostępniane osobom trzecim.
+### Panel Administracyjny
+Dostęp do wszystkich pytań użytkowników i odpowiedzi AI dla celów analitycznych i poprawy jakości.
+
+### Analityka
+Zbieranie pytań i odpowiedzi do analizy i usprawniania systemu.
 
 ---
 
@@ -55,9 +58,32 @@ Aplikacja dostępna zawsze, z dowolnego urządzenia z przeglądarką.
 ## 🛡️ Bezpieczeństwo i prywatność
 
 - Aplikacja zabezpieczona hasłem
-- Brak gromadzenia danych osobowych
+- Minimalizacja gromadzenia danych osobowych
 - Brak śledzenia użytkowników
-- Dane zapytań nie są przechowywane
+- Pytania i odpowiedzi zapisywane anonimowo dla celów analitycznych
+
+---
+
+## 🔄 Automatyczny Deployment
+
+Projekt wykorzystuje **GitHub Actions** do automatycznego wdrażania zmian:
+
+- **Frontend (Vercel)**: Automatyczny deployment po merge do `main`
+- **Backend (Supabase)**: Automatyczny deployment Edge Functions i migracji po merge do `main`
+
+### Konfiguracja auto-deploymentu:
+
+Szczegółowe instrukcje: [`.github/SUPABASE_DEPLOYMENT.md`](.github/SUPABASE_DEPLOYMENT.md)
+
+**Wymagane GitHub Secrets:**
+- `SUPABASE_ACCESS_TOKEN` - token API z Supabase
+- `SUPABASE_PROJECT_ID` - ID projektu Supabase
+- `SUPABASE_DB_PASSWORD` - hasło do bazy danych (dla migracji)
+
+Po skonfigurowaniu sekretów, każdy merge do `main` automatycznie:
+1. ✅ Deployuje zmiany w Edge Functions
+2. ✅ Uruchamia nowe migracje bazy danych
+3. ✅ Aktualizuje frontend na Vercel
 
 ---
 
