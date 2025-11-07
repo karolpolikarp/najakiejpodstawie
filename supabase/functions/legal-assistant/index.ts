@@ -38,21 +38,21 @@ function detectLegalContext(message: string): string {
 
   // Słowa kluczowe dla różnych tematów prawnych
   const topicKeywords: Record<string, string[]> = {
-    'urlop': ['urlop', 'wakacje', 'urlop wypoczynkowy', 'urlop na żądanie', 'dni wolne', 'wyjazd'],
-    'wynagrodzenie': ['wynagrodzenie', 'pensja', 'wypłata', 'płaca', 'zarobki', 'minimalna krajowa', 'wynagrodzenie minimalne'],
-    'wypowiedzenie_umowy_pracy': ['wypowiedzenie umowy', 'zwolnienie z pracy', 'rozwiązanie umowy o pracę', 'okres wypowiedzenia'],
-    'zwrot_towaru_online': ['zwrot towaru', 'odstąpienie od umowy', 'sklep internetowy', 'zakupy online', '14 dni', 'zwrot pieniędzy'],
-    'reklamacja_towaru': ['reklamacja', 'wada towaru', 'gwarancja', 'rękojmia', 'naprawa', 'wymiana towaru', 'uszkodzony towar'],
-    'wypowiedzenie_najmu': ['najem', 'wynajem', 'mieszkanie', 'lokator', 'wynajmujący', 'umowa najmu'],
-    'alimenty': ['alimenty', 'alimentacyjny', 'utrzymanie dziecka', 'fundusz alimentacyjny', 'obowiązek alimentacyjny'],
-    'zniewaga': ['zniewaga', 'obelga', 'zniesławienie', 'pomówienie', 'obraza'],
-    'rodo': ['dane osobowe', 'rodo', 'gdpr', 'prywatność', 'przetwarzanie danych', 'administrator danych', 'ochrona danych'],
-    'spadek': ['spadek', 'dziedziczenie', 'testament', 'spadkobierca', 'zachowek', 'nabycie spadku', 'dział spadku'],
-    'umowa_zlecenie': ['umowa zlecenia', 'umowa o dzieło', 'zlecenie', 'dzieło', 'zleceniobiorca', 'zleceniodawca'],
-    'prawa_autorskie': ['prawa autorskie', 'copyright', 'plagiat', 'utwór', 'autor', 'naruszenie praw autorskich'],
-    'kupno_sprzedaz': ['kupno', 'sprzedaż', 'umowa kupna', 'sprzedaż nieruchomości', 'kupno mieszkania', 'akt notarialny'],
-    'mobbing': ['mobbing', 'molestowanie', 'nękanie w pracy', 'dyskryminacja w pracy', 'przemoc psychiczna'],
-    'postepowanie_sadowe': ['pozew', 'sąd', 'proces sądowy', 'apelacja', 'wyrok', 'postępowanie cywilne', 'sprawa sądowa']
+    'urlop': ['urlop', 'wakacje', 'dni wolne'],
+    'wynagrodzenie': ['wynagrodzenie', 'wynagrodzeni', 'pensj', 'wypłat', 'płac', 'zarobki', 'zarobk', 'minimalna'],
+    'wypowiedzenie_umowy_pracy': ['wypowiedzeni', 'zwolnieni', 'rozwiązani'],
+    'zwrot_towaru_online': ['zwrot', 'zwróc', 'odstąpieni', 'sklep internetowy', 'online', '14 dni'],
+    'reklamacja_towaru': ['reklamacj', 'wad', 'gwarancj', 'rękojmi', 'naprawa', 'wymian'],
+    'wypowiedzenie_najmu': ['najem', 'najmu', 'wynajem', 'lokator', 'wynajmując'],
+    'alimenty': ['aliment'],
+    'zniewaga': ['zniewag', 'obelg', 'zniesławi', 'pomówien', 'obraz'],
+    'rodo': ['dan', 'rodo', 'gdpr', 'prywatno', 'przetwarzani'],
+    'spadek': ['spadk', 'dziedziczen', 'testament', 'spadkobierc', 'zachowek'],
+    'umowa_zlecenie': ['zleceni', 'dzieł'],
+    'prawa_autorskie': ['prawa autorskie', 'copyright', 'plagiat', 'utwór', 'autor'],
+    'kupno_sprzedaz': ['kupn', 'kupuj', 'sprzeda', 'akt notarialny'],
+    'mobbing': ['mobbing', 'molestowani', 'nękan', 'dyskryminacj'],
+    'postepowanie_sadowe': ['pozew', 'sąd', 'sądow', 'apelacj', 'wyrok', 'proces']
   };
 
   // Wykryj wszystkie pasujące tematy
