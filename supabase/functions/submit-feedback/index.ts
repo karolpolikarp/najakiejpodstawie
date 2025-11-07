@@ -8,10 +8,7 @@ const corsHeaders = {
 
 interface FeedbackRequest {
   messageId: string;
-  feedbackType: 'positive' | 'negative';
-  userQuestion?: string;
-  assistantResponse?: string;
-  sessionId?: string;
+  feedbackType: 'positive' | 'negative' | null;
 }
 
 serve(async (req) => {
@@ -31,12 +28,12 @@ serve(async (req) => {
       }
     )
 
-    const { messageId, feedbackType, userQuestion, assistantResponse, sessionId }: FeedbackRequest = await req.json()
+    const { messageId, feedbackType }: FeedbackRequest = await req.json()
 
     // Validate input
-    if (!messageId || !feedbackType) {
+    if (!messageId) {
       return new Response(
-        JSON.stringify({ error: 'messageId and feedbackType are required' }),
+        JSON.stringify({ error: 'messageId is required' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -44,9 +41,9 @@ serve(async (req) => {
       )
     }
 
-    if (!['positive', 'negative'].includes(feedbackType)) {
+    if (feedbackType !== null && !['positive', 'negative'].includes(feedbackType)) {
       return new Response(
-        JSON.stringify({ error: 'feedbackType must be either "positive" or "negative"' }),
+        JSON.stringify({ error: 'feedbackType must be either "positive", "negative", or null' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -54,20 +51,30 @@ serve(async (req) => {
       )
     }
 
-    // Get user agent from headers
-    const userAgent = req.headers.get('user-agent') || 'unknown'
-
-    // Check if feedback already exists for this message
-    const { data: existingFeedback, error: checkError } = await supabaseClient
-      .from('message_feedback')
-      .select('id, feedback_type')
+    // Update feedback in user_questions table
+    const { data, error } = await supabaseClient
+      .from('user_questions')
+      .update({ feedback: feedbackType })
       .eq('message_id', messageId)
+      .select()
       .single()
 
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
-      console.error('Error checking existing feedback:', checkError)
+    if (error) {
+      console.error('Error updating feedback:', error)
+
+      // If no rows found, it might be that the question hasn't been saved yet
+      if (error.code === 'PGRST116') {
+        return new Response(
+          JSON.stringify({ error: 'Question not found with this messageId' }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        )
+      }
+
       return new Response(
-        JSON.stringify({ error: 'Database error' }),
+        JSON.stringify({ error: 'Failed to update feedback' }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -75,87 +82,13 @@ serve(async (req) => {
       )
     }
 
-    let result
-
-    if (existingFeedback) {
-      // Update existing feedback
-      const { data, error } = await supabaseClient
-        .from('message_feedback')
-        .update({
-          feedback_type: feedbackType,
-          user_question: userQuestion,
-          assistant_response: assistantResponse,
-          session_id: sessionId,
-          user_agent: userAgent,
-        })
-        .eq('message_id', messageId)
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error updating feedback:', error)
-        return new Response(
-          JSON.stringify({ error: 'Failed to update feedback' }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        )
-      }
-
-      result = data
-    } else {
-      // Insert new feedback
-      const { data, error } = await supabaseClient
-        .from('message_feedback')
-        .insert({
-          message_id: messageId,
-          feedback_type: feedbackType,
-          user_question: userQuestion,
-          assistant_response: assistantResponse,
-          session_id: sessionId,
-          user_agent: userAgent,
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error inserting feedback:', error)
-        return new Response(
-          JSON.stringify({ error: 'Failed to save feedback' }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        )
-      }
-
-      result = data
-    }
-
-    // Also update user_questions table with feedback
-    try {
-      const { error: updateError } = await supabaseClient
-        .from('user_questions')
-        .update({ feedback: feedbackType })
-        .eq('message_id', messageId)
-
-      if (updateError) {
-        console.error('Error updating user_questions feedback:', updateError)
-        // Don't fail the request - feedback is already saved in message_feedback
-      } else {
-        console.log('Feedback also saved to user_questions table')
-      }
-    } catch (updateError) {
-      console.error('Error updating user_questions:', updateError)
-      // Don't fail the request
-    }
+    console.log('Feedback updated for message:', messageId, 'to:', feedbackType)
 
     return new Response(
       JSON.stringify({
         success: true,
-        data: result,
-        message: existingFeedback ? 'Feedback updated' : 'Feedback saved'
+        data: data,
+        message: 'Feedback saved'
       }),
       {
         status: 200,
