@@ -152,7 +152,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
 
   return (
     <>
-      <div className="mb-2 sm:mb-3">
+      <div>
         {!currentFile ? (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             <input
