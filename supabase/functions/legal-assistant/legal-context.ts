@@ -197,6 +197,142 @@ export const LEGAL_CONTEXT = {
       "Art. 33-34 RODO - obowiązek zgłoszenia naruszenia"
     ],
     source: "https://eur-lex.europa.eu/legal-content/PL/TXT/?uri=CELEX%3A32016R0679"
+  },
+
+  /**
+   * PRAWO SPADKOWE (Inheritance Law)
+   */
+  spadek: {
+    name: "Prawo spadkowe",
+    mainActs: [
+      "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
+    ],
+    mainArticles: [
+      "Art. 922 KC - otwarcie spadku",
+      "Art. 924 KC - formy dziedziczenia (testament, ustawa)",
+      "Art. 931 KC - dziedziczenie ustawowe"
+    ],
+    relatedArticles: [
+      "Art. 1011 KC - zachowek",
+      "Art. 1015 KC - wysokość zachowku",
+      "Art. 1025 KC - stwierdzenie nabycia spadku",
+      "Art. 1012 KC - odrzucenie dziedziczenia",
+      "Art. 888 KC - testament",
+      "Art. 1035 KC - dział spadku"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
+  },
+
+  /**
+   * UMOWA O DZIEŁO / ZLECENIE
+   */
+  umowa_zlecenie: {
+    name: "Umowa zlecenia i umowa o dzieło",
+    mainActs: [
+      "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
+    ],
+    mainArticles: [
+      "Art. 734 KC - umowa zlecenia",
+      "Art. 627 KC - umowa o dzieło"
+    ],
+    relatedArticles: [
+      "Art. 735 KC - obowiązki zleceniobiorcy",
+      "Art. 742 KC - wypowiedzenie umowy zlecenia",
+      "Art. 628 KC - wynagrodzenie za dzieło",
+      "Art. 635 KC - odstąpienie od umowy o dzieło",
+      "Art. 638 KC - wady dzieła"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
+  },
+
+  /**
+   * PRAWO AUTORSKIE
+   */
+  prawa_autorskie: {
+    name: "Prawa autorskie",
+    mainActs: [
+      "Ustawa z dnia 4 lutego 1994 r. o prawie autorskim i prawach pokrewnych"
+    ],
+    mainArticles: [
+      "Art. 1 - przedmiot prawa autorskiego",
+      "Art. 16 - autorskie prawa osobiste",
+      "Art. 17 - autorskie prawa majątkowe"
+    ],
+    relatedArticles: [
+      "Art. 23 - czas trwania praw autorskich",
+      "Art. 29 - użytek osobisty",
+      "Art. 33 - dozwolony użytek publiczny",
+      "Art. 41 - umowa o przeniesienie autorskich praw majątkowych",
+      "Art. 79 - naruszenie praw autorskich",
+      "Art. 115-119 - kary za naruszenie praw"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19940240083"
+  },
+
+  /**
+   * UMOWA KUPNA-SPRZEDAŻY
+   */
+  kupno_sprzedaz: {
+    name: "Umowa kupna-sprzedaży",
+    mainActs: [
+      "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
+    ],
+    mainArticles: [
+      "Art. 535 KC - definicja umowy sprzedaży",
+      "Art. 556 KC - rękojmia za wady"
+    ],
+    relatedArticles: [
+      "Art. 158 KC - forma aktu notarialnego (nieruchomości)",
+      "Art. 546 KC - przejście własności",
+      "Art. 560 KC - zgłoszenie wady",
+      "Art. 568 KC - gwarancja",
+      "Art. 576 KC - odpowiedzialność za wady prawne"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
+  },
+
+  /**
+   * MOBBING W PRACY
+   */
+  mobbing: {
+    name: "Mobbing w miejscu pracy",
+    mainActs: [
+      "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
+    ],
+    mainArticles: [
+      "Art. 943 - definicja mobbingu i ochrona przed mobbingiem"
+    ],
+    relatedArticles: [
+      "Art. 11 - równe traktowanie w zatrudnieniu",
+      "Art. 94 - obowiązki pracodawcy (przeciwdziałanie mobbingowi)",
+      "Art. 183a-183e - dyskryminacja w zatrudnieniu",
+      "Art. 300 KC - odszkodowanie za krzywdę"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
+  },
+
+  /**
+   * POSTĘPOWANIE SĄDOWE
+   */
+  postepowanie_sadowe: {
+    name: "Postępowanie sądowe cywilne",
+    mainActs: [
+      "Ustawa z dnia 17 listopada 1964 r. - Kodeks postępowania cywilnego"
+    ],
+    mainArticles: [
+      "Art. 1 - przedmiot regulacji",
+      "Art. 126 - pozew",
+      "Art. 187 - apelacja"
+    ],
+    relatedArticles: [
+      "Art. 13 - zasada kontradyktoryjności",
+      "Art. 19 - koszty sądowe",
+      "Art. 98 - zwrot kosztów procesu",
+      "Art. 130 - termin na odpowiedź na pozew",
+      "Art. 369 - zaskarżenie wyroku",
+      "Art. 505 - egzekucja"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640430296"
   }
 };
 
