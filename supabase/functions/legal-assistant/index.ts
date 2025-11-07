@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { checkRateLimit, rateLimitExceededResponse } from '../_shared/rate-limit.ts';
+import { checkRateLimit } from './rate-limiter.ts';
 import { LEGAL_CONTEXT, LEGAL_TOPICS } from './legal-context.ts';
 
 // CORS configuration - restrict to specific domains for security
@@ -91,11 +91,6 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Rate limiting - 10 requests per minute per IP
-  if (!checkRateLimit(req)) {
-    return rateLimitExceededResponse(corsHeaders);
-  }
-
   try {
     const requestBody = await req.json();
     const { message, fileContext, sessionId, messageId } = requestBody || {};
@@ -129,6 +124,42 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    // Initialize Supabase client for rate limiting and database operations
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          persistSession: false,
+        },
+      }
+    );
+
+    // Check rate limit - use sessionId if available, otherwise fallback to IP
+    const identifier = sessionId || req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'unknown';
+    const rateLimitResult = await checkRateLimit(supabaseClient, identifier, 'legal-assistant');
+
+    if (!rateLimitResult.allowed) {
+      console.log('Rate limit exceeded for identifier:', identifier);
+      return new Response(JSON.stringify({
+        error: 'Przekroczono limit zapytań. Możesz wysłać maksymalnie 10 pytań na minutę.',
+        retryAfter: rateLimitResult.retryAfter,
+        resetAt: rateLimitResult.resetAt?.toISOString(),
+      }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': String(rateLimitResult.retryAfter || 60),
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': rateLimitResult.resetAt?.toISOString() || '',
+        }
+      });
+    }
+
+    console.log('Rate limit check passed. Remaining requests:', rateLimitResult.remaining);
 
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_API_KEY) {
@@ -324,16 +355,6 @@ ${message}`;
               // Save question and answer to database
               try {
                 const responseTime = Date.now() - startTime;
-                const supabaseClient = createClient(
-                  Deno.env.get('SUPABASE_URL') ?? '',
-                  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-                  {
-                    auth: {
-                      persistSession: false,
-                    },
-                  }
-                );
-
                 const userAgent = req.headers.get('user-agent') || 'unknown';
 
                 await supabaseClient
