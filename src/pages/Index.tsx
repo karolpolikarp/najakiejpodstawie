@@ -558,6 +558,7 @@ const Index = () => {
                       onRetry={handleRetry}
                       onRemove={handleRemoveMessage}
                       onFeedback={handleFeedback}
+                      onSendMessage={handleSendMessage}
                     />
                   );
                 })}
