@@ -222,6 +222,87 @@ Art. 27 Ustawy`;
     });
   });
 
+  describe('Suggested questions functionality', () => {
+    it('parses SUGEROWANE PYTANIA section and renders clickable buttons', () => {
+      const content = `**SUGEROWANE PYTANIA:**
+- Zwrot towaru kupionego online
+- Reklamacja wadliwego produktu
+- Odstąpienie od umowy`;
+
+      const mockSendMessage = vi.fn();
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+          onSendMessage={mockSendMessage}
+        />
+      );
+
+      expect(screen.getByText(/Sugerowane Pytania/i)).toBeInTheDocument();
+
+      // Check if all questions are rendered as buttons
+      expect(screen.getByRole('button', { name: /Zwrot towaru kupionego online/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Reklamacja wadliwego produktu/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Odstąpienie od umowy/i })).toBeInTheDocument();
+    });
+
+    it('calls onSendMessage when suggested question button is clicked', () => {
+      const content = `**PYTANIA POMOCNICZE:**
+- Urlop na żądanie - ile dni w roku?
+- Wypowiedzenie umowy o pracę`;
+
+      const mockSendMessage = vi.fn();
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+          onSendMessage={mockSendMessage}
+        />
+      );
+
+      const questionButton = screen.getByRole('button', { name: /Urlop na żądanie - ile dni w roku?/i });
+      fireEvent.click(questionButton);
+
+      expect(mockSendMessage).toHaveBeenCalledWith('Urlop na żądanie - ile dni w roku?');
+    });
+
+    it('handles numbered list format for suggested questions', () => {
+      const content = `**MOŻE ZAPYTAJ:**
+1. Zwrot towaru kupionego online
+2. Reklamacja wadliwego produktu`;
+
+      const mockSendMessage = vi.fn();
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+          onSendMessage={mockSendMessage}
+        />
+      );
+
+      expect(screen.getByRole('button', { name: /Zwrot towaru kupionego online/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Reklamacja wadliwego produktu/i })).toBeInTheDocument();
+    });
+
+    it('disables suggested question buttons when onSendMessage is not provided', () => {
+      const content = `**SUGEROWANE PYTANIA:**
+- Test question`;
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+        />
+      );
+
+      const questionButton = screen.getByRole('button', { name: /Test question/i });
+      expect(questionButton).toBeDisabled();
+    });
+  });
+
   describe('Edge cases', () => {
     it('handles empty content gracefully', () => {
       render(<ChatMessage role="assistant" content="" />);

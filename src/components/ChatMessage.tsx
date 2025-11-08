@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, memo } from 'react';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ interface ChatMessageProps {
   onRetry?: (content: string) => void;
   onRemove?: (messageId: string) => void;
   onFeedback?: (messageId: string, feedback: 'positive' | 'negative' | null) => void;
+  onSendMessage?: (content: string) => void;
 }
 
 interface Section {
@@ -36,6 +37,7 @@ const parseMessage = (content: string): Section[] => {
     { pattern: /^UWAGA:?$/i, type: 'warning' },
     { pattern: /^(KLUCZOWE INFORMACJE|SZCZEGÓŁY|SZCZEGÓŁOWY TRYB ZWROTU|WARUNKI SKORZYSTANIA|WARUNKI):?$/i, type: 'details' },
     { pattern: /^(DODATKOWE INFORMACJE|PRZYKŁADY|ZASADY):?$/i, type: 'additional' },
+    { pattern: /^(SUGEROWANE PYTANIA|PYTANIA POMOCNICZE|MOŻE ZAPYTAJ|SPRÓBUJ ZAPYTAĆ):?$/i, type: 'suggested-questions' },
   ];
 
   for (let i = 0; i < lines.length; i++) {
@@ -147,7 +149,7 @@ const formatContent = (content: string) => {
   });
 };
 
-const formatAssistantMessage = (content: string) => {
+const formatAssistantMessage = (content: string, onSendMessage?: (content: string) => void) => {
   const sections = parseMessage(content);
 
   return sections.map((section, idx) => {
@@ -243,6 +245,43 @@ const formatAssistantMessage = (content: string) => {
           </div>
         );
 
+      case 'suggested-questions': {
+        // Parse questions from content - each line is a question
+        const questions = section.content
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .map(line => {
+            // Remove leading markers like "- ", "• ", "1. ", etc.
+            return line.replace(/^[-•]\s*/, '').replace(/^\d+\.\s*/, '');
+          })
+          .filter(q => q.length > 0);
+
+        if (questions.length === 0) return null;
+
+        return (
+          <div key={idx} className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageSquare className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <h3 className="font-semibold text-amber-900 dark:text-amber-100">{section.title}</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {questions.map((question, qIdx) => (
+                <Button
+                  key={`suggested-${qIdx}`}
+                  variant="outline"
+                  onClick={() => onSendMessage?.(question)}
+                  disabled={!onSendMessage}
+                  className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 border-amber-600/50 dark:border-amber-400/50 bg-amber-100/50 dark:bg-amber-900/30 hover:bg-amber-200/70 dark:hover:bg-amber-800/50 hover:border-amber-700 dark:hover:border-amber-300 text-amber-900 dark:text-amber-100 hover:text-amber-950 dark:hover:text-amber-50"
+                >
+                  {question}
+                </Button>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
       case 'text':
       default:
         if (!section.content.trim()) return null;
@@ -269,17 +308,17 @@ const isErrorMessage = (content: string): boolean => {
   return errorPatterns.some(pattern => pattern.test(content.trim()));
 };
 
-export const ChatMessage = memo(({ role, content, messageId, userContent, feedback, onRetry, onRemove, onFeedback }: ChatMessageProps) => {
+export const ChatMessage = memo(({ role, content, messageId, userContent, feedback, onRetry, onRemove, onFeedback, onSendMessage }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const isError = role === 'assistant' && isErrorMessage(content);
 
   // Memoize formatted content to avoid re-parsing on every render
   const formattedContent = useMemo(() => {
     if (role === 'assistant') {
-      return formatAssistantMessage(content);
+      return formatAssistantMessage(content, onSendMessage);
     }
     return content;
-  }, [role, content]);
+  }, [role, content, onSendMessage]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
