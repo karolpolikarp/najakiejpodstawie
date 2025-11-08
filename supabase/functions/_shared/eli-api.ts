@@ -413,3 +413,164 @@ export function needsFullText(query: string): boolean {
   const lowerQuery = query.toLowerCase();
   return fullTextKeywords.some(keyword => lowerQuery.includes(keyword));
 }
+
+// ================== MAPOWANIA POPULARNYCH AKTÓW PRAWNYCH ==================
+
+/**
+ * Mapowanie popularnych skrótów ustaw do pełnych nazw
+ */
+const COMMON_ACT_MAPPINGS: Record<string, { title: string; year?: number; position?: number }> = {
+  'kc': { title: 'kodeks cywilny', year: 1964, position: 16 },
+  'kodeks cywilny': { title: 'kodeks cywilny', year: 1964, position: 16 },
+  'kp': { title: 'kodeks pracy', year: 1974, position: 24 },
+  'kodeks pracy': { title: 'kodeks pracy', year: 1974, position: 24 },
+  'kk': { title: 'kodeks karny', year: 1997, position: 88 },
+  'kodeks karny': { title: 'kodeks karny', year: 1997, position: 88 },
+  'kpk': { title: 'kodeks postępowania karnego', year: 1997, position: 89 },
+  'kodeks postępowania karnego': { title: 'kodeks postępowania karnego', year: 1997, position: 89 },
+  'kpc': { title: 'kodeks postępowania cywilnego', year: 1964, position: 43 },
+  'kodeks postępowania cywilnego': { title: 'kodeks postępowania cywilnego', year: 1964, position: 43 },
+  'konstytucja': { title: 'konstytucja', year: 1997, position: 78 },
+  'konstytucja rp': { title: 'konstytucja', year: 1997, position: 78 },
+};
+
+/**
+ * Parsuj zapytanie o konkretny artykuł
+ * Przykłady: "art 533 kc", "artykuł 533 kodeksu cywilnego", "art. 10 konstytucji"
+ */
+export function parseArticleQuery(query: string): {
+  articleNumber: string;
+  actCode: string;
+  actInfo?: { title: string; year?: number; position?: number };
+} | null {
+  const lowerQuery = query.toLowerCase().trim();
+
+  // Pattern: art/artykuł [numer] [akt prawny]
+  const patterns = [
+    /(?:art\.?|artykuł)\s+(\d+[a-z]?)\s+(.+)/i,
+    /(\d+[a-z]?)\s+(?:art\.?|artykuł)\s+(.+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = lowerQuery.match(pattern);
+    if (match) {
+      const articleNumber = match[1];
+      const actCode = match[2].trim();
+
+      // Sprawdź czy to znany akt prawny
+      const actInfo = COMMON_ACT_MAPPINGS[actCode];
+
+      return {
+        articleNumber,
+        actCode,
+        actInfo,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Pobierz tekst konkretnego artykułu z aktu prawnego
+ */
+export async function getArticleText(
+  articleNumber: string,
+  actTitle: string,
+  actYear?: number,
+  actPosition?: number
+): Promise<{
+  articleText: string;
+  actDetails: ELIActDetails;
+  fullTextLink: string;
+}> {
+  console.log(`🎯 Getting article ${articleNumber} from "${actTitle}"`);
+
+  // 1. Znajdź akt prawny jeśli nie mamy year/position
+  let publisher = 'DU';
+  let year = actYear;
+  let position = actPosition;
+
+  if (!year || !position) {
+    const searchResult = await eliSearchActs({
+      title: actTitle,
+      publisher: 'DU',
+      limit: 1,
+      sortBy: 'announcementDate',
+      sortDir: 'desc', // Najnowszy akt
+    });
+
+    if (searchResult.count === 0) {
+      throw new Error(`Nie znaleziono aktu prawnego: ${actTitle}`);
+    }
+
+    const firstAct = searchResult.items[0];
+    publisher = firstAct.publisher;
+    year = firstAct.year;
+    position = firstAct.pos;
+  }
+
+  // 2. Pobierz szczegóły aktu
+  const actDetails = await eliGetActDetails(publisher, year, position);
+
+  // 3. Pobierz pełny tekst HTML
+  let fullText: string;
+  try {
+    fullText = await eliGetActText(publisher, year, position, 'html');
+  } catch (error) {
+    throw new Error(`Nie można pobrać tekstu aktu. ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  // 4. Spróbuj wyodrębnić konkretny artykuł z HTML
+  const articleText = extractArticleFromHTML(fullText, articleNumber);
+
+  if (!articleText) {
+    // Jeśli nie udało się wyodrębnić, zwróć fragment tekstu
+    const cleanText = fullText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    const preview = cleanText.length > 2000
+      ? cleanText.substring(0, 2000) + '...'
+      : cleanText;
+
+    return {
+      articleText: `⚠️ Nie udało się automatycznie wyodrębnić artykułu ${articleNumber}.\n\nOto fragment tekstu aktu:\n\n${preview}\n\n💡 Pełny tekst dostępny pod linkiem poniżej.`,
+      actDetails,
+      fullTextLink: `https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=${publisher}${year}${position.toString().padStart(4, '0')}`,
+    };
+  }
+
+  return {
+    articleText,
+    actDetails,
+    fullTextLink: `https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=${publisher}${year}${position.toString().padStart(4, '0')}`,
+  };
+}
+
+/**
+ * Wyodrębnij tekst konkretnego artykułu z HTML
+ */
+function extractArticleFromHTML(html: string, articleNumber: string): string | null {
+  // Wzorce do wyszukiwania artykułu
+  const patterns = [
+    // Art. 533. [treść]
+    new RegExp(`Art\\.?\\s+${articleNumber}\\.?\\s*([\\s\\S]*?)(?=Art\\.?\\s+\\d+\\.?|$)`, 'i'),
+    // Artykuł 533. [treść]
+    new RegExp(`Artykuł\\s+${articleNumber}\\.?\\s*([\\s\\S]*?)(?=Artykuł\\s+\\d+\\.?|$)`, 'i'),
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match && match[0]) {
+      // Usuń HTML tags
+      let text = match[0].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Ogranicz do rozsądnej długości (max 5000 znaków)
+      if (text.length > 5000) {
+        text = text.substring(0, 5000) + '\n\n[...artykuł jest dłuższy, pełna treść pod linkiem...]';
+      }
+
+      return text;
+    }
+  }
+
+  return null;
+}

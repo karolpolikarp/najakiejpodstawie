@@ -44,7 +44,7 @@ export const CONSTANTS = {
   EDGE_FUNCTION: {
     MAX_TOKENS: 2048,
     TEMPERATURE: 0.7,
-    MODEL: 'claude-3-5-haiku-20241022' as const,
+    MODEL: 'claude-haiku-4-5-20251001' as const,
     FILE_CONTEXT_LIMIT: 30000,
   },
 
