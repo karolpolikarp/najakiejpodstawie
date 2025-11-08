@@ -402,10 +402,21 @@ KIEDY NIE UŻYWAĆ:
 ❌ Pytania nieobjęte prawem polskim (kuchnia, pogoda, etc.)
 ❌ Gdy masz pewność co do przepisu z lokalnej bazy wiedzy
 
+STRATEGIA WYSZUKIWANIA (WAŻNE!):
+1. API ELI szuka po DOKŁADNYM tytule aktu, nie po semantyce
+2. Używaj KRÓTKICH, KLUCZOWYCH słów z tytułu ustawy
+3. Unikaj długich fraz typu "rozliczenie PIT termin składania zeznania"
+4. Preferuj oficjalne nazwy: "kodeks pracy", "ustawa o podatku dochodowym", "konstytucja"
+
+PRZYKŁADY DOBRYCH QUERIES:
+✅ "kodeks pracy" (nie "urlop macierzyński regulacje")
+✅ "podatek dochodowy osoby fizyczne" (nie "rozliczenie PIT termin")
+✅ "prawa konsumenta" (nie "zwrot towaru sklep online")
+
 STRATEGIA:
-1. Dla pytań typu "urlop macierzyński", "kodeks pracy" → użyj smart_act_search z includeText=false (szybkie)
-2. Dla pytań o treść przepisu "co mówi art. X" → użyj smart_act_search z includeText=true (dokładne)
-3. Zawsze preferuj dane z narzędzi nad wiedzą wbudowaną gdy dostępne
+1. Dla pytań ogólnych → smart_act_search z KRÓTKIMI słowami kluczowymi, includeText=false
+2. Dla pytań o treść → smart_act_search z NAZWĄ USTAWY, includeText=true
+3. Jeśli pierwsze wyszukiwanie daje 0 wyników → UPROŚĆ query do 2-3 słów kluczowych
 
 # WAŻNE: ZAKAZ UDZIELANIA PORAD PRAWNYCH
 
@@ -547,9 +558,9 @@ ${message}`;
 
       console.log('📊 Initial response stop_reason:', initialResponse.stop_reason);
 
-      // Obsłuż tool calls (max 3 iteracje aby uniknąć nieskończonej pętli)
+      // Obsłuż tool calls (max 5 iteracji aby dać szansę na uproszczenie query)
       let iterations = 0;
-      const MAX_ITERATIONS = 3;
+      const MAX_ITERATIONS = 5;
       let currentResponse = initialResponse;
 
       while (currentResponse.stop_reason === 'tool_use' && iterations < MAX_ITERATIONS) {
