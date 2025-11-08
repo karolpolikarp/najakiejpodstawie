@@ -11,6 +11,8 @@ import {
   smartActSearch,
   formatActForPrompt,
   needsFullText,
+  parseArticleQuery,
+  getArticleText,
   type ELISearchParams,
 } from '../_shared/eli-api.ts';
 
@@ -172,6 +174,36 @@ WAŻNE: Ustawienie includeText=true pobierze fragmenty tekstów aktów, co zajmu
       required: ['query'],
     },
   },
+  {
+    name: 'get_article_text',
+    description: `Pobierz pełną treść konkretnego artykułu z aktu prawnego.
+
+To jest NAJLEPSZE narzędzie gdy użytkownik pyta o konkretny artykuł, np:
+- "art 533 kc"
+- "artykuł 10 konstytucji"
+- "art. 123 kodeksu pracy"
+
+Narzędzie automatycznie:
+1. Rozpoznaje popularnie używane skróty (kc, kp, kk, konstytucja, etc.)
+2. Znajduje odpowiedni akt prawny
+3. Wyodrębnia pełną treść konkretnego artykułu
+
+WAŻNE: Używaj tego narzędzia ZAMIAST smart_act_search gdy użytkownik pyta o konkretny numerowany artykuł.`,
+    input_schema: {
+      type: 'object',
+      properties: {
+        articleNumber: {
+          type: 'string',
+          description: 'Numer artykułu (np. "533", "10", "123a")',
+        },
+        actCode: {
+          type: 'string',
+          description: 'Skrót lub nazwa aktu prawnego (np. "kc", "kodeks cywilny", "konstytucja", "kp")',
+        },
+      },
+      required: ['articleNumber', 'actCode'],
+    },
+  },
 ];
 
 /**
@@ -225,6 +257,25 @@ async function handleELIToolCall(toolName: string, toolInput: any): Promise<any>
             },
             textPreview: r.textPreview,
           })),
+        };
+
+      case 'get_article_text':
+        const articleResult = await getArticleText(
+          toolInput.articleNumber,
+          toolInput.actCode
+        );
+
+        return {
+          articleText: articleResult.articleText,
+          act: {
+            title: articleResult.actDetails.title,
+            address: articleResult.actDetails.displayAddress,
+            announcementDate: articleResult.actDetails.announcementDate,
+            status: articleResult.actDetails.status,
+            entryIntoForce: articleResult.actDetails.entryIntoForce,
+            keywords: articleResult.actDetails.keywords,
+          },
+          fullTextLink: articleResult.fullTextLink,
         };
 
       default:
@@ -300,7 +351,7 @@ serve(async (req) => {
 
   try {
     const requestBody = await req.json();
-    const { message, fileContext, sessionId, messageId } = requestBody || {};
+    const { message, fileContext, sessionId, messageId, usePremiumModel } = requestBody || {};
 
     // Log incoming request for debugging
     console.log('Received request:', {
@@ -310,7 +361,8 @@ serve(async (req) => {
       hasFileContext: !!fileContext,
       hasSessionId: !!sessionId,
       hasMessageId: !!messageId,
-      messageId: messageId // Log actual messageId value
+      messageId: messageId, // Log actual messageId value
+      usePremiumModel: !!usePremiumModel
     });
 
     // Validate required fields
@@ -373,6 +425,13 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
+    // Wybierz model: Haiku (domyślny, tani) vs Sonnet (premium, droższy)
+    const selectedModel = usePremiumModel
+      ? 'claude-sonnet-4-20250514'  // Premium: Sonnet 4.5
+      : 'claude-3-5-haiku-20241022'; // Domyślny: Haiku 3.5
+
+    console.log(`🤖 Using model: ${selectedModel} (premium: ${!!usePremiumModel})`);
+
     // Inicjalizuj klienta Anthropic
     const anthropic = new Anthropic({
       apiKey: ANTHROPIC_API_KEY,
@@ -386,13 +445,15 @@ serve(async (req) => {
 🔧 DOSTĘPNE NARZĘDZIA:
 
 Masz dostęp do oficjalnej bazy aktów prawnych (ELI API - Dziennik Ustaw i Monitor Polski) przez następujące narzędzia:
-1. **smart_act_search** - PREFEROWANE: Inteligentne wyszukiwanie aktów z opcją pobrania fragmentów tekstu
-2. **eli_search_acts** - Szybkie wyszukiwanie po metadanych (wspiera keyword, daty, sortowanie)
-3. **eli_get_act_details** - Szczegóły konkretnego aktu
-4. **eli_get_act_structure** - Struktura/spis treści aktu (tylko HTML)
+1. **get_article_text** - 🌟 NAJLEPSZE dla konkretnych artykułów! Użyj gdy pytanie zawiera "art X kc/kp/kk" etc.
+2. **smart_act_search** - Inteligentne wyszukiwanie aktów z opcją pobrania fragmentów tekstu
+3. **eli_search_acts** - Szybkie wyszukiwanie po metadanych (wspiera keyword, daty, sortowanie)
+4. **eli_get_act_details** - Szczegóły konkretnego aktu
+5. **eli_get_act_structure** - Struktura/spis treści aktu (tylko HTML)
 
 KIEDY UŻYWAĆ NARZĘDZI:
-✅ ZAWSZE gdy użytkownik pyta o konkretną ustawę, rozporządzenie, kodeks
+✅ **get_article_text** - ZAWSZE gdy użytkownik pyta o konkretny artykuł (np. "art 533 kc", "artykuł 10 konstytucji")
+✅ **smart_act_search/eli_search_acts** - Gdy użytkownik pyta o ustawę, rozporządzenie bez konkretnego artykułu
 ✅ ZAWSZE gdy potrzebujesz zweryfikować podstawę prawną
 ✅ ZAWSZE gdy pytanie dotyczy "jakie prawo", "jaka ustawa", "na jakiej podstawie"
 ✅ Gdy chcesz podać aktualny numer Dz.U. lub link do przepisu
@@ -403,23 +464,35 @@ KIEDY NIE UŻYWAĆ:
 ❌ Gdy masz pewność co do przepisu z lokalnej bazy wiedzy
 
 STRATEGIA WYSZUKIWANIA (WAŻNE!):
-1. API ELI szuka po DOKŁADNYM tytule aktu, nie po semantyce
-2. Używaj KRÓTKICH, KLUCZOWYCH słów z tytułu ustawy
-3. Unikaj długich fraz typu "rozliczenie PIT termin składania zeznania"
-4. Preferuj oficjalne nazwy: "kodeks pracy", "ustawa o podatku dochodowym", "konstytucja"
+
+**KROK 1: Wykryj typ pytania**
+- Pytanie o konkretny artykuł (np. "art 533 kc") → Użyj **get_article_text**
+- Pytanie ogólne o ustawę → Użyj **smart_act_search** lub **eli_search_acts**
+
+**KROK 2: Dla get_article_text (pytania o konkretny artykuł):**
+- Wyodrębnij numer artykułu (np. "533")
+- Wyodrębnij kod aktu (np. "kc", "kodeks cywilny", "konstytucja")
+- Wywołaj get_article_text(articleNumber: "533", actCode: "kc")
+- Narzędzie automatycznie znajdzie Kodeks cywilny i wyodrębni artykuł 533
+
+**KROK 3: Dla smart_act_search/eli_search_acts:**
+- API ELI szuka po DOKŁADNYM tytule aktu, nie po semantyce
+- Używaj KRÓTKICH, KLUCZOWYCH słów z tytułu ustawy
+- Unikaj długich fraz typu "rozliczenie PIT termin składania zeznania"
+- Preferuj oficjalne nazwy: "kodeks pracy", "ustawa o podatku dochodowym", "konstytucja"
 
 PRZYKŁADY DOBRYCH QUERIES:
-✅ "kodeks pracy" (nie "urlop macierzyński regulacje")
-✅ "podatek dochodowy osoby fizyczne" (nie "rozliczenie PIT termin")
-✅ "prawa konsumenta" (nie "zwrot towaru sklep online")
+✅ get_article_text("533", "kc") - dla "art 533 kc"
+✅ get_article_text("10", "konstytucja") - dla "art 10 konstytucji"
+✅ smart_act_search("kodeks pracy") - dla pytań o Kodeks pracy ogólnie
+✅ smart_act_search("prawa konsumenta") - dla pytań o prawa konsumenta
 
-STRATEGIA:
-1. Dla pytań ogólnych → smart_act_search z KRÓTKIMI słowami kluczowymi, includeText=false (szybkie)
-2. Dla pytań o KONKRETNĄ treść artykułu → smart_act_search z NAZWĄ USTAWY, includeText=true (wolniejsze)
-3. Jeśli pierwsze wyszukiwanie daje 0 wyników → UPROŚĆ query do 2-3 słów kluczowych
+**KROK 4: Jeśli wyszukiwanie daje 0 wyników:**
+- UPROŚĆ query do 2-3 słów kluczowych
+- Spróbuj alternatywnych nazw (np. "konstytucja" zamiast "konstytucja RP")
 
 ⚠️ WAŻNE: NIE używaj includeText=true dla ogólnych pytań! To spowalnia odpowiedź i może przekroczyć limity.
-Używaj includeText=true TYLKO gdy użytkownik pyta o DOKŁADNĄ treść konkretnego artykułu lub przepisu.
+Używaj includeText=true TYLKO gdy użytkownik pyta o DOKŁADNĄ treść konkretnego artykułu lub przepisu (i NIE ma konkretnego numeru artykułu - bo wtedy użyj get_article_text).
 
 # WAŻNE: ZAKAZ UDZIELANIA PORAD PRAWNYCH
 
@@ -455,7 +528,8 @@ Przykład: "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta, Art. 27"
 
 
 **CO TO OZNACZA:**
-Wyjaśnienie w prostym języku (2-4 zdania), co przepis oznacza w praktyce
+JEŚLI użyłeś narzędzia get_article_text - ZAWRZYJ tutaj pełną treść artykułu z narzędzia
+NASTĘPNIE wyjaśnij w prostym języku (2-4 zdania), co przepis oznacza w praktyce
 
 
 **POWIĄZANE PRZEPISY:**
@@ -558,7 +632,7 @@ ${message}`;
         console.log(`🔄 Iteration ${iterations}/${MAX_ITERATIONS}`);
 
         currentResponse = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: selectedModel,
           max_tokens: 4096,
           system: systemPrompt,
           tools: ELI_TOOLS,
@@ -695,7 +769,7 @@ ${message}`;
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: selectedModel,
           max_tokens: 4096,
           system: systemPrompt,
           // NIE przekazujemy tools - Claude ma po prostu odpowiedzieć
