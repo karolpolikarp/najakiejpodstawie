@@ -1,8 +1,18 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import Anthropic from 'npm:@anthropic-ai/sdk@0.28.0';
 import { checkRateLimit } from './rate-limiter.ts';
 import { LEGAL_CONTEXT, LEGAL_TOPICS } from './legal-context.ts';
+import {
+  eliSearchActs,
+  eliGetActDetails,
+  eliGetActStructure,
+  smartActSearch,
+  formatActForPrompt,
+  needsFullText,
+  type ELISearchParams,
+} from '../_shared/eli-api.ts';
 
 // CORS configuration - restrict to specific domains for security
 const getAllowedOrigin = (requestOrigin: string | null): string => {
@@ -28,6 +38,203 @@ const getCorsHeaders = (requestOrigin: string | null) => ({
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Credentials': 'true'
 });
+
+// ================== ELI API TOOLS CONFIGURATION ==================
+
+const ELI_TOOLS: Anthropic.Messages.Tool[] = [
+  {
+    name: 'eli_search_acts',
+    description: `Wyszukaj akty prawne w polskiej bazie prawnej (Dziennik Ustaw i Monitor Polski).
+
+Użyj tego narzędzia gdy:
+- Użytkownik pyta o konkretną ustawę, rozporządzenie lub inny akt prawny
+- Potrzebujesz znaleźć podstawę prawną dla sytuacji
+- Chcesz sprawdzić czy istnieje przepis na dany temat
+
+Przykłady:
+- "Jaka ustawa reguluje urlopy?"
+- "Kodeks pracy"
+- "Prawa konsumenta"`,
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: {
+          type: 'string',
+          description: 'Słowa kluczowe do wyszukania w tytule aktu (np. "kodeks pracy", "konstytucja", "prawa konsumenta")',
+        },
+        year: {
+          type: 'number',
+          description: 'Rok wydania aktu (opcjonalne). Użyj tylko gdy użytkownik podał konkretny rok.',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maksymalna liczba wyników (domyślnie 5, max 10)',
+          default: 5,
+        },
+      },
+      required: ['title'],
+    },
+  },
+  {
+    name: 'eli_get_act_details',
+    description: `Pobierz szczegółowe informacje o konkretnym akcie prawnym, w tym:
+- Pełny tytuł i status (czy obowiązuje)
+- Daty: ogłoszenia, wejścia w życie, ewentualnego uchylenia
+- Słowa kluczowe
+- Organ wydający
+- Powiązania z innymi aktami
+
+Użyj tego narzędzia gdy:
+- Masz już identyfikator aktu (publisher/rok/pozycja) z poprzedniego wyszukiwania
+- Potrzebujesz szczegółowych metadanych o konkretnym akcie`,
+    input_schema: {
+      type: 'object',
+      properties: {
+        publisher: {
+          type: 'string',
+          description: 'Kod wydawcy: "DU" dla Dziennika Ustaw lub "MP" dla Monitora Polskiego',
+          enum: ['DU', 'MP'],
+        },
+        year: {
+          type: 'number',
+          description: 'Rok wydania aktu',
+        },
+        position: {
+          type: 'number',
+          description: 'Numer pozycji w dzienniku',
+        },
+      },
+      required: ['publisher', 'year', 'position'],
+    },
+  },
+  {
+    name: 'eli_get_act_structure',
+    description: `Pobierz hierarchiczną strukturę aktu prawnego (spis treści).
+
+Zwraca organizację aktu w formie drzewa:
+- Księgi, tytuły, działy, rozdziały, oddziały
+- Artykuły, paragrafy, ustępy, punkty, litery
+
+Użyj tego narzędzia gdy:
+- Użytkownik pyta o strukturę/organizację aktu
+- Chcesz pokazać jakie części zawiera ustawa
+- Potrzebujesz nawigować po konkretnych fragmentach aktu
+
+UWAGA: Działa tylko dla aktów dostępnych w formacie HTML.`,
+    input_schema: {
+      type: 'object',
+      properties: {
+        publisher: {
+          type: 'string',
+          description: 'Kod wydawcy: "DU" dla Dziennika Ustaw lub "MP" dla Monitora Polskiego',
+          enum: ['DU', 'MP'],
+        },
+        year: {
+          type: 'number',
+          description: 'Rok wydania aktu',
+        },
+        position: {
+          type: 'number',
+          description: 'Numer pozycji w dzienniku',
+        },
+      },
+      required: ['publisher', 'year', 'position'],
+    },
+  },
+  {
+    name: 'smart_act_search',
+    description: `Inteligentne wyszukiwanie aktów prawnych - łączy wyszukiwanie metadanych z opcjonalnym pobraniem fragmentów tekstu.
+
+To jest NAJLEPSZE narzędzie do użycia gdy:
+- Użytkownik pyta o treść konkretnych przepisów
+- Potrzebujesz cytować konkretne artykuły
+- Chcesz znaleźć akt i od razu zobaczyć jego fragment
+
+WAŻNE: Ustawienie includeText=true pobierze fragmenty tekstów aktów, co zajmuje więcej czasu, ale daje lepsze wyniki.`,
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Zapytanie wyszukiwania - słowa kluczowe z pytania użytkownika',
+        },
+        includeText: {
+          type: 'boolean',
+          description: 'Czy pobrać fragmenty tekstu aktów (wolniejsze, ale bardziej szczegółowe). Ustaw true gdy użytkownik pyta o treść przepisów.',
+          default: false,
+        },
+        maxResults: {
+          type: 'number',
+          description: 'Maksymalna liczba wyników (1-5). Dla pytań ogólnych użyj 3-5, dla konkretnych 1-2.',
+          default: 3,
+        },
+      },
+      required: ['query'],
+    },
+  },
+];
+
+/**
+ * Handler dla wywołań narzędzi ELI API
+ */
+async function handleELIToolCall(toolName: string, toolInput: any): Promise<any> {
+  console.log(`🔧 ELI Tool call: ${toolName}`, toolInput);
+
+  try {
+    switch (toolName) {
+      case 'eli_search_acts':
+        return await eliSearchActs({
+          title: toolInput.title,
+          year: toolInput.year,
+          publisher: 'DU',
+          limit: Math.min(toolInput.limit || 5, 10),
+        });
+
+      case 'eli_get_act_details':
+        return await eliGetActDetails(
+          toolInput.publisher,
+          toolInput.year,
+          toolInput.position
+        );
+
+      case 'eli_get_act_structure':
+        return await eliGetActStructure(
+          toolInput.publisher,
+          toolInput.year,
+          toolInput.position
+        );
+
+      case 'smart_act_search':
+        const results = await smartActSearch(toolInput.query, {
+          includeText: toolInput.includeText || false,
+          maxResults: Math.min(toolInput.maxResults || 3, 5),
+        });
+
+        // Formatuj wyniki dla lepszej czytelności
+        return {
+          count: results.length,
+          results: results.map(r => ({
+            act: {
+              title: r.act.title,
+              address: r.act.displayAddress,
+              announcementDate: r.act.announcementDate,
+              status: r.act.status,
+              entryIntoForce: r.act.entryIntoForce,
+              keywords: r.act.keywords,
+              link: `https://eli.gov.pl/eli/${r.act.publisher}/${r.act.year}/${r.act.pos}/ogl`
+            },
+            textPreview: r.textPreview,
+          })),
+        };
+
+      default:
+        throw new Error(`Unknown tool: ${toolName}`);
+    }
+  } catch (error) {
+    console.error(`❌ ELI Tool error (${toolName}):`, error);
+    throw error;
+  }
+}
 
 /**
  * Wykrywa temat prawny na podstawie pytania użytkownika i zwraca odpowiedni kontekst
@@ -166,10 +373,39 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
+    // Inicjalizuj klienta Anthropic
+    const anthropic = new Anthropic({
+      apiKey: ANTHROPIC_API_KEY,
+    });
+
     // Wykryj kontekst prawny na podstawie pytania
     const detectedLegalContext = detectLegalContext(message);
 
     let systemPrompt = `Jesteś profesjonalnym asystentem prawnym specjalizującym się w polskim prawie. Udzielasz merytorycznych, szczegółowych odpowiedzi z konkretnymi podstawami prawnymi.
+
+🔧 DOSTĘPNE NARZĘDZIA:
+
+Masz dostęp do oficjalnej bazy aktów prawnych (ELI API - Dziennik Ustaw i Monitor Polski) przez następujące narzędzia:
+1. **smart_act_search** - PREFEROWANE: Inteligentne wyszukiwanie aktów z opcją pobrania fragmentów tekstu
+2. **eli_search_acts** - Szybkie wyszukiwanie po metadanych (wspiera keyword, daty, sortowanie)
+3. **eli_get_act_details** - Szczegóły konkretnego aktu
+4. **eli_get_act_structure** - Struktura/spis treści aktu (tylko HTML)
+
+KIEDY UŻYWAĆ NARZĘDZI:
+✅ ZAWSZE gdy użytkownik pyta o konkretną ustawę, rozporządzenie, kodeks
+✅ ZAWSZE gdy potrzebujesz zweryfikować podstawę prawną
+✅ ZAWSZE gdy pytanie dotyczy "jakie prawo", "jaka ustawa", "na jakiej podstawie"
+✅ Gdy chcesz podać aktualny numer Dz.U. lub link do przepisu
+
+KIEDY NIE UŻYWAĆ:
+❌ Pytania teoretyczne o ogólne zasady (np. "czym jest prawo cywilne")
+❌ Pytania nieobjęte prawem polskim (kuchnia, pogoda, etc.)
+❌ Gdy masz pewność co do przepisu z lokalnej bazy wiedzy
+
+STRATEGIA:
+1. Dla pytań typu "urlop macierzyński", "kodeks pracy" → użyj smart_act_search z includeText=false (szybkie)
+2. Dla pytań o treść przepisu "co mówi art. X" → użyj smart_act_search z includeText=true (dokładne)
+3. Zawsze preferuj dane z narzędzi nad wiedzą wbudowaną gdy dostępne
 
 # WAŻNE: ZAKAZ UDZIELANIA PORAD PRAWNYCH
 
@@ -287,6 +523,119 @@ PYTANIE UŻYTKOWNIKA:
 ${message}`;
     }
 
+    // ================== PHASE 1: Function Calling (non-streaming) ==================
+    // Najpierw daj Claude'owi szansę na użycie narzędzi ELI API
+
+    console.log('🚀 Phase 1: Checking if tools are needed...');
+
+    let messages: Anthropic.Messages.MessageParam[] = [
+      { role: 'user', content: userMessage }
+    ];
+
+    let toolResults: any[] = [];
+    let usedTools = false;
+
+    try {
+      const initialResponse = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514', // Używam Sonnet dla lepszego tool use
+        max_tokens: 4096,
+        system: systemPrompt,
+        tools: ELI_TOOLS,
+        messages: messages,
+        temperature: 0.3,
+      });
+
+      console.log('📊 Initial response stop_reason:', initialResponse.stop_reason);
+
+      // Obsłuż tool calls (max 3 iteracje aby uniknąć nieskończonej pętli)
+      let iterations = 0;
+      const MAX_ITERATIONS = 3;
+      let currentResponse = initialResponse;
+
+      while (currentResponse.stop_reason === 'tool_use' && iterations < MAX_ITERATIONS) {
+        iterations++;
+        usedTools = true;
+        console.log(`🔄 Tool use iteration ${iterations}/${MAX_ITERATIONS}`);
+
+        // Znajdź tool use blocks
+        const toolUseBlocks = currentResponse.content.filter(
+          (block): block is Anthropic.Messages.ToolUseBlock => block.type === 'tool_use'
+        );
+
+        if (toolUseBlocks.length === 0) break;
+
+        console.log(`🔧 Found ${toolUseBlocks.length} tool calls`);
+
+        // Dodaj odpowiedź asystenta do historii
+        messages.push({
+          role: 'assistant',
+          content: currentResponse.content,
+        });
+
+        // Wykonaj wszystkie wywołania narzędzi
+        const toolResultsContent: Anthropic.Messages.ToolResultBlockParam[] = [];
+
+        for (const toolUse of toolUseBlocks) {
+          console.log(`⚙️ Executing tool: ${toolUse.name}`);
+
+          try {
+            const result = await handleELIToolCall(toolUse.name, toolUse.input);
+            toolResults.push({ tool: toolUse.name, result });
+
+            toolResultsContent.push({
+              type: 'tool_result',
+              tool_use_id: toolUse.id,
+              content: JSON.stringify(result, null, 2),
+            });
+
+            console.log(`✅ Tool ${toolUse.name} completed`);
+          } catch (error) {
+            console.error(`❌ Tool ${toolUse.name} failed:`, error);
+
+            toolResultsContent.push({
+              type: 'tool_result',
+              tool_use_id: toolUse.id,
+              content: JSON.stringify({
+                error: error instanceof Error ? error.message : 'Unknown error',
+              }),
+              is_error: true,
+            });
+          }
+        }
+
+        // Dodaj wyniki narzędzi do historii
+        messages.push({
+          role: 'user',
+          content: toolResultsContent,
+        });
+
+        // Kontynuuj konwersację z wynikami narzędzi
+        currentResponse = await anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4096,
+          system: systemPrompt,
+          tools: ELI_TOOLS,
+          messages: messages,
+          temperature: 0.3,
+        });
+
+        console.log(`📊 Iteration ${iterations} stop_reason:`, currentResponse.stop_reason);
+      }
+
+      if (usedTools) {
+        console.log(`✅ Tool phase completed. Used ${toolResults.length} tool calls.`);
+      } else {
+        console.log('ℹ️ No tools were used.');
+      }
+
+    } catch (error) {
+      console.error('❌ Error in tool calling phase:', error);
+      // Kontynuuj bez narzędzi
+    }
+
+    // ================== PHASE 2: Final Streaming Response ==================
+    console.log('🚀 Phase 2: Generating final streaming response...');
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -295,10 +644,11 @@ ${message}`;
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 4096,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }],
+        tools: ELI_TOOLS,
+        messages: messages,
         temperature: 0.3,
         stream: true
       })
