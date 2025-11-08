@@ -402,10 +402,21 @@ KIEDY NIE UŻYWAĆ:
 ❌ Pytania nieobjęte prawem polskim (kuchnia, pogoda, etc.)
 ❌ Gdy masz pewność co do przepisu z lokalnej bazy wiedzy
 
+STRATEGIA WYSZUKIWANIA (WAŻNE!):
+1. API ELI szuka po DOKŁADNYM tytule aktu, nie po semantyce
+2. Używaj KRÓTKICH, KLUCZOWYCH słów z tytułu ustawy
+3. Unikaj długich fraz typu "rozliczenie PIT termin składania zeznania"
+4. Preferuj oficjalne nazwy: "kodeks pracy", "ustawa o podatku dochodowym", "konstytucja"
+
+PRZYKŁADY DOBRYCH QUERIES:
+✅ "kodeks pracy" (nie "urlop macierzyński regulacje")
+✅ "podatek dochodowy osoby fizyczne" (nie "rozliczenie PIT termin")
+✅ "prawa konsumenta" (nie "zwrot towaru sklep online")
+
 STRATEGIA:
-1. Dla pytań typu "urlop macierzyński", "kodeks pracy" → użyj smart_act_search z includeText=false (szybkie)
-2. Dla pytań o treść przepisu "co mówi art. X" → użyj smart_act_search z includeText=true (dokładne)
-3. Zawsze preferuj dane z narzędzi nad wiedzą wbudowaną gdy dostępne
+1. Dla pytań ogólnych → smart_act_search z KRÓTKIMI słowami kluczowymi, includeText=false
+2. Dla pytań o treść → smart_act_search z NAZWĄ USTAWY, includeText=true
+3. Jeśli pierwsze wyszukiwanie daje 0 wyników → UPROŚĆ query do 2-3 słów kluczowych
 
 # WAŻNE: ZAKAZ UDZIELANIA PORAD PRAWNYCH
 
@@ -523,93 +534,26 @@ PYTANIE UŻYTKOWNIKA:
 ${message}`;
     }
 
-    // ================== PHASE 1: Function Calling (non-streaming) ==================
-    // Najpierw daj Claude'owi szansę na użycie narzędzi ELI API
-
-    console.log('🚀 Phase 1: Checking if tools are needed...');
+    // ================== SINGLE PHASE: Tool Use + Streaming Response ==================
+    console.log('🚀 Starting tool-enabled streaming response...');
 
     let messages: Anthropic.Messages.MessageParam[] = [
       { role: 'user', content: userMessage }
     ];
 
-    let toolResults: any[] = [];
     let usedTools = false;
+    let toolCallCount = 0;
+
+    // Pętla tool calling (max 3 iteracje)
+    let iterations = 0;
+    const MAX_ITERATIONS = 3;
+    let currentResponse: Anthropic.Messages.Message | null = null;
 
     try {
-      const initialResponse = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', // Używam Sonnet dla lepszego tool use
-        max_tokens: 4096,
-        system: systemPrompt,
-        tools: ELI_TOOLS,
-        messages: messages,
-        temperature: 0.3,
-      });
-
-      console.log('📊 Initial response stop_reason:', initialResponse.stop_reason);
-
-      // Obsłuż tool calls (max 3 iteracje aby uniknąć nieskończonej pętli)
-      let iterations = 0;
-      const MAX_ITERATIONS = 3;
-      let currentResponse = initialResponse;
-
-      while (currentResponse.stop_reason === 'tool_use' && iterations < MAX_ITERATIONS) {
+      while (iterations < MAX_ITERATIONS) {
         iterations++;
-        usedTools = true;
-        console.log(`🔄 Tool use iteration ${iterations}/${MAX_ITERATIONS}`);
+        console.log(`🔄 Iteration ${iterations}/${MAX_ITERATIONS}`);
 
-        // Znajdź tool use blocks
-        const toolUseBlocks = currentResponse.content.filter(
-          (block): block is Anthropic.Messages.ToolUseBlock => block.type === 'tool_use'
-        );
-
-        if (toolUseBlocks.length === 0) break;
-
-        console.log(`🔧 Found ${toolUseBlocks.length} tool calls`);
-
-        // Dodaj odpowiedź asystenta do historii
-        messages.push({
-          role: 'assistant',
-          content: currentResponse.content,
-        });
-
-        // Wykonaj wszystkie wywołania narzędzi
-        const toolResultsContent: Anthropic.Messages.ToolResultBlockParam[] = [];
-
-        for (const toolUse of toolUseBlocks) {
-          console.log(`⚙️ Executing tool: ${toolUse.name}`);
-
-          try {
-            const result = await handleELIToolCall(toolUse.name, toolUse.input);
-            toolResults.push({ tool: toolUse.name, result });
-
-            toolResultsContent.push({
-              type: 'tool_result',
-              tool_use_id: toolUse.id,
-              content: JSON.stringify(result, null, 2),
-            });
-
-            console.log(`✅ Tool ${toolUse.name} completed`);
-          } catch (error) {
-            console.error(`❌ Tool ${toolUse.name} failed:`, error);
-
-            toolResultsContent.push({
-              type: 'tool_result',
-              tool_use_id: toolUse.id,
-              content: JSON.stringify({
-                error: error instanceof Error ? error.message : 'Unknown error',
-              }),
-              is_error: true,
-            });
-          }
-        }
-
-        // Dodaj wyniki narzędzi do historii
-        messages.push({
-          role: 'user',
-          content: toolResultsContent,
-        });
-
-        // Kontynuuj konwersację z wynikami narzędzi
         currentResponse = await anthropic.messages.create({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 4096,
@@ -619,22 +563,93 @@ ${message}`;
           temperature: 0.3,
         });
 
-        console.log(`📊 Iteration ${iterations} stop_reason:`, currentResponse.stop_reason);
+        console.log(`📊 Response stop_reason: ${currentResponse.stop_reason}`);
+
+        // Jeśli Claude skończył (end_turn) - przerwij pętlę
+        if (currentResponse.stop_reason === 'end_turn' || currentResponse.stop_reason === 'max_tokens') {
+          console.log('✅ Claude finished generating response');
+          break;
+        }
+
+        // Jeśli Claude chce użyć narzędzi
+        if (currentResponse.stop_reason === 'tool_use') {
+          usedTools = true;
+
+          const toolUseBlocks = currentResponse.content.filter(
+            (block): block is Anthropic.Messages.ToolUseBlock => block.type === 'tool_use'
+          );
+
+          if (toolUseBlocks.length === 0) {
+            console.log('⚠️ tool_use stop_reason but no tool blocks found');
+            break;
+          }
+
+          console.log(`🔧 Found ${toolUseBlocks.length} tool call(s)`);
+
+          // Dodaj odpowiedź Claude'a do historii
+          messages.push({
+            role: 'assistant',
+            content: currentResponse.content,
+          });
+
+          // Wykonaj wywołania narzędzi
+          const toolResultsContent: Anthropic.Messages.ToolResultBlockParam[] = [];
+
+          for (const toolUse of toolUseBlocks) {
+            toolCallCount++;
+            console.log(`⚙️ Executing tool: ${toolUse.name}`, toolUse.input);
+
+            try {
+              const result = await handleELIToolCall(toolUse.name, toolUse.input);
+
+              toolResultsContent.push({
+                type: 'tool_result',
+                tool_use_id: toolUse.id,
+                content: JSON.stringify(result, null, 2),
+              });
+
+              console.log(`✅ Tool ${toolUse.name} completed`);
+            } catch (error) {
+              console.error(`❌ Tool ${toolUse.name} failed:`, error);
+
+              toolResultsContent.push({
+                type: 'tool_result',
+                tool_use_id: toolUse.id,
+                content: JSON.stringify({
+                  error: error instanceof Error ? error.message : 'Unknown error',
+                }),
+                is_error: true,
+              });
+            }
+          }
+
+          // Dodaj wyniki narzędzi do historii
+          messages.push({
+            role: 'user',
+            content: toolResultsContent,
+          });
+
+          // Kontynuuj pętlę - Claude dostanie wyniki i może użyć więcej narzędzi lub odpowiedzieć
+          continue;
+        }
+
+        // Jeśli inny stop_reason - przerwij
+        console.log(`⚠️ Unexpected stop_reason: ${currentResponse.stop_reason}`);
+        break;
       }
 
       if (usedTools) {
-        console.log(`✅ Tool phase completed. Used ${toolResults.length} tool calls.`);
-      } else {
-        console.log('ℹ️ No tools were used.');
+        console.log(`✅ Tool phase completed. Made ${toolCallCount} tool call(s).`);
       }
 
     } catch (error) {
       console.error('❌ Error in tool calling phase:', error);
-      // Kontynuuj bez narzędzi
+      // Jeśli error - spróbuj odpowiedzieć bez narzędzi
     }
 
-    // ================== PHASE 2: Final Streaming Response ==================
-    console.log('🚀 Phase 2: Generating final streaming response...');
+    // ================== STREAMING RESPONSE ==================
+    // Teraz streamuj finalną odpowiedź (BEZ tools - żeby Claude po prostu odpowiedział)
+    console.log('🚀 Streaming final response...');
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -647,7 +662,7 @@ ${message}`;
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4096,
         system: systemPrompt,
-        tools: ELI_TOOLS,
+        // NIE przekazujemy tools - Claude ma po prostu odpowiedzieć na podstawie zebranych danych
         messages: messages,
         temperature: 0.3,
         stream: true
