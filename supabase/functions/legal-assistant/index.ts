@@ -832,9 +832,9 @@ ${message}`;
       });
     }
 
-    // Jeśli mamy finalResponseText (z end_turn), zwróć go bezpośrednio
+    // Jeśli mamy finalResponseText (z end_turn), zwróć go jako SSE stream
     if (finalResponseText) {
-      console.log('📤 Returning pre-generated response');
+      console.log('📤 Returning pre-generated response as SSE stream');
 
       // Zapisz do bazy
       try {
@@ -859,11 +859,38 @@ ${message}`;
         console.error('Failed to save to database:', dbError);
       }
 
-      // Zwróć jako JSON (nie stream, bo już mamy pełną odpowiedź)
-      return new Response(JSON.stringify({ answer: finalResponseText }), {
+      // Zwróć jako SSE stream (symulowany)
+      const encoder = new TextEncoder();
+
+      const stream = new ReadableStream({
+        start(controller) {
+          // Format SSE: wysyłamy tekst w kawałkach jak prawdziwy stream
+          const chunkSize = 100; // Wysyłaj po ~100 znaków
+
+          for (let i = 0; i < finalResponseText.length; i += chunkSize) {
+            const chunk = finalResponseText.substring(i, i + chunkSize);
+
+            // Format SSE event
+            const sseEvent = `data: ${JSON.stringify({
+              type: 'content_block_delta',
+              delta: { type: 'text_delta', text: chunk }
+            })}\n\n`;
+
+            controller.enqueue(encoder.encode(sseEvent));
+          }
+
+          // Wyślij message_stop event
+          controller.enqueue(encoder.encode('data: {"type":"message_stop"}\n\n'));
+          controller.close();
+        }
+      });
+
+      return new Response(stream, {
         headers: {
           ...corsHeaders,
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
         }
       });
     }
