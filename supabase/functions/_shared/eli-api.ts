@@ -10,13 +10,38 @@ const ELI_API_BASE = 'https://api.sejm.gov.pl/eli';
 // ================== INTERFACES ==================
 
 export interface ELISearchParams {
+  // Podstawowe parametry
   title?: string;
   publisher?: string;
   year?: number;
+  volume?: number;
+  position?: number;
   type?: string;
-  statusInForce?: boolean;
+
+  // Status i słowa kluczowe
+  inForce?: boolean; // POPRAWIONE: było statusInForce
+  keyword?: string; // Słowa kluczowe oddzielone przecinkiem
+
+  // Daty wydania
+  date?: string; // Format: yyyy-MM-dd
+  dateFrom?: string;
+  dateTo?: string;
+
+  // Daty wejścia w życie
+  dateEffect?: string;
+  dateEffectFrom?: string;
+  dateEffectTo?: string;
+
+  // Daty publikacji
+  pubDate?: string;
+  pubDateFrom?: string;
+  pubDateTo?: string;
+
+  // Paginacja i sortowanie
   limit?: number;
   offset?: number;
+  sortBy?: string; // Kolumna do sortowania
+  sortDir?: 'asc' | 'desc'; // Kierunek sortowania
 }
 
 export interface ELIAct {
@@ -67,13 +92,38 @@ export async function eliSearchActs(
 ): Promise<ELISearchResult> {
   const queryParams = new URLSearchParams();
 
+  // Podstawowe parametry
   if (params.title) queryParams.set('title', params.title);
   if (params.publisher) queryParams.set('publisher', params.publisher);
   if (params.year) queryParams.set('year', params.year.toString());
+  if (params.volume) queryParams.set('volume', params.volume.toString());
+  if (params.position) queryParams.set('position', params.position.toString());
   if (params.type) queryParams.set('type', params.type);
-  if (params.statusInForce) queryParams.set('statusInForce', '1');
+
+  // Status i słowa kluczowe (POPRAWIONE!)
+  if (params.inForce) queryParams.set('inForce', '1');
+  if (params.keyword) queryParams.set('keyword', params.keyword);
+
+  // Daty wydania
+  if (params.date) queryParams.set('date', params.date);
+  if (params.dateFrom) queryParams.set('dateFrom', params.dateFrom);
+  if (params.dateTo) queryParams.set('dateTo', params.dateTo);
+
+  // Daty wejścia w życie
+  if (params.dateEffect) queryParams.set('dateEffect', params.dateEffect);
+  if (params.dateEffectFrom) queryParams.set('dateEffectFrom', params.dateEffectFrom);
+  if (params.dateEffectTo) queryParams.set('dateEffectTo', params.dateEffectTo);
+
+  // Daty publikacji
+  if (params.pubDate) queryParams.set('pubDate', params.pubDate);
+  if (params.pubDateFrom) queryParams.set('pubDateFrom', params.pubDateFrom);
+  if (params.pubDateTo) queryParams.set('pubDateTo', params.pubDateTo);
+
+  // Paginacja i sortowanie
   if (params.limit) queryParams.set('limit', params.limit.toString());
   if (params.offset) queryParams.set('offset', params.offset.toString());
+  if (params.sortBy) queryParams.set('sortBy', params.sortBy);
+  if (params.sortDir) queryParams.set('sortDir', params.sortDir);
 
   const url = `${ELI_API_BASE}/acts/search?${queryParams}`;
   console.log('🔍 ELI Search:', url);
@@ -186,6 +236,30 @@ export async function eliGetActReferences(
 ): Promise<any> {
   const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/references`;
   console.log('🔗 ELI References:', url);
+
+  const response = await fetch(url, {
+    headers: { 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(10000)
+  });
+
+  if (!response.ok) {
+    throw new Error(`ELI API error: ${response.status} ${response.statusText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Pobierz strukturę aktu (dla HTML)
+ * Przydatne do inteligentnego wybierania fragmentów i pokazywania organizacji aktu
+ */
+export async function eliGetActStructure(
+  publisher: string,
+  year: number,
+  position: number
+): Promise<any> {
+  const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/struct`;
+  console.log('📋 ELI Structure:', url);
 
   const response = await fetch(url, {
     headers: { 'Accept': 'application/json' },

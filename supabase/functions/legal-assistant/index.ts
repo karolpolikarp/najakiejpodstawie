@@ -7,6 +7,7 @@ import { LEGAL_CONTEXT, LEGAL_TOPICS } from './legal-context.ts';
 import {
   eliSearchActs,
   eliGetActDetails,
+  eliGetActStructure,
   smartActSearch,
   formatActForPrompt,
   needsFullText,
@@ -107,6 +108,40 @@ Użyj tego narzędzia gdy:
     },
   },
   {
+    name: 'eli_get_act_structure',
+    description: `Pobierz hierarchiczną strukturę aktu prawnego (spis treści).
+
+Zwraca organizację aktu w formie drzewa:
+- Księgi, tytuły, działy, rozdziały, oddziały
+- Artykuły, paragrafy, ustępy, punkty, litery
+
+Użyj tego narzędzia gdy:
+- Użytkownik pyta o strukturę/organizację aktu
+- Chcesz pokazać jakie części zawiera ustawa
+- Potrzebujesz nawigować po konkretnych fragmentach aktu
+
+UWAGA: Działa tylko dla aktów dostępnych w formacie HTML.`,
+    input_schema: {
+      type: 'object',
+      properties: {
+        publisher: {
+          type: 'string',
+          description: 'Kod wydawcy: "DU" dla Dziennika Ustaw lub "MP" dla Monitora Polskiego',
+          enum: ['DU', 'MP'],
+        },
+        year: {
+          type: 'number',
+          description: 'Rok wydania aktu',
+        },
+        position: {
+          type: 'number',
+          description: 'Numer pozycji w dzienniku',
+        },
+      },
+      required: ['publisher', 'year', 'position'],
+    },
+  },
+  {
     name: 'smart_act_search',
     description: `Inteligentne wyszukiwanie aktów prawnych - łączy wyszukiwanie metadanych z opcjonalnym pobraniem fragmentów tekstu.
 
@@ -157,6 +192,13 @@ async function handleELIToolCall(toolName: string, toolInput: any): Promise<any>
 
       case 'eli_get_act_details':
         return await eliGetActDetails(
+          toolInput.publisher,
+          toolInput.year,
+          toolInput.position
+        );
+
+      case 'eli_get_act_structure':
+        return await eliGetActStructure(
           toolInput.publisher,
           toolInput.year,
           toolInput.position
@@ -345,8 +387,9 @@ serve(async (req) => {
 
 Masz dostęp do oficjalnej bazy aktów prawnych (ELI API - Dziennik Ustaw i Monitor Polski) przez następujące narzędzia:
 1. **smart_act_search** - PREFEROWANE: Inteligentne wyszukiwanie aktów z opcją pobrania fragmentów tekstu
-2. **eli_search_acts** - Szybkie wyszukiwanie po metadanych
+2. **eli_search_acts** - Szybkie wyszukiwanie po metadanych (wspiera keyword, daty, sortowanie)
 3. **eli_get_act_details** - Szczegóły konkretnego aktu
+4. **eli_get_act_structure** - Struktura/spis treści aktu (tylko HTML)
 
 KIEDY UŻYWAĆ NARZĘDZI:
 ✅ ZAWSZE gdy użytkownik pyta o konkretną ustawę, rozporządzenie, kodeks
