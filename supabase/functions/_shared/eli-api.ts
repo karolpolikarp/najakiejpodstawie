@@ -129,7 +129,11 @@ export async function eliSearchActs(
   console.log('🔍 ELI Search:', url);
 
   const response = await fetch(url, {
-    headers: { 'Accept': 'application/json' },
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0; +https://najakiejpodstawie.pl)',
+      'Accept-Language': 'pl-PL,pl;q=0.9',
+    },
     signal: AbortSignal.timeout(10000)
   });
 
@@ -156,7 +160,11 @@ export async function eliGetActDetails(
   console.log('📄 ELI Details:', url);
 
   const response = await fetch(url, {
-    headers: { 'Accept': 'application/json' },
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0; +https://najakiejpodstawie.pl)',
+      'Accept-Language': 'pl-PL,pl;q=0.9',
+    },
     signal: AbortSignal.timeout(10000)
   });
 
@@ -184,7 +192,9 @@ export async function eliGetActText(
 
   const response = await fetch(url, {
     headers: {
-      'Accept': format === 'html' ? 'text/html' : 'application/pdf'
+      'Accept': format === 'html' ? 'text/html' : 'application/pdf',
+      'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0; +https://najakiejpodstawie.pl)',
+      'Accept-Language': 'pl-PL,pl;q=0.9',
     },
     // Większy timeout dla tekstów
     signal: AbortSignal.timeout(30000)
@@ -214,7 +224,11 @@ export async function eliGetActFragment(
   console.log('✂️ ELI Fragment:', url);
 
   const response = await fetch(url, {
-    headers: { 'Accept': 'text/html' },
+    headers: {
+      'Accept': 'text/html',
+      'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0; +https://najakiejpodstawie.pl)',
+      'Accept-Language': 'pl-PL,pl;q=0.9',
+    },
     signal: AbortSignal.timeout(10000)
   });
 
@@ -238,7 +252,11 @@ export async function eliGetActReferences(
   console.log('🔗 ELI References:', url);
 
   const response = await fetch(url, {
-    headers: { 'Accept': 'application/json' },
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0; +https://najakiejpodstawie.pl)',
+      'Accept-Language': 'pl-PL,pl;q=0.9',
+    },
     signal: AbortSignal.timeout(10000)
   });
 
@@ -262,7 +280,11 @@ export async function eliGetActStructure(
   console.log('📋 ELI Structure:', url);
 
   const response = await fetch(url, {
-    headers: { 'Accept': 'application/json' },
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0; +https://najakiejpodstawie.pl)',
+      'Accept-Language': 'pl-PL,pl;q=0.9',
+    },
     signal: AbortSignal.timeout(10000)
   });
 
