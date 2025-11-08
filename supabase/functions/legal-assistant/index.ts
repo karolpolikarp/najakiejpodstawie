@@ -651,77 +651,102 @@ ${message}`;
     }
 
     // ================== STREAMING RESPONSE ==================
-    // Teraz streamuj finalną odpowiedź (BEZ tools - żeby Claude po prostu odpowiedział)
-    console.log('🚀 Streaming final response...');
+    console.log('🚀 Preparing final response...');
 
-    // Sprawdź rozmiar context przed streamingiem
-    const contextSize = JSON.stringify(messages).length;
-    console.log(`📊 Context size: ${contextSize} chars, ${messages.length} messages`);
+    // Sprawdź czy Claude już wygenerował odpowiedź (end_turn w pętli)
+    let finalResponseText = '';
 
-    if (contextSize > 180000) { // ~180KB to bezpieczny limit
-      console.warn('⚠️ Context size is large, may cause issues');
-    }
+    if (currentResponse && currentResponse.stop_reason === 'end_turn') {
+      // Claude już ma odpowiedź - użyj jej bezpośrednio!
+      console.log('✅ Using response from tool phase (already generated)');
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
-        system: systemPrompt,
-        // NIE przekazujemy tools - Claude ma po prostu odpowiedzieć na podstawie zebranych danych
-        messages: messages,
-        temperature: 0.3,
-        stream: true
-      })
-    });
+      const textBlocks = currentResponse.content.filter(
+        (block): block is Anthropic.Messages.TextBlock => block.type === 'text'
+      );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Anthropic API error:', response.status, errorText);
+      finalResponseText = textBlocks.map(block => block.text).join('\n');
+      console.log(`📝 Final response length: ${finalResponseText.length} chars`);
 
-      if (response.status === 429) {
-        return new Response(JSON.stringify({
-          error: 'Osiągnięto limit zapytań. Spróbuj ponownie za chwilę.'
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    } else {
+      // Claude nie ma jeszcze odpowiedzi - streamuj nową
+      console.log('🔄 Generating new streaming response...');
+
+      // Sprawdź rozmiar context
+      const contextSize = JSON.stringify(messages).length;
+      console.log(`📊 Context size: ${contextSize} chars, ${messages.length} messages`);
+
+      if (contextSize > 180000) {
+        console.warn('⚠️ Context size is large, may cause issues');
+      }
+
+      // Dodaj prośbę o odpowiedź jeśli mamy tool results ale brak end_turn
+      if (usedTools && messages.length > 1) {
+        messages.push({
+          role: 'user',
+          content: 'Na podstawie powyższych informacji z wyszukiwania, udziel odpowiedzi na pytanie użytkownika zgodnie z instrukcjami w system prompt.',
         });
       }
 
-      if (response.status === 401) {
-        return new Response(JSON.stringify({
-          error: 'Nieprawidłowy klucz API. Sprawdź konfigurację.'
-        }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4096,
+          system: systemPrompt,
+          // NIE przekazujemy tools - Claude ma po prostu odpowiedzieć
+          messages: messages,
+          temperature: 0.3,
+          stream: true
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Anthropic API error:', response.status, errorText);
+
+        if (response.status === 429) {
+          return new Response(JSON.stringify({
+            error: 'Osiągnięto limit zapytań. Spróbuj ponownie za chwilę.'
+          }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        if (response.status === 401) {
+          return new Response(JSON.stringify({
+            error: 'Nieprawidłowy klucz API. Sprawdź konfigurację.'
+          }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        throw new Error(`Anthropic API error: ${response.status}`);
       }
 
-      throw new Error(`Anthropic API error: ${response.status}`);
-    }
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Response body is not readable');
+      }
 
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error('Response body is not readable');
-    }
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+      // Track full response for database storage
+      let fullResponse = '';
+      let chunkCount = 0;
+      const startTime = Date.now();
 
-    // Track full response for database storage
-    let fullResponse = '';
-    let chunkCount = 0;
-    const startTime = Date.now();
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          let buffer = '';
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            let buffer = '';
 
           while (true) {
             const { done, value } = await reader.read();
@@ -795,16 +820,56 @@ ${message}`;
           controller.error(error);
         }
       }
-    });
+      });
 
-    return new Response(stream, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
+      return new Response(stream, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
+        }
+      });
+    }
+
+    // Jeśli mamy finalResponseText (z end_turn), zwróć go bezpośrednio
+    if (finalResponseText) {
+      console.log('📤 Returning pre-generated response');
+
+      // Zapisz do bazy
+      try {
+        const responseTime = Date.now() - Date.now(); // będzie 0, ale OK
+        const userAgent = req.headers.get('user-agent') || 'unknown';
+
+        await supabaseClient
+          .from('user_questions')
+          .insert({
+            message_id: messageId || null,
+            question: message,
+            answer: finalResponseText,
+            has_file_context: !!fileContext,
+            file_name: fileContext ? 'document.pdf/docx' : null,
+            session_id: sessionId || null,
+            user_agent: userAgent,
+            response_time_ms: responseTime,
+          });
+
+        console.log('Question and answer saved to database');
+      } catch (dbError) {
+        console.error('Failed to save to database:', dbError);
       }
-    });
+
+      // Zwróć jako JSON (nie stream, bo już mamy pełną odpowiedź)
+      return new Response(JSON.stringify({ answer: finalResponseText }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        }
+      });
+    }
+
+    // Nie powinno się tu znaleźć
+    throw new Error('No response generated');
   } catch (error) {
     console.error('Error in legal-assistant function:', error);
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
