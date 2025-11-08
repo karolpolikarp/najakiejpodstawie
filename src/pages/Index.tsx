@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Scale, Trash2, LogOut, Database, ArrowUp } from 'lucide-react';
+import { Scale, Trash2, LogOut, Database, ArrowUp, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
 import { ExampleQuestions } from '@/components/ExampleQuestions';
@@ -31,6 +32,7 @@ const Index = () => {
   const messagesStartRef = useRef<HTMLDivElement>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [usePremiumModel, setUsePremiumModel] = useState(false);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const shouldAutoScrollRef = useRef(true); // Śledzi czy powinniśmy auto-scrollować
 
@@ -236,6 +238,7 @@ const Index = () => {
           fileContext: attachedFile?.content || null,
           sessionId: sessionId,
           messageId: tempMessageId,
+          usePremiumModel: usePremiumModel,
         }),
       });
 
@@ -616,6 +619,24 @@ const Index = () => {
                   </Button>
                 )}
               </div>
+
+              {/* Premium Model Toggle */}
+              <div className="flex items-center gap-2 mb-2 sm:mb-3 px-1">
+                <Checkbox
+                  id="premium-model"
+                  checked={usePremiumModel}
+                  onCheckedChange={(checked) => setUsePremiumModel(checked === true)}
+                  disabled={isLoading}
+                />
+                <label
+                  htmlFor="premium-model"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span>Tryb Premium (Sonnet 4.5 - wolniejszy, dokładniejszy)</span>
+                </label>
+              </div>
+
               <ChatInput onSend={handleSendMessage} disabled={isLoading} />
 
               {/* AI Disclaimer - AI Act Art. 13 compliance */}
