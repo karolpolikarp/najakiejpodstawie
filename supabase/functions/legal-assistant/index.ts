@@ -414,9 +414,12 @@ PRZYKŁADY DOBRYCH QUERIES:
 ✅ "prawa konsumenta" (nie "zwrot towaru sklep online")
 
 STRATEGIA:
-1. Dla pytań ogólnych → smart_act_search z KRÓTKIMI słowami kluczowymi, includeText=false
-2. Dla pytań o treść → smart_act_search z NAZWĄ USTAWY, includeText=true
+1. Dla pytań ogólnych → smart_act_search z KRÓTKIMI słowami kluczowymi, includeText=false (szybkie)
+2. Dla pytań o KONKRETNĄ treść artykułu → smart_act_search z NAZWĄ USTAWY, includeText=true (wolniejsze)
 3. Jeśli pierwsze wyszukiwanie daje 0 wyników → UPROŚĆ query do 2-3 słów kluczowych
+
+⚠️ WAŻNE: NIE używaj includeText=true dla ogólnych pytań! To spowalnia odpowiedź i może przekroczyć limity.
+Używaj includeText=true TYLKO gdy użytkownik pyta o DOKŁADNĄ treść konkretnego artykułu lub przepisu.
 
 # WAŻNE: ZAKAZ UDZIELANIA PORAD PRAWNYCH
 
@@ -651,6 +654,14 @@ ${message}`;
     // Teraz streamuj finalną odpowiedź (BEZ tools - żeby Claude po prostu odpowiedział)
     console.log('🚀 Streaming final response...');
 
+    // Sprawdź rozmiar context przed streamingiem
+    const contextSize = JSON.stringify(messages).length;
+    console.log(`📊 Context size: ${contextSize} chars, ${messages.length} messages`);
+
+    if (contextSize > 180000) { // ~180KB to bezpieczny limit
+      console.warn('⚠️ Context size is large, may cause issues');
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -704,6 +715,7 @@ ${message}`;
 
     // Track full response for database storage
     let fullResponse = '';
+    let chunkCount = 0;
     const startTime = Date.now();
 
     const stream = new ReadableStream({
@@ -717,6 +729,13 @@ ${message}`;
             if (done) {
               controller.close();
 
+              // Check if we got any response
+              if (fullResponse.length === 0) {
+                console.error('⚠️ WARNING: Empty response from streaming! Chunks received:', chunkCount);
+              } else {
+                console.log(`✅ Streaming completed: ${fullResponse.length} chars, ${chunkCount} chunks`);
+              }
+
               // Save question and answer to database
               try {
                 const responseTime = Date.now() - startTime;
@@ -727,7 +746,7 @@ ${message}`;
                   .insert({
                     message_id: messageId || null,
                     question: message,
-                    answer: fullResponse,
+                    answer: fullResponse || '[BŁĄD: Brak odpowiedzi]',
                     has_file_context: !!fileContext,
                     file_name: fileContext ? 'document.pdf/docx' : null,
                     session_id: sessionId || null,
@@ -743,6 +762,8 @@ ${message}`;
 
               break;
             }
+
+            chunkCount++;
 
             const chunk = decoder.decode(value, { stream: true });
 
