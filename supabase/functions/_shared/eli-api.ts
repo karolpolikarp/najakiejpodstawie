@@ -331,15 +331,18 @@ export async function smartActSearch(
           // Usuń HTML tags dla preview
           const cleanText = fullText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
-          // Pełny tekst (ograniczony do 10000 znaków)
-          text = fullText.length > 10000
-            ? fullText.substring(0, 10000) + '\n\n[...tekst skrócony...]'
+          // WAŻNE: Ogranicz do 3000 znaków aby nie przekroczyć context window
+          const textLimit = 3000;
+          text = fullText.length > textLimit
+            ? fullText.substring(0, textLimit) + '\n\n[...tekst skrócony dla optymalizacji...]'
             : fullText;
 
           // Preview (pierwsze 500 znaków)
           textPreview = cleanText.length > 500
             ? cleanText.substring(0, 500) + '...'
             : cleanText;
+
+          console.log(`📊 Text stats: full=${fullText.length} chars, limited=${text.length} chars, preview=${textPreview.length} chars`);
 
         } catch (error) {
           console.error('❌ Error fetching text:', error);
