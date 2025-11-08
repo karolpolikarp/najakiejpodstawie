@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, memo } from 'react';
 import { toast } from 'sonner';
