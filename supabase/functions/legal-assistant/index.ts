@@ -2,7 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { checkRateLimit } from './rate-limiter.ts';
-import { LEGAL_CONTEXT, LEGAL_TOPICS } from './legal-context.ts';
+import { LEGAL_CONTEXT, LEGAL_TOPICS, type ArticleReference, type LegalTopic } from './legal-context.ts';
 import { enrichWithArticles, type EnrichmentResult } from './eli-tools.ts';
 
 // CORS configuration - restrict to specific domains for security
@@ -30,58 +30,62 @@ const getCorsHeaders = (requestOrigin: string | null) => ({
   'Access-Control-Allow-Credentials': 'true'
 });
 
+interface LegalContextResult {
+  contextText: string;
+  mcpArticles: ArticleReference[];
+}
+
 /**
- * Wykrywa temat prawny na podstawie pytania użytkownika i zwraca odpowiedni kontekst
+ * Wykrywa temat prawny na podstawie pytania użytkownika
+ * Zwraca kontekst tekstowy + artykuły do automatycznego pobrania z MCP
  */
-function detectLegalContext(message: string): string {
+function detectLegalContext(message: string): LegalContextResult {
   const lowerMessage = message.toLowerCase();
-  let detectedContexts: string[] = [];
+  const detectedTopics: LegalTopic[] = [];
+  const allMcpArticles: ArticleReference[] = [];
 
-  // Słowa kluczowe dla różnych tematów prawnych
-  const topicKeywords: Record<string, string[]> = {
-    'urlop': ['urlop', 'wakacje', 'dni wolne'],
-    'wynagrodzenie': ['wynagrodzenie', 'wynagrodzeni', 'pensj', 'wypłat', 'płac', 'zarobki', 'zarobk', 'minimalna'],
-    'wypowiedzenie_umowy_pracy': ['wypowiedzeni', 'zwolnieni', 'rozwiązani'],
-    'zwrot_towaru_online': ['zwrot', 'zwróc', 'odstąpieni', 'sklep internetowy', 'online', '14 dni'],
-    'reklamacja_towaru': ['reklamacj', 'wad', 'gwarancj', 'rękojmi', 'naprawa', 'wymian'],
-    'wypowiedzenie_najmu': ['najem', 'najmu', 'wynajem', 'lokator', 'wynajmując'],
-    'alimenty': ['aliment'],
-    'zniewaga': ['zniewag', 'obelg', 'zniesławi', 'pomówien', 'obraz'],
-    'rodo': ['dan', 'rodo', 'gdpr', 'prywatno', 'przetwarzani'],
-    'spadek': ['spadk', 'dziedziczen', 'testament', 'spadkobierc', 'zachowek'],
-    'umowa_zlecenie': ['zleceni', 'dzieł'],
-    'prawa_autorskie': ['prawa autorskie', 'copyright', 'plagiat', 'utwór', 'autor'],
-    'kupno_sprzedaz': ['kupn', 'kupuj', 'sprzeda', 'akt notarialny'],
-    'mobbing': ['mobbing', 'molestowani', 'nękan', 'dyskryminacj'],
-    'postepowanie_sadowe': ['pozew', 'sąd', 'sądow', 'apelacj', 'wyrok', 'proces']
-  };
+  // Wykryj wszystkie pasujące tematy na podstawie keywords
+  for (const [topicKey, topicData] of Object.entries(LEGAL_CONTEXT)) {
+    const keywords = topicData.keywords || [];
 
-  // Wykryj wszystkie pasujące tematy
-  for (const [topic, keywords] of Object.entries(topicKeywords)) {
-    if (keywords.some(keyword => lowerMessage.includes(keyword))) {
-      detectedContexts.push(topic);
+    // Sprawdź czy którekolwiek słowo kluczowe pasuje
+    const matches = keywords.some(keyword =>
+      lowerMessage.includes(keyword.toLowerCase())
+    );
+
+    if (matches) {
+      console.log(`[CONTEXT] Detected topic: ${topicData.name} (${topicKey})`);
+      detectedTopics.push(topicData);
+
+      // Dodaj artykuły tego tematu do listy do pobrania z MCP
+      allMcpArticles.push(...topicData.mcpArticles);
     }
   }
 
   // Jeśli wykryto tematy, zwróć sformatowany kontekst
-  if (detectedContexts.length > 0) {
+  if (detectedTopics.length > 0) {
     let contextText = '\n\n📚 RELEWANTNA BAZA WIEDZY PRAWNEJ:\n';
 
-    for (const topic of detectedContexts) {
-      const context = LEGAL_CONTEXT[topic as keyof typeof LEGAL_CONTEXT];
-      if (context) {
-        contextText += `\n**${context.name}:**\n`;
-        contextText += `Główne akty prawne: ${context.mainActs.join(', ')}\n`;
-        contextText += `Kluczowe artykuły:\n${context.mainArticles.map(a => `- ${a}`).join('\n')}\n`;
-        contextText += `Powiązane przepisy:\n${context.relatedArticles.map(a => `- ${a}`).join('\n')}\n`;
-        contextText += `Źródło: ${context.source}\n`;
-      }
+    for (const topic of detectedTopics) {
+      contextText += `\n**${topic.name}:**\n`;
+      contextText += `Główne akty prawne: ${topic.mainActs.join(', ')}\n`;
+      contextText += `Kluczowe artykuły:\n${topic.mainArticles.map(a => `- ${a}`).join('\n')}\n`;
+      contextText += `Powiązane przepisy:\n${topic.relatedArticles.map(a => `- ${a}`).join('\n')}\n`;
+      contextText += `Źródło: ${topic.source}\n`;
     }
 
-    return contextText;
+    console.log(`[CONTEXT] Total MCP articles to fetch from topics: ${allMcpArticles.length}`);
+
+    return {
+      contextText,
+      mcpArticles: allMcpArticles
+    };
   }
 
-  return '';
+  return {
+    contextText: '',
+    mcpArticles: []
+  };
 }
 
 serve(async (req) => {
@@ -173,12 +177,15 @@ serve(async (req) => {
 
     console.log(`🤖 Using model: ${selectedModel} (premium: ${!!usePremiumModel})`);
 
-    // Wykryj kontekst prawny na podstawie pytania
-    const detectedLegalContext = detectLegalContext(message);
+    // Wykryj kontekst prawny na podstawie pytania (wykrywa tematy i zwraca artykuły do pobrania)
+    const legalContextResult = detectLegalContext(message);
+    console.log(`[CONTEXT] Detected ${legalContextResult.mcpArticles.length} articles from legal topics`);
 
-    // Pobierz treści artykułów z ELI MCP jeśli pytanie dotyczy konkretnych artykułów
-    console.log('[ELI] Checking for article references in message...');
-    const enrichmentResult = await enrichWithArticles(message);
+    // Pobierz treści artykułów z ELI MCP:
+    // 1. Artykuły z pytania użytkownika (regex: "art 10 kp")
+    // 2. Artykuły z wykrytych tematów (np. "obrona konieczna" → Art. 25 kk)
+    console.log('[ELI] Fetching articles from both user query and detected topics...');
+    const enrichmentResult = await enrichWithArticles(message, legalContextResult.mcpArticles);
     console.log(`[ELI] Enrichment result: ${enrichmentResult.successCount} successful, ${enrichmentResult.failureCount} failed`);
 
     const articleContext = enrichmentResult.context;
@@ -275,7 +282,7 @@ https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827
 
 
 **UWAGA:**
-⚠️ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem.${detectedLegalContext}${articleContext}`;
+⚠️ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem.${legalContextResult.contextText}${articleContext}`;
 
     if (fileContext && typeof fileContext === 'string' && fileContext.length > 0) {
       systemPrompt += `

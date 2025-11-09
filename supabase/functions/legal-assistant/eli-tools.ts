@@ -283,13 +283,46 @@ export interface EnrichmentResult {
 }
 
 /**
+ * Deduplicate articles by actCode + articleNumber
+ */
+function deduplicateArticles(articles: ArticleRequest[]): ArticleRequest[] {
+  const seen = new Set<string>();
+  const unique: ArticleRequest[] = [];
+
+  for (const article of articles) {
+    const key = `${article.actCode}:${article.articleNumber}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(article);
+    }
+  }
+
+  return unique;
+}
+
+/**
  * Main function to detect and fetch articles from user message
+ * Also accepts additional articles from detected legal topics
  * Returns enrichment result with context and status information
  */
-export async function enrichWithArticles(message: string): Promise<EnrichmentResult> {
-  const references = detectArticleReferences(message);
+export async function enrichWithArticles(
+  message: string,
+  additionalArticles: ArticleRequest[] = []
+): Promise<EnrichmentResult> {
+  // Combine articles from:
+  // 1. User query (regex detection: "art 10 kp")
+  const fromQuery = detectArticleReferences(message);
 
-  if (references.length === 0) {
+  // 2. Legal topics (e.g., "obrona konieczna" → Art. 25 kk)
+  const fromTopics = additionalArticles;
+
+  // Merge and deduplicate
+  const allReferences = [...fromQuery, ...fromTopics];
+  const uniqueReferences = deduplicateArticles(allReferences);
+
+  console.log(`[ELI] Articles from query: ${fromQuery.length}, from topics: ${fromTopics.length}, unique: ${uniqueReferences.length}`);
+
+  if (uniqueReferences.length === 0) {
     return {
       context: '',
       hasArticles: false,
@@ -299,10 +332,10 @@ export async function enrichWithArticles(message: string): Promise<EnrichmentRes
     };
   }
 
-  console.log(`[ELI] Attempting to fetch ${references.length} article(s)...`);
+  console.log(`[ELI] Attempting to fetch ${uniqueReferences.length} article(s)...`);
 
   // Fetch all articles in parallel (max 5 to avoid overloading)
-  const limitedReferences = references.slice(0, 5);
+  const limitedReferences = uniqueReferences.slice(0, 5);
   const articlePromises = limitedReferences.map(ref =>
     fetchArticle(ref.actCode, ref.articleNumber)
   );
@@ -332,9 +365,9 @@ export async function enrichWithArticles(message: string): Promise<EnrichmentRes
     );
   }
 
-  if (references.length > 5) {
+  if (uniqueReferences.length > 5) {
     warnings.push(
-      `Wykryto ${references.length} artykułów, ale pobrano tylko 5 pierwszych.`
+      `Wykryto ${uniqueReferences.length} artykułów, ale pobrano tylko 5 pierwszych.`
     );
   }
 
