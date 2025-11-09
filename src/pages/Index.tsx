@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Scale, Trash2, LogOut, Database, ArrowUp, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatInput } from '@/components/ChatInput';
 import { ExampleQuestions } from '@/components/ExampleQuestions';
@@ -26,6 +27,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const PREMIUM_PASSWORD = 'power';
+const PREMIUM_KEY = 'premium_unlocked';
+
 const Index = () => {
   const { messages, isLoading, addMessage, updateMessageContent, removeMessage, clearMessages, setLoading, attachedFile, setAttachedFile, setMessageFeedback } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,6 +37,9 @@ const Index = () => {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [usePremiumModel, setUsePremiumModel] = useState(false);
+  const [showPremiumDialog, setShowPremiumDialog] = useState(false);
+  const [premiumPassword, setPremiumPassword] = useState('');
+  const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const shouldAutoScrollRef = useRef(true); // Śledzi czy powinniśmy auto-scrollować
 
@@ -42,6 +49,42 @@ const Index = () => {
 
   const scrollToTop = () => {
     messagesStartRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Sprawdź czy premium jest odblokowany przy starcie
+  useEffect(() => {
+    const unlocked = localStorage.getItem(PREMIUM_KEY) === 'true';
+    setIsPremiumUnlocked(unlocked);
+  }, []);
+
+  // Handler dla zmiany checkboxa premium
+  const handlePremiumToggle = (checked: boolean) => {
+    if (checked) {
+      // Jeśli zaznaczamy i nie mamy odblokowanego - pokaż dialog
+      if (!isPremiumUnlocked) {
+        setShowPremiumDialog(true);
+        return;
+      }
+      setUsePremiumModel(true);
+    } else {
+      setUsePremiumModel(false);
+    }
+  };
+
+  // Handler dla wprowadzenia hasła premium
+  const handlePremiumPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (premiumPassword === PREMIUM_PASSWORD) {
+      localStorage.setItem(PREMIUM_KEY, 'true');
+      setIsPremiumUnlocked(true);
+      setUsePremiumModel(true);
+      setShowPremiumDialog(false);
+      setPremiumPassword('');
+      toast.success('Tryb Premium odblokowany!');
+    } else {
+      toast.error('Nieprawidłowe hasło');
+      setPremiumPassword('');
+    }
   };
 
   // Sprawdź czy użytkownik jest blisko dołu strony
@@ -625,7 +668,7 @@ const Index = () => {
                 <Checkbox
                   id="premium-model"
                   checked={usePremiumModel}
-                  onCheckedChange={(checked) => setUsePremiumModel(checked === true)}
+                  onCheckedChange={handlePremiumToggle}
                   disabled={isLoading}
                 />
                 <label
@@ -633,7 +676,7 @@ const Index = () => {
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
                 >
                   <Sparkles className="h-4 w-4 text-primary" />
-                  <span>Tryb Premium (Sonnet 4.5 - wolniejszy, dokładniejszy)</span>
+                  <span>Tryb Premium (Sonnet 4.5 - wolniejszy, dokładniejszy) {isPremiumUnlocked && '🔓'}</span>
                 </label>
               </div>
 
@@ -682,6 +725,43 @@ const Index = () => {
               Wyczyść
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Premium Password Dialog */}
+      <AlertDialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Tryb Premium
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Wprowadź hasło aby odblokować tryb Premium z modelem Sonnet 4.5.
+              <br />
+              Sonnet 4.5 jest wolniejszy ale bardziej dokładny i szczegółowy.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <form onSubmit={handlePremiumPassword}>
+            <div className="py-4">
+              <Input
+                type="password"
+                placeholder="Wprowadź hasło..."
+                value={premiumPassword}
+                onChange={(e) => setPremiumPassword(e.target.value)}
+                className="text-center"
+                autoFocus
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPremiumPassword('')}>
+                Anuluj
+              </AlertDialogCancel>
+              <Button type="submit">
+                Odblokuj Premium
+              </Button>
+            </AlertDialogFooter>
+          </form>
         </AlertDialogContent>
       </AlertDialog>
 

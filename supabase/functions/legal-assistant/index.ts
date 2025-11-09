@@ -170,7 +170,7 @@ serve(async (req) => {
     // Wybierz model: Haiku (domyślny, tani) vs Sonnet (premium, droższy)
     const selectedModel = usePremiumModel
       ? 'claude-sonnet-4-20250514'  // Premium: Sonnet 4.5
-      : 'claude-haiku-4-5'; // Domyślny: Haiku 4.5
+      : 'claude-haiku-4-5-20251001'; // Domyślny: Haiku 4.5
 
     console.log(`🤖 Using model: ${selectedModel} (premium: ${!!usePremiumModel})`);
 
