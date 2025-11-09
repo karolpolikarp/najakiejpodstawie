@@ -186,8 +186,9 @@ function validateArticleContent(data: ArticleResponse): { valid: boolean; reason
 
   const text = data.article.text.trim();
 
-  // Check minimum length (should be at least 50 characters for a valid article)
-  if (text.length < 50) {
+  // Check minimum length (should be at least 20 characters for a valid article)
+  // Lowered from 50 to 20 to support shorter articles like Art. 105 KK
+  if (text.length < 20) {
     return { valid: false, reason: `Article text too short (${text.length} chars)` };
   }
 
