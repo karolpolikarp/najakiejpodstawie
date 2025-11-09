@@ -44,14 +44,19 @@ export interface ArticleResponse {
 }
 
 // Supported act codes that can be fetched from ELI MCP server
-const SUPPORTED_ACT_CODES = ['kc', 'kp', 'kk', 'kpk', 'kpc', 'konstytucja'];
+// Updated: November 2025 - dodano PZP, KSH, KKS, OP, PB i ustawę o prawach konsumenta
+const SUPPORTED_ACT_CODES = [
+  'kc', 'kp', 'kk', 'kpk', 'kpc', 'konstytucja',
+  'kks', 'ksh', 'pzp', 'op', 'pb',
+  'ordynacja podatkowa', 'prawo budowlane',
+  'prawo zamówień publicznych', 'prawo zamowien publicznych',
+  'ustawa o prawach konsumenta', 'prawa konsumenta',
+  'kodeks karny skarbowy', 'kodeks spółek handlowych'
+];
 
-// Known but unsupported act codes
+// Known but unsupported act codes (przykłady - większość ustaw jest teraz wspierana)
 const UNSUPPORTED_ACT_INFO: Record<string, string> = {
-  'pzp': 'Prawo zamówień publicznych',
-  'ksh': 'Kodeks spółek handlowych',
-  'ordynacja podatkowa': 'Ordynacja podatkowa',
-  'kks': 'Kodeks karny skarbowy',
+  // Dodaj tutaj inne ustawy w przyszłości
 };
 
 /**
@@ -63,8 +68,8 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
   const references: ArticleRequest[] = [];
 
   // Pattern 1: "art 10 kp", "art. 10 kp", "artykuł 10 kp"
-  // Extended to include PZP and other codes
-  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(kc|kp|kk|kpk|kpc|pzp|ksh|kks|k\.?c\.?|k\.?p\.?|k\.?k\.?|k\.?p\.?k\.?|k\.?p\.?c\.?)/gi;
+  // Extended to include PZP, OP, PB and other codes
+  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(kc|kp|kk|kpk|kpc|pzp|ksh|kks|op|pb|k\.?c\.?|k\.?p\.?|k\.?k\.?|k\.?p\.?k\.?|k\.?p\.?c\.?|k\.?s\.?h\.?|k\.?k\.?s\.?)/gi;
   let match;
   while ((match = pattern1.exec(message)) !== null) {
     const articleNumber = match[1];
@@ -80,12 +85,14 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     else if (codeAbbr === 'pzp') actCode = 'pzp';
     else if (codeAbbr === 'ksh') actCode = 'ksh';
     else if (codeAbbr === 'kks') actCode = 'kks';
+    else if (codeAbbr === 'op') actCode = 'op';
+    else if (codeAbbr === 'pb') actCode = 'pb';
 
     references.push({ actCode, articleNumber });
   }
 
   // Pattern 2: "art 10 kodeks pracy", "artykuł 533 kodeksu cywilnego"
-  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym)/gi;
+  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym|karny skarbowy|karnego skarbowego|spółek handlowych|spolek handlowych)/gi;
   while ((match = pattern2.exec(message)) !== null) {
     const articleNumber = match[1];
     const codeName = match[2].toLowerCase();
@@ -93,7 +100,9 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     let actCode = '';
     if (codeName.startsWith('prac')) actCode = 'kp';
     else if (codeName.startsWith('cywil')) actCode = 'kc';
+    else if (codeName.startsWith('karny skarbowy') || codeName.startsWith('karnego skarbowego')) actCode = 'kks';
     else if (codeName.startsWith('kar')) actCode = 'kk';
+    else if (codeName.startsWith('spółek') || codeName.startsWith('spolek')) actCode = 'ksh';
 
     if (actCode) {
       references.push({ actCode, articleNumber });
@@ -105,6 +114,23 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
   while ((match = pattern3.exec(message)) !== null) {
     const articleNumber = match[1];
     references.push({ actCode: 'konstytucja', articleNumber });
+  }
+
+  // Pattern 4: "art 10 pzp", "art 15 ordynacji podatkowej", "art 20 prawa budowlanego"
+  const pattern4 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:pzp|(?:praw[ao]|ustawy)\s+(?:zamówień publicznych|zamowien publicznych|budowlane|budowlanego)|ordynacj[iae] podatkow[aje]|praw konsumenta)/gi;
+  while ((match = pattern4.exec(message)) !== null) {
+    const articleNumber = match[1];
+    const fullMatch = match[0].toLowerCase();
+
+    let actCode = '';
+    if (fullMatch.includes('zamówień') || fullMatch.includes('zamowien') || fullMatch.includes('pzp')) actCode = 'pzp';
+    else if (fullMatch.includes('ordynacj')) actCode = 'op';
+    else if (fullMatch.includes('budowlan')) actCode = 'pb';
+    else if (fullMatch.includes('konsumenta')) actCode = 'prawa konsumenta';
+
+    if (actCode) {
+      references.push({ actCode, articleNumber });
+    }
   }
 
   console.log(`[ELI] Detected ${references.length} article references:`, references);
