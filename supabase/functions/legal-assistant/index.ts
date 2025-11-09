@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { checkRateLimit } from './rate-limiter.ts';
 import { LEGAL_CONTEXT, LEGAL_TOPICS } from './legal-context.ts';
+import { enrichWithArticles } from './eli-tools.ts';
 
 // CORS configuration - restrict to specific domains for security
 const getAllowedOrigin = (requestOrigin: string | null): string => {
@@ -175,6 +176,13 @@ serve(async (req) => {
     // Wykryj kontekst prawny na podstawie pytania
     const detectedLegalContext = detectLegalContext(message);
 
+    // Pobierz treści artykułów z ELI MCP jeśli pytanie dotyczy konkretnych artykułów
+    console.log('[ELI] Checking for article references in message...');
+    const articleContext = await enrichWithArticles(message);
+    if (articleContext) {
+      console.log('[ELI] Successfully enriched with article context');
+    }
+
     let systemPrompt = `Jesteś profesjonalnym asystentem prawnym specjalizującym się w polskim prawie. Udzielasz merytorycznych, szczegółowych odpowiedzi z konkretnymi podstawami prawnymi.
 
 # WAŻNE: ZAKAZ UDZIELANIA PORAD PRAWNYCH
@@ -267,7 +275,7 @@ https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827
 
 
 **UWAGA:**
-⚠️ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem.${detectedLegalContext}`;
+⚠️ To nie jest porada prawna. W indywidualnych sprawach skonsultuj się z prawnikiem.${detectedLegalContext}${articleContext}`;
 
     if (fileContext && typeof fileContext === 'string' && fileContext.length > 0) {
       systemPrompt += `
