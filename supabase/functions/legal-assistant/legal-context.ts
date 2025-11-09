@@ -1,18 +1,47 @@
 /**
  * Legal Context Knowledge Base
  *
- * This file contains commonly referenced Polish legal provisions organized by topic.
- * Update this file when laws change to ensure the AI assistant provides current information.
+ * This file maps legal topics to relevant articles that should be automatically
+ * fetched from the ELI MCP server to provide up-to-date legal information.
  *
- * Last updated: 2025-11-06
+ * PHILOSOPHY:
+ * - MCP is the PRIMARY source of legal content (always current)
+ * - This file provides topic mapping and context (never outdated)
+ * - mainArticles/relatedArticles are for AI reference (what to mention)
+ * - mcpArticles defines what to automatically fetch from MCP
+ *
+ * Last updated: 2025-11-09
  */
 
-export const LEGAL_CONTEXT = {
+export interface ArticleReference {
+  actCode: string;
+  articleNumber: string;
+}
+
+export interface LegalTopic {
+  name: string;
+  keywords?: string[]; // Alternative phrases to detect this topic
+  mcpArticles: ArticleReference[]; // Articles to auto-fetch from MCP
+  mainActs: string[];
+  mainArticles: string[]; // For AI reference only
+  relatedArticles: string[]; // For AI reference only
+  source: string;
+}
+
+export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
   /**
    * PRAWO PRACY (Labor Law)
    */
   urlop: {
     name: "Urlop wypoczynkowy",
+    keywords: ["urlop", "urlopy", "wakacje", "urlop wypoczynkowy", "dni wolne"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '152' },
+      { actCode: 'kp', articleNumber: '153' },
+      { actCode: 'kp', articleNumber: '154' },
+      { actCode: 'kp', articleNumber: '155' },
+      { actCode: 'kp', articleNumber: '163' }, // urlop na żądanie
+    ],
     mainActs: [
       "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
     ],
@@ -35,6 +64,13 @@ export const LEGAL_CONTEXT = {
 
   wynagrodzenie: {
     name: "Wynagrodzenie za pracę",
+    keywords: ["wynagrodzenie", "pensja", "płaca", "wypłata", "minimalna", "zarobki"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '78' },
+      { actCode: 'kp', articleNumber: '80' },
+      { actCode: 'kp', articleNumber: '85' },
+      { actCode: 'kp', articleNumber: '87' },
+    ],
     mainActs: [
       "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
     ],
@@ -55,6 +91,12 @@ export const LEGAL_CONTEXT = {
 
   wypowiedzenie_umowy_pracy: {
     name: "Wypowiedzenie umowy o pracę",
+    keywords: ["wypowiedzenie", "rozwiązanie umowy", "zwolnienie", "okres wypowiedzenia"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '30' },
+      { actCode: 'kp', articleNumber: '36' },
+      { actCode: 'kp', articleNumber: '38' },
+    ],
     mainActs: [
       "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
     ],
@@ -77,6 +119,10 @@ export const LEGAL_CONTEXT = {
    */
   zwrot_towaru_online: {
     name: "Zwrot towaru kupionego online",
+    keywords: ["zwrot", "odstąpienie", "sklep internetowy", "zakupy online", "14 dni"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '27' }, // Uwaga: to może być błąd - Art. 27 Ustawy o prawach konsumenta
+    ],
     mainActs: [
       "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta"
     ],
@@ -96,6 +142,12 @@ export const LEGAL_CONTEXT = {
 
   reklamacja_towaru: {
     name: "Reklamacja towaru",
+    keywords: ["reklamacja", "wada", "rękojmia", "gwarancja", "zwrot towaru"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '556' },
+      { actCode: 'kc', articleNumber: '560' },
+      { actCode: 'kc', articleNumber: '561' },
+    ],
     mainActs: [
       "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta",
       "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
@@ -118,6 +170,12 @@ export const LEGAL_CONTEXT = {
    */
   wypowiedzenie_najmu: {
     name: "Wypowiedzenie umowy najmu",
+    keywords: ["najem", "wynajem", "wypowiedzenie najmu", "lokator", "właściciel"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '659' },
+      { actCode: 'kc', articleNumber: '673' },
+      { actCode: 'kc', articleNumber: '661' },
+    ],
     mainActs: [
       "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
     ],
@@ -139,6 +197,11 @@ export const LEGAL_CONTEXT = {
    */
   alimenty: {
     name: "Alimenty",
+    keywords: ["alimenty", "alimentacja", "obowiązek alimentacyjny", "dziecko"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '133' }, // Kodeks rodzinny to też 'kc' w kontekście
+      { actCode: 'kc', articleNumber: '135' },
+    ],
     mainActs: [
       "Ustawa z dnia 25 lutego 1964 r. - Kodeks rodzinny i opiekuńczy"
     ],
@@ -160,6 +223,11 @@ export const LEGAL_CONTEXT = {
    */
   zniewaga: {
     name: "Zniewaga",
+    keywords: ["zniewaga", "obraza", "wyzwisko"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '216' },
+      { actCode: 'kk', articleNumber: '212' }, // zniesławienie
+    ],
     mainActs: [
       "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
     ],
@@ -174,11 +242,115 @@ export const LEGAL_CONTEXT = {
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
   },
 
+  obrona_konieczna: {
+    name: "Obrona konieczna",
+    keywords: ["obrona konieczna", "przekroczenie granic", "atak", "odpieranie", "samoobrona"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '25' },
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 25 - prawo do obrony koniecznej i przekroczenie granic obrony"
+    ],
+    relatedArticles: [
+      "Art. 26 - stan wyższej konieczności",
+      "Art. 1 § 1 - zasada nullum crimen sine lege"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  kradziez: {
+    name: "Kradzież",
+    keywords: ["kradzież", "zabór", "mienie", "skradziono"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '278' },
+      { actCode: 'kk', articleNumber: '279' }, // kradzież z włamaniem
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 278 - kradzież",
+      "Art. 279 - kradzież z włamaniem"
+    ],
+    relatedArticles: [
+      "Art. 275 - przywłaszczenie",
+      "Art. 282 - kradzież rozbójnicza",
+      "Art. 284 - paserstwo"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  rozboj: {
+    name: "Rozbój",
+    keywords: ["rozbój", "napad", "przemoc", "zabór mienia"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '280' },
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 280 - rozbój"
+    ],
+    relatedArticles: [
+      "Art. 282 - kradzież rozbójnicza",
+      "Art. 281 - wymuszenie rozbójnicze"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  oszustwo: {
+    name: "Oszustwo",
+    keywords: ["oszustwo", "wyłudzenie", "wprowadzenie w błąd", "oszukano"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '286' },
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 286 - oszustwo"
+    ],
+    relatedArticles: [
+      "Art. 287 - oszustwo komputerowe",
+      "Art. 297 - oszustwo kredytowe"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  pobicie: {
+    name: "Pobicie i uszkodzenie ciała",
+    keywords: ["pobicie", "bójka", "uszkodzenie ciała", "naruszenie nietykalności"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '157' },
+      { actCode: 'kk', articleNumber: '158' },
+      { actCode: 'kk', articleNumber: '217' }, // naruszenie nietykalności
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 157 - ciężki uszczerbek na zdrowiu",
+      "Art. 158 - średni lub lekki uszczerbek",
+      "Art. 217 - naruszenie nietykalności cielesnej"
+    ],
+    relatedArticles: [
+      "Art. 159 - pobicie lub naruszenie nietykalności",
+      "Art. 160 - spowodowanie lekkiego uszczerbku w afekcie"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
   /**
    * OCHRONA DANYCH OSOBOWYCH (Data Protection)
    */
   rodo: {
     name: "Ochrona danych osobowych (RODO)",
+    keywords: ["rodo", "dane osobowe", "ochrona danych", "przetwarzanie", "zgoda"],
+    mcpArticles: [], // RODO to rozporządzenie UE - może nie być w polskim MCP
     mainActs: [
       "Rozporządzenie Parlamentu Europejskiego i Rady (UE) 2016/679 (RODO)",
       "Ustawa z dnia 10 maja 2018 r. o ochronie danych osobowych"
@@ -204,6 +376,13 @@ export const LEGAL_CONTEXT = {
    */
   spadek: {
     name: "Prawo spadkowe",
+    keywords: ["spadek", "testament", "dziedziczenie", "zachowek", "spadkobierca"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '922' },
+      { actCode: 'kc', articleNumber: '924' },
+      { actCode: 'kc', articleNumber: '931' },
+      { actCode: 'kc', articleNumber: '1011' }, // zachowek
+    ],
     mainActs: [
       "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
     ],
@@ -228,6 +407,11 @@ export const LEGAL_CONTEXT = {
    */
   umowa_zlecenie: {
     name: "Umowa zlecenia i umowa o dzieło",
+    keywords: ["zlecenie", "dzieło", "umowa cywilnoprawna", "kontrakt"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '734' },
+      { actCode: 'kc', articleNumber: '627' },
+    ],
     mainActs: [
       "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
     ],
@@ -250,6 +434,8 @@ export const LEGAL_CONTEXT = {
    */
   prawa_autorskie: {
     name: "Prawa autorskie",
+    keywords: ["prawa autorskie", "copyright", "plagiat", "prawo autora"],
+    mcpArticles: [], // Specjalna ustawa - może nie być w MCP
     mainActs: [
       "Ustawa z dnia 4 lutego 1994 r. o prawie autorskim i prawach pokrewnych"
     ],
@@ -274,6 +460,11 @@ export const LEGAL_CONTEXT = {
    */
   kupno_sprzedaz: {
     name: "Umowa kupna-sprzedaży",
+    keywords: ["kupno", "sprzedaż", "kupno-sprzedaż", "umowa sprzedaży"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '535' },
+      { actCode: 'kc', articleNumber: '556' },
+    ],
     mainActs: [
       "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
     ],
@@ -296,6 +487,10 @@ export const LEGAL_CONTEXT = {
    */
   mobbing: {
     name: "Mobbing w miejscu pracy",
+    keywords: ["mobbing", "molestowanie", "nękanie w pracy", "przemoc psychiczna"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '943' },
+    ],
     mainActs: [
       "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
     ],
@@ -316,6 +511,11 @@ export const LEGAL_CONTEXT = {
    */
   postepowanie_sadowe: {
     name: "Postępowanie sądowe cywilne",
+    keywords: ["pozew", "sąd", "proces", "apelacja", "postępowanie"],
+    mcpArticles: [
+      { actCode: 'kpc', articleNumber: '1' },
+      { actCode: 'kpc', articleNumber: '126' },
+    ],
     mainActs: [
       "Ustawa z dnia 17 listopada 1964 r. - Kodeks postępowania cywilnego"
     ],
@@ -344,6 +544,6 @@ export const LEGAL_TOPICS = Object.keys(LEGAL_CONTEXT);
 /**
  * Helper function to get legal context for a specific topic
  */
-export function getLegalContext(topic: string) {
+export function getLegalContext(topic: string): LegalTopic | undefined {
   return LEGAL_CONTEXT[topic as keyof typeof LEGAL_CONTEXT];
 }
