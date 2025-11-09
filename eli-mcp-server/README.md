@@ -88,12 +88,12 @@ Wyszukaj akty prawne po słowach kluczowych.
   "totalCount": 145,
   "acts": [
     {
-      "eli": "DU/1964/16",
+      "eli": "DU/1964/93",
       "title": "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny",
       "displayAddress": "Dz.U. 1964 Nr 16 poz. 93",
       "publisher": "DU",
       "year": 1964,
-      "position": 16,
+      "position": 93,
       "status": "obowiązujący",
       "hasHTML": true,
       "hasPDF": true
@@ -129,7 +129,7 @@ Pobierz konkretny artykuł z aktu prawnego.
   "act": {
     "title": "Kodeks cywilny",
     "displayAddress": "Dz.U. 1964 Nr 16 poz. 93",
-    "eli": "DU/1964/16"
+    "eli": "DU/1964/93"
   },
   "article": {
     "number": "533",

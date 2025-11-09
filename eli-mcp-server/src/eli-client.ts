@@ -104,8 +104,10 @@ export class ELIClient {
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
       throw new Error(
-        `ELI API error: ${response.status} ${response.statusText}`,
+        `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
       );
     }
 
@@ -138,8 +140,10 @@ export class ELIClient {
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
       throw new Error(
-        `ELI API error: ${response.status} ${response.statusText}`,
+        `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
       );
     }
 
@@ -173,8 +177,10 @@ export class ELIClient {
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
       throw new Error(
-        `ELI API error: ${response.status} ${response.statusText}`,
+        `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
       );
     }
 
@@ -203,8 +209,10 @@ export class ELIClient {
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
       throw new Error(
-        `ELI API error: ${response.status} ${response.statusText}`,
+        `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
       );
     }
 

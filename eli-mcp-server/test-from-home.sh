@@ -45,10 +45,10 @@ fi
 echo ""
 echo ""
 
-# Test 3: Specific act (Kodeks cywilny)
-echo "Test 3: GET /eli/acts/DU/1964/16 (Kodeks cywilny)"
+# Test 3: Specific act (Kodeks cywilny - corrected position)
+echo "Test 3: GET /eli/acts/DU/1964/93 (Kodeks cywilny)"
 echo "-------------------------------------------------"
-response=$(curl -s -o /tmp/eli-test3.txt -w "%{http_code}" https://api.sejm.gov.pl/eli/acts/DU/1964/16)
+response=$(curl -s -o /tmp/eli-test3.txt -w "%{http_code}" https://api.sejm.gov.pl/eli/acts/DU/1964/93)
 echo "Status code: $response"
 if [ "$response" = "200" ]; then
     echo "✅ SUCCESS - Act details work!"
@@ -61,10 +61,10 @@ fi
 echo ""
 echo ""
 
-# Test 4: HTML text
-echo "Test 4: GET /eli/acts/DU/1964/16/text.html (KC - HTML)"
+# Test 4: HTML text (corrected position)
+echo "Test 4: GET /eli/acts/DU/1964/93/text.html (KC - HTML)"
 echo "------------------------------------------------------"
-response=$(curl -s -o /tmp/eli-test4.txt -w "%{http_code}" https://api.sejm.gov.pl/eli/acts/DU/1964/16/text.html)
+response=$(curl -s -o /tmp/eli-test4.txt -w "%{http_code}" https://api.sejm.gov.pl/eli/acts/DU/1964/93/text.html)
 echo "Status code: $response"
 if [ "$response" = "200" ]; then
     size=$(wc -c < /tmp/eli-test4.txt)

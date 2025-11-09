@@ -9,16 +9,17 @@ export class ELITools {
   private client: ELIClient;
 
   // Mapping of common act codes to their official identifiers
+  // Based on correct ELI identifiers from api.sejm.gov.pl
   private ACT_CODES: Record<string, { publisher: string; year: number; position: number; title: string }> = {
-    'kc': { publisher: 'DU', year: 1964, position: 16, title: 'Kodeks cywilny' },
-    'kodeks cywilny': { publisher: 'DU', year: 1964, position: 16, title: 'Kodeks cywilny' },
-    'kp': { publisher: 'DU', year: 1974, position: 24, title: 'Kodeks pracy' },
-    'kodeks pracy': { publisher: 'DU', year: 1974, position: 24, title: 'Kodeks pracy' },
-    'kk': { publisher: 'DU', year: 1997, position: 88, title: 'Kodeks karny' },
-    'kodeks karny': { publisher: 'DU', year: 1997, position: 88, title: 'Kodeks karny' },
-    'kpk': { publisher: 'DU', year: 1997, position: 89, title: 'Kodeks postępowania karnego' },
-    'kpc': { publisher: 'DU', year: 1964, position: 43, title: 'Kodeks postępowania cywilnego' },
-    'konstytucja': { publisher: 'DU', year: 1997, position: 78, title: 'Konstytucja Rzeczypospolitej Polskiej' },
+    'kc': { publisher: 'DU', year: 1964, position: 93, title: 'Kodeks cywilny' },
+    'kodeks cywilny': { publisher: 'DU', year: 1964, position: 93, title: 'Kodeks cywilny' },
+    'kp': { publisher: 'DU', year: 1974, position: 296, title: 'Kodeks pracy' },
+    'kodeks pracy': { publisher: 'DU', year: 1974, position: 296, title: 'Kodeks pracy' },
+    'kk': { publisher: 'DU', year: 1997, position: 553, title: 'Kodeks karny' },
+    'kodeks karny': { publisher: 'DU', year: 1997, position: 553, title: 'Kodeks karny' },
+    'kpk': { publisher: 'DU', year: 1997, position: 555, title: 'Kodeks postępowania karnego' },
+    'kpc': { publisher: 'DU', year: 1964, position: 296, title: 'Kodeks postępowania cywilnego' },
+    'konstytucja': { publisher: 'DU', year: 1997, position: 483, title: 'Konstytucja Rzeczypospolitej Polskiej' },
   };
 
   constructor(client: ELIClient) {
