@@ -208,6 +208,87 @@ function validateArticleContent(data: ArticleResponse): { valid: boolean; reason
 }
 
 /**
+ * Detect Cloudflare Tunnel errors from response text
+ */
+function isCloudflareTunnelError(errorText: string): boolean {
+  return errorText.includes('Cloudflare Tunnel error') ||
+         errorText.includes('cloudflared') ||
+         errorText.includes('Error 1033') ||
+         errorText.includes('unable to resolve');
+}
+
+/**
+ * Check if ELI MCP server is reachable
+ * Returns { available: true } if server responds to health check
+ * Returns { available: false, reason: string } if server is down
+ */
+export async function checkELIMCPHealth(): Promise<{ available: boolean; reason?: string }> {
+  try {
+    console.log(`[ELI] Checking health of ELI MCP server: ${ELI_MCP_URL}`);
+
+    const response = await fetchWithTimeout(
+      `${ELI_MCP_URL}/health`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      },
+      5000 // 5 second timeout for health check
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      if (isCloudflareTunnelError(errorText)) {
+        return {
+          available: false,
+          reason: 'Cloudflare Tunnel offline - cloudflared service may not be running',
+        };
+      }
+
+      return {
+        available: false,
+        reason: `Server returned ${response.status}`,
+      };
+    }
+
+    // Try to parse JSON response
+    try {
+      const data = await response.json();
+      if (data.status === 'ok') {
+        console.log(`[ELI] Health check passed`);
+        return { available: true };
+      }
+    } catch {
+      // If JSON parsing fails but status is 200, still consider it available
+      return { available: true };
+    }
+
+    return {
+      available: false,
+      reason: 'Unexpected response format',
+    };
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[ELI] Health check failed: ${errorMessage}`);
+
+    if (errorMessage.includes('timeout')) {
+      return {
+        available: false,
+        reason: 'Connection timeout - server may be unreachable',
+      };
+    }
+
+    return {
+      available: false,
+      reason: errorMessage,
+    };
+  }
+}
+
+/**
  * Fetch article content from ELI MCP server with retry logic
  */
 export async function fetchArticle(
@@ -247,7 +328,17 @@ export async function fetchArticle(
       const errorText = await response.text();
       console.error(`[ELI] API error: ${response.status} ${errorText}`);
 
-      // Retry on 5xx errors (server errors)
+      // Detect Cloudflare Tunnel errors (530, 502, 503 with specific HTML)
+      if ((response.status === 530 || response.status === 502 || response.status === 503) &&
+          isCloudflareTunnelError(errorText)) {
+        console.error(`[ELI] Cloudflare Tunnel is down or unreachable. URL: ${ELI_MCP_URL}`);
+        return {
+          success: false,
+          error: `Serwer ELI MCP jest tymczasowo niedostępny (Cloudflare Tunnel offline). Sprawdź czy cloudflared jest uruchomiony lub użyj bezpośredniego URL.`,
+        };
+      }
+
+      // Retry on 5xx errors (server errors) - but not on tunnel errors
       if (response.status >= 500 && retryCount < MCP_MAX_RETRIES - 1) {
         const delayMs = MCP_RETRY_DELAYS[retryCount];
         console.log(`[ELI] Retrying after ${delayMs}ms due to server error...`);
