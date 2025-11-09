@@ -1,4 +1,110 @@
-# Deployment Guide - Mikrus FROG
+# Deployment Guide - ELI MCP Server
+
+## ⚠️ WAŻNE: Problem z lokalną siecią
+
+Jeśli Twój Raspberry Pi jest w lokalnej sieci (adres `192.168.x.x`), Supabase Edge Functions **NIE MAJĄ** do niego dostępu!
+
+```
+❌ NIE ZADZIAŁA:
+Supabase (chmura) → http://192.168.0.9:8080 → Raspberry Pi (lokalna sieć)
+```
+
+**Rozwiązanie:** Deploy do chmury lub użyj tunelu.
+
+---
+
+## 🚀 Opcja 1: Deno Deploy (POLECAM - najprostsze!)
+
+### Kroki:
+
+**1. Zainstaluj deployctl:**
+```bash
+deno install --allow-read --allow-write --allow-env --allow-net --allow-run --no-check -r -f https://deno.land/x/deploy/deployctl.ts
+```
+
+**2. Zaloguj się:**
+```bash
+deployctl login
+```
+
+**3. Deploy:**
+```bash
+cd ~/najakiejpodstawie/eli-mcp-server
+deno task deploy
+```
+
+**4. Otrzymasz URL:**
+```
+✅ https://eli-mcp-prod-xyz123.deno.dev
+```
+
+**5. Ustaw env w Deno Deploy:**
+- Wejdź: https://dash.deno.com/projects/eli-mcp-prod/settings
+- Dodaj: `ELI_API_KEY = dev-secret-key`
+
+**6. Test:**
+```bash
+curl https://eli-mcp-prod-xyz123.deno.dev/health
+```
+
+**7. Ustaw w Supabase:**
+```
+ELI_MCP_URL = https://eli-mcp-prod-xyz123.deno.dev
+```
+
+**Zalety:** ✅ Darmowy, ✅ Globalny CDN, ✅ Zero konfiguracji
+
+---
+
+## 🌐 Opcja 2: Cloudflare Tunnel (dla Raspberry Pi)
+
+Jeśli koniecznie chcesz na Pi:
+
+**1. Zainstaluj cloudflared:**
+```bash
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb
+sudo dpkg -i cloudflared-linux-arm64.deb
+```
+
+**2. Zaloguj się:**
+```bash
+cloudflared tunnel login
+```
+
+**3. Stwórz tunel:**
+```bash
+cloudflared tunnel create eli-mcp
+cloudflared tunnel route dns eli-mcp eli.TWOJA-DOMENA.pl
+```
+
+**4. Konfiguracja (`~/.cloudflared/config.yml`):**
+```yaml
+tunnel: eli-mcp
+credentials-file: /home/pi/.cloudflared/abc123-....json
+
+ingress:
+  - hostname: eli.TWOJA-DOMENA.pl
+    service: http://localhost:8080
+  - service: http_status:404
+```
+
+**5. Uruchom:**
+```bash
+sudo cloudflared service install
+sudo systemctl enable cloudflared
+sudo systemctl start cloudflared
+```
+
+**6. Test:**
+```bash
+curl https://eli.TWOJA-DOMENA.pl/health
+```
+
+**Zalety:** ✅ Zero portów otwartych, ✅ Darmowy na zawsze, ✅ Pi w domu
+
+---
+
+## 🐸 Opcja 3: Mikrus FROG (backup)
 
 Instrukcja wdrożenia ELI MCP Server na darmowym serwerze Mikrus FROG.
 

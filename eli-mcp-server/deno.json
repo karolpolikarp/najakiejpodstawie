@@ -2,7 +2,8 @@
   "tasks": {
     "start": "deno run --allow-net --allow-env src/server.ts",
     "dev": "deno run --allow-net --allow-env --watch src/server.ts",
-    "test": "deno run --allow-net src/test-eli.ts"
+    "test": "deno run --allow-net src/test-eli.ts",
+    "deploy": "deployctl deploy --project=eli-mcp-prod src/server.ts"
   },
   "compilerOptions": {
     "lib": ["deno.window", "dom"]
