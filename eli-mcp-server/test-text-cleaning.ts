@@ -6,39 +6,15 @@
 function cleanPolishText(text: string): string {
   // Step 1: Fix hyphenated words at line breaks
   text = text.replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2');
-  text = text.replace(/(\w+)-\s+(\w+)/g, '$1$2');
 
-  // Step 2: Fix broken Polish diacritic characters
-  const polishCharFixes = [
-    { broken: /([a-z])\s+ą/gi, fixed: '$1ą' },
-    { broken: /([a-z])\s+ć/gi, fixed: '$1ć' },
-    { broken: /([a-z])\s+ę/gi, fixed: '$1ę' },
-    { broken: /([a-z])\s+ł/gi, fixed: '$1ł' },
-    { broken: /([a-z])\s+ń/gi, fixed: '$1ń' },
-    { broken: /([a-z])\s+ó/gi, fixed: '$1ó' },
-    { broken: /([a-z])\s+ś/gi, fixed: '$1ś' },
-    { broken: /([a-z])\s+ź/gi, fixed: '$1ź' },
-    { broken: /([a-z])\s+ż/gi, fixed: '$1ż' },
-    // Also fix when diacritic comes before space
-    { broken: /ą\s+([a-z])/gi, fixed: 'ą$1' },
-    { broken: /ć\s+([a-z])/gi, fixed: 'ć$1' },
-    { broken: /ę\s+([a-z])/gi, fixed: 'ę$1' },
-    { broken: /ł\s+([a-z])/gi, fixed: 'ł$1' },
-    { broken: /ń\s+([a-z])/gi, fixed: 'ń$1' },
-    { broken: /ó\s+([a-z])/gi, fixed: 'ó$1' },
-    { broken: /ś\s+([a-z])/gi, fixed: 'ś$1' },
-    { broken: /ź\s+([a-z])/gi, fixed: 'ź$1' },
-    { broken: /ż\s+([a-z])/gi, fixed: 'ż$1' },
-  ];
-
-  for (const fix of polishCharFixes) {
-    text = text.replace(fix.broken, fix.fixed);
-  }
-
-  // Step 3: Fix common broken words
+  // Step 2: Fix common broken words with dictionary approach
   const commonFixes: Record<string, string> = {
     'po krzywdzeniem': 'pokrzywdzeniem',
+    'po-krzywdzeniem': 'pokrzywdzeniem',
+    'wyj ątkiem': 'wyjątkiem',
+    'zatru dnienia': 'zatrudnienia',
     'za tru dnienia': 'zatrudnienia',
+    'dożywot niego': 'dożywotniego',
     'do żywot niego': 'dożywotniego',
     'peł nieniem': 'pełnieniem',
     'popeł nionego': 'popełnionego',
@@ -46,22 +22,52 @@ function cleanPolishText(text: string): string {
     'więce j': 'więcej',
     'czyn ności': 'czynności',
     'ż ądającego': 'żądającego',
-    'wyj ątkiem': 'wyjątkiem',
+    'wysok ość': 'wysokość',
+    'zmierz ającą': 'zmierzającą',
+    'krót szy': 'krótszy',
+    'wzię ciem': 'wzięciem',
+    'zasług ującej': 'zasługującej',
+    'potęp ienie': 'potępienie',
+    'użyc iem': 'użyciem',
+    'wcze śniej': 'wcześniej',
+    'popełn ionego': 'popełnionego',
+    'pod czas': 'podczas',
+    'związ ku': 'związku',
+    'obowiąz ków': 'obowiązków',
+    'służ bowych': 'służbowych',
+    'związ anych': 'związanych',
+    'ochro ną': 'ochroną',
+    'bezpieczeń stwa': 'bezpieczeństwa',
+    'ludz i': 'ludzi',
+    'porząd ku': 'porządku',
+    'człowie ka': 'człowieka',
+    'wpły wem': 'wpływem',
+    'okoliczno ściami': 'okolicznościami',
   };
 
   for (const [broken, fixed] of Object.entries(commonFixes)) {
-    text = text.replace(new RegExp(broken, 'gi'), fixed);
+    const regex = new RegExp(broken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    text = text.replace(regex, fixed);
   }
 
-  // Step 4: Fix excessive spaces within words
-  text = text.replace(/\b([a-ząćęłńóśźż]+)\s+([a-ząćęłńóśźż]{1,3}\b)/gi, (match, p1, p2) => {
-    if (p2.length <= 3 && !['i', 'w', 'z', 'u', 'o', 'a', 'na', 'do', 'od', 'po', 'za'].includes(p2.toLowerCase())) {
-      return p1 + p2;
-    }
-    return match;
-  });
+  // Step 3: Fix broken diacritics ONLY when clearly inside a word
+  const conservativePolishFixes = [
+    { broken: /([a-z])\s+(ą)([a-z])/gi, fixed: '$1$2$3' },
+    { broken: /([a-z])\s+(ć)([a-z])/gi, fixed: '$1$2$3' },
+    { broken: /([a-z])\s+(ę)([a-z])/gi, fixed: '$1$2$3' },
+    { broken: /([a-z])\s+(ł)([a-z])/gi, fixed: '$1$2$3' },
+    { broken: /([a-z])\s+(ń)([a-z])/gi, fixed: '$1$2$3' },
+    { broken: /([a-z])\s+(ó)([a-z])/gi, fixed: '$1$2$3' },
+    { broken: /([a-z])\s+(ś)([a-z])/gi, fixed: '$1$2$3' },
+    { broken: /([a-z])\s+(ź)([a-z])/gi, fixed: '$1$2$3' },
+    { broken: /([a-z])\s+(ż)([a-z])/gi, fixed: '$1$2$3' },
+  ];
 
-  // Step 5: Clean up line breaks and spacing
+  for (const fix of conservativePolishFixes) {
+    text = text.replace(fix.broken, fix.fixed);
+  }
+
+  // Step 4: Clean up formatting
   text = text.replace(/[ \t]+/g, ' ');
   text = text.replace(/\s*\n\s*/g, '\n');
   text = text.replace(/\s*\n\s*([.,;:])/g, '$1');

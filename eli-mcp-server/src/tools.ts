@@ -228,42 +228,19 @@ export class ELITools {
    */
   private cleanPolishText(text: string): string {
     // Step 1: Fix hyphenated words at line breaks
-    // Common pattern: "zastu- pienia" or "wyj ątkiem" -> "zastupienia", "wyjątkiem"
+    // Pattern: "po-\nkrzywdzeniem" -> "pokrzywdzeniem"
     text = text.replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2');
-    text = text.replace(/(\w+)-\s+(\w+)/g, '$1$2');
 
-    // Step 2: Fix broken Polish diacritic characters
-    // Common pattern: "wyj ątkiem" -> "wyjątkiem"
-    const polishCharFixes = [
-      { broken: /([a-z])\s+ą/gi, fixed: '$1ą' },
-      { broken: /([a-z])\s+ć/gi, fixed: '$1ć' },
-      { broken: /([a-z])\s+ę/gi, fixed: '$1ę' },
-      { broken: /([a-z])\s+ł/gi, fixed: '$1ł' },
-      { broken: /([a-z])\s+ń/gi, fixed: '$1ń' },
-      { broken: /([a-z])\s+ó/gi, fixed: '$1ó' },
-      { broken: /([a-z])\s+ś/gi, fixed: '$1ś' },
-      { broken: /([a-z])\s+ź/gi, fixed: '$1ź' },
-      { broken: /([a-z])\s+ż/gi, fixed: '$1ż' },
-      // Also fix when diacritic comes before space
-      { broken: /ą\s+([a-z])/gi, fixed: 'ą$1' },
-      { broken: /ć\s+([a-z])/gi, fixed: 'ć$1' },
-      { broken: /ę\s+([a-z])/gi, fixed: 'ę$1' },
-      { broken: /ł\s+([a-z])/gi, fixed: 'ł$1' },
-      { broken: /ń\s+([a-z])/gi, fixed: 'ń$1' },
-      { broken: /ó\s+([a-z])/gi, fixed: 'ó$1' },
-      { broken: /ś\s+([a-z])/gi, fixed: 'ś$1' },
-      { broken: /ź\s+([a-z])/gi, fixed: 'ź$1' },
-      { broken: /ż\s+([a-z])/gi, fixed: 'ż$1' },
-    ];
-
-    for (const fix of polishCharFixes) {
-      text = text.replace(fix.broken, fix.fixed);
-    }
-
-    // Step 3: Fix common broken words (manual corrections for known issues)
+    // Step 2: Fix common broken words with dictionary approach
+    // This is more reliable than regex patterns for Polish text
     const commonFixes: Record<string, string> = {
+      // Words with extra spaces (from observed errors)
       'po krzywdzeniem': 'pokrzywdzeniem',
+      'po-krzywdzeniem': 'pokrzywdzeniem',
+      'wyj ątkiem': 'wyjątkiem',
+      'zatru dnienia': 'zatrudnienia',
       'za tru dnienia': 'zatrudnienia',
+      'dożywot niego': 'dożywotniego',
       'do żywot niego': 'dożywotniego',
       'peł nieniem': 'pełnieniem',
       'popeł nionego': 'popełnionego',
@@ -271,27 +248,107 @@ export class ELITools {
       'więce j': 'więcej',
       'czyn ności': 'czynności',
       'ż ądającego': 'żądającego',
-      'wyj ątkiem': 'wyjątkiem',
+
+      // Words incorrectly joined (missing spaces)
+      'niemożna': 'nie można',
+      'Każdyma': 'Każdy ma',
+      'każdyma': 'każdy ma',
+      'zwyjątkiem': 'z wyjątkiem',
+      'zabronićwykonywania': 'zabronić wykonywania',
+      'minimalnąwysokość': 'minimalną wysokość',
+      'minimalnąwysokośćwynagrodzenia': 'minimalną wysokość wynagrodzenia',
+      'politykęzmierzającą': 'politykę zmierzającą',
+      'zmierzającądopełnego': 'zmierzającą do pełnego',
+      'dopełnego': 'do pełnego',
+      'korzyśćmajątkową': 'korzyść majątkową',
+      'korzyśćmajątkowąwskutek': 'korzyść majątkową wskutek',
+      'prawnejdłużnika': 'prawnej dłużnika',
+      'zwolnićsię': 'zwolnić się',
+      'zwolnićsięod': 'zwolnić się od',
+      'wierzycielażądającego': 'wierzyciela żądającego',
+      'wskażemu': 'wskaże mu',
+      'mieniedłużnika': 'mienie dłużnika',
+      'zabijaczłowieka': 'zabija człowieka',
+      'czasniekrótszy': 'czas nie krótszy',
+      'karzedożywot': 'karze dożywot',
+      'karzedożywotniego': 'karze dożywotniego',
+      'wzwiązku': 'w związku',
+      'wzięciemzakładnika': 'wzięciem zakładnika',
+      'motywacjizasługującej': 'motywacji zasługującej',
+      'potępienie': 'potępienie',
+      'zużyciem': 'z użyciem',
+      'zabijawięcej': 'zabija więcej',
+      'więcejniż': 'więcej niż',
+      'niżjedną': 'niż jedną',
+      'osobęlub': 'osobę lub',
+      'lubbył': 'lub był',
+      'byłwcześniej': 'był wcześniej',
+      'sprawcazabójstwa': 'sprawca zabójstwa',
+      'podczaslub': 'podczas lub',
+      'obowiązkówsłużbowych': 'obowiązków służbowych',
+      'służbowychzwiązanych': 'służbowych związanych',
+      'ochronąbezpieczeństwa': 'ochroną bezpieczeństwa',
+      'ludzilub': 'ludzi lub',
+      'bezpieczeństwalub': 'bezpieczeństwa lub',
+      'człowiekapod': 'człowieka pod',
+      'podwpływem': 'pod wpływem',
+
+      // Additional common patterns from PDF extraction
+      'wysok ość': 'wysokość',
+      'zmierz ającą': 'zmierzającą',
+      'krót szy': 'krótszy',
+      'wzię ciem': 'wzięciem',
+      'zasług ującej': 'zasługującej',
+      'potęp ienie': 'potępienie',
+      'użyc iem': 'użyciem',
+      'dożywot niego': 'dożywotniego',
+      'wcze śniej': 'wcześniej',
+      'popełn ionego': 'popełnionego',
+      'pod czas': 'podczas',
+      'związ ku': 'związku',
+      'peł nieniem': 'pełnieniem',
+      'obowiąz ków': 'obowiązków',
+      'służ bowych': 'służbowych',
+      'związ anych': 'związanych',
+      'ochro ną': 'ochroną',
+      'bezpieczeń stwa': 'bezpieczeństwa',
+      'ludz i': 'ludzi',
+      'porząd ku': 'porządku',
+      'człowie ka': 'człowieka',
+      'wpły wem': 'wpływem',
+      'okoliczno ściami': 'okolicznościami',
     };
 
+    // Apply dictionary fixes
     for (const [broken, fixed] of Object.entries(commonFixes)) {
-      text = text.replace(new RegExp(broken, 'gi'), fixed);
+      const regex = new RegExp(broken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      text = text.replace(regex, fixed);
     }
 
-    // Step 4: Fix excessive spaces within words (but preserve intentional spacing)
-    // Remove space if it appears in the middle of a lowercase word
-    text = text.replace(/\b([a-ząćęłńóśźż]+)\s+([a-ząćęłńóśźż]{1,3}\b)/gi, (match, p1, p2) => {
-      // Only join if second part is very short (likely a suffix or broken part)
-      if (p2.length <= 3 && !['i', 'w', 'z', 'u', 'o', 'a', 'na', 'do', 'od', 'po', 'za'].includes(p2.toLowerCase())) {
-        return p1 + p2;
-      }
-      return match;
-    });
+    // Step 3: Fix broken diacritics ONLY when clearly inside a word
+    // Pattern: lowercase letter + space + Polish diacritic + lowercase letter (continuing the word)
+    // This is conservative - only fixes obvious mid-word breaks
+    const conservativePolishFixes = [
+      // Only match when there's a letter after the diacritic (mid-word)
+      { broken: /([a-z])\s+(ą)([a-z])/gi, fixed: '$1$2$3' },
+      { broken: /([a-z])\s+(ć)([a-z])/gi, fixed: '$1$2$3' },
+      { broken: /([a-z])\s+(ę)([a-z])/gi, fixed: '$1$2$3' },
+      { broken: /([a-z])\s+(ł)([a-z])/gi, fixed: '$1$2$3' },
+      { broken: /([a-z])\s+(ń)([a-z])/gi, fixed: '$1$2$3' },
+      { broken: /([a-z])\s+(ó)([a-z])/gi, fixed: '$1$2$3' },
+      { broken: /([a-z])\s+(ś)([a-z])/gi, fixed: '$1$2$3' },
+      { broken: /([a-z])\s+(ź)([a-z])/gi, fixed: '$1$2$3' },
+      { broken: /([a-z])\s+(ż)([a-z])/gi, fixed: '$1$2$3' },
+    ];
 
-    // Step 5: Clean up line breaks and spacing
+    for (const fix of conservativePolishFixes) {
+      text = text.replace(fix.broken, fix.fixed);
+    }
+
+    // Step 4: Clean up formatting
     // Replace multiple spaces with single space
     text = text.replace(/[ \t]+/g, ' ');
-    // Clean up line breaks around punctuation
+    // Clean up line breaks
     text = text.replace(/\s*\n\s*/g, '\n');
     // Remove line break before punctuation
     text = text.replace(/\s*\n\s*([.,;:])/g, '$1');
