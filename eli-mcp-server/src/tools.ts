@@ -234,9 +234,40 @@ export class ELITools {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(' ');
+
+        // Better text extraction - preserve word boundaries
+        let pageText = '';
+        let lastY = 0;
+
+        for (const item of textContent.items) {
+          const itemData = item as any;
+          const text = itemData.str;
+          const transform = itemData.transform;
+          const y = transform ? transform[5] : 0;
+
+          // Add newline if Y position changed significantly (new line)
+          if (lastY && Math.abs(y - lastY) > 5) {
+            pageText += '\n';
+          }
+
+          // Add text with proper spacing
+          if (text) {
+            // Check if we need a space before this text
+            const needsSpace = pageText.length > 0 &&
+                             !pageText.endsWith(' ') &&
+                             !pageText.endsWith('\n') &&
+                             !text.startsWith(' ');
+
+            if (needsSpace) {
+              pageText += ' ';
+            }
+
+            pageText += text;
+          }
+
+          lastY = y;
+        }
+
         fullText += pageText + '\n';
       }
 
