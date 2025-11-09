@@ -23,25 +23,22 @@ Funkcja ta przeprowadza kompleksowe czyszczenie tekstu wyekstraktowanego z PDF:
 **Krok 1: Łączenie słów przedzielonych myślnikami**
 ```typescript
 text.replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2')
-text.replace(/(\w+)-\s+(\w+)/g, '$1$2')
 ```
+Naprawia słowa rozdzielone myślnikiem na końcu linii, np: `po-\nkrzywdzeniem` → `pokrzywdzeniem`
 
-**Krok 2: Naprawa polskich znaków diakrytycznych**
-- Usuwa błędne spacje przed/po znakach: ą, ć, ę, ł, ń, ó, ś, ź, ż
-- Regex dla każdego znaku, np: `/([a-z])\s+ą/gi` → `$1ą`
+**Krok 2: Słownik typowych błędów**
+- Ręczna korekta znanych problemów (ponad 60 wpisów):
+  - Słowa z nadmiarem spacji: `wyj ątkiem` → `wyjątkiem`, `zatru dnienia` → `zatrudnienia`
+  - Słowa sklejone bez spacji: `niemożna` → `nie można`, `zabijaczłowieka` → `zabija człowieka`
+  - Lista stale rozszerzana o nowe przypadki
 
-**Krok 3: Słownik typowych błędów**
-- Ręczna korekta znanych problemów:
-  - `wyj ątkiem` → `wyjątkiem`
-  - `po krzywdzeniem` → `pokrzywdzeniem`
-  - `zatru dnienia` → `zatrudnienia`
-  - i inne...
+**Krok 3: Konserwatywna naprawa znaków diakrytycznych**
+- Usuwa spacje TYLKO gdy są jednoznacznie w środku słowa
+- Pattern: litera + spacja + polski znak + litera (np. `w ą t` → `wąt`)
+- **NIE** usuwa spacji między słowami kończącymi się polskimi znakami
+- Przykład: `zmierzającą do` pozostaje niezmienione (spacja prawidłowa)
 
-**Krok 4: Usuwanie nadmiarowych spacji**
-- Łączy krótkie fragmenty słów (1-3 znaki) z głównym słowem
-- Zachowuje krótkie spójniki i przyimki (i, w, z, na, do, etc.)
-
-**Krok 5: Czyszczenie formatowania**
+**Krok 4: Czyszczenie formatowania**
 - Normalizacja spacji i nowych linii
 - Usunięcie nowych linii przed znakami interpunkcyjnymi
 
