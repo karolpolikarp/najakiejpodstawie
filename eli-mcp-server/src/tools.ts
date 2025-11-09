@@ -250,30 +250,61 @@ export class ELITools {
    * Extract specific article from PDF text
    */
   private extractArticleFromPDF(pdfText: string, articleNumber: string): string | null {
+    // Normalize the text - remove excessive whitespace but keep structure
+    const normalizedText = pdfText.replace(/[ \t]+/g, ' ');
+
+    console.log(`[ELI] Looking for article ${articleNumber} in PDF text (${normalizedText.length} chars)`);
+
     // Try to find article in PDF text
-    // Common patterns: Art. 533., Artykuł 533
+    // Common patterns for Polish legal acts
     const patterns = [
-      // Match "Art. 533." followed by text until next "Art." or end
-      new RegExp(`Art\\.\\s*${articleNumber}\\.([\\s\\S]{0,3000}?)(?=\\n\\s*Art\\.\\s*\\d|$)`, 'i'),
-      // Match "Artykuł 533" followed by text
-      new RegExp(`Artykuł\\s*${articleNumber}[\\s\\S]{0,3000}?(?=\\n\\s*Artykuł\\s*\\d|$)`, 'i'),
+      // Pattern 1: "Art. 10." or "Art.10." with optional spaces
+      new RegExp(`Art\\.?\\s*${articleNumber}\\.\\s*([\\s\\S]{10,3000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+      // Pattern 2: "Artykuł 10" (full word)
+      new RegExp(`Artykuł\\s+${articleNumber}[\\s\\S]{10,3000}?(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
+      // Pattern 3: More lenient - just "Art" followed by number
+      new RegExp(`Art\\s*\\.?\\s*${articleNumber}\\s*\\.?\\s+([\\s\\S]{10,3000}?)(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
+      // Pattern 4: Try with paragraph marker §
+      new RegExp(`Art\\.?\\s*${articleNumber}\\.?\\s*§?\\s*([\\s\\S]{10,3000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
     ];
 
-    for (const pattern of patterns) {
-      const match = pdfText.match(pattern);
+    for (let i = 0; i < patterns.length; i++) {
+      const pattern = patterns[i];
+      const match = normalizedText.match(pattern);
       if (match) {
+        console.log(`[ELI] Found article using pattern ${i + 1}`);
         let text = match[1] || match[0];
         text = text.trim();
-        // Clean up extra whitespace
-        text = text.replace(/\s+/g, ' ');
-        // Ensure we include the article header
-        if (!text.startsWith('Art.') && !text.startsWith('Artykuł')) {
+
+        // Clean up extra whitespace while preserving paragraph structure
+        text = text.replace(/[ \t]+/g, ' ');
+        text = text.replace(/\n\s*\n\s*\n+/g, '\n\n'); // Max 2 newlines
+
+        // Ensure we include the article header if not already there
+        if (!text.match(/^Art/i)) {
           text = `Art. ${articleNumber}. ${text}`;
         }
-        if (text.length > 0) {
+
+        // Remove text that looks like it's from the next article
+        text = text.replace(/\s+Art\.\s*\d+.*$/i, '');
+
+        if (text.length > 10) {
+          console.log(`[ELI] Extracted article text: ${text.substring(0, 150)}...`);
           return text;
         }
       }
+    }
+
+    // Debug: Show context around the article number
+    const contextRegex = new RegExp(`.{0,200}${articleNumber}.{0,200}`, 'g');
+    const contexts = normalizedText.match(contextRegex);
+    if (contexts) {
+      console.log(`[ELI] Found ${contexts.length} occurrences of "${articleNumber}" in PDF:`);
+      contexts.slice(0, 3).forEach((ctx, i) => {
+        console.log(`[ELI] Context ${i + 1}: ...${ctx}...`);
+      });
+    } else {
+      console.log(`[ELI] Article number "${articleNumber}" not found in PDF at all`);
     }
 
     return null;
