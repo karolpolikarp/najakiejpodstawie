@@ -11,16 +11,19 @@ export class ELITools {
   private client: ELIClient;
 
   // Mapping of common act codes to their official identifiers
-  // Based on correct ELI identifiers from api.sejm.gov.pl
+  // IMPORTANT: Always use consolidated texts (teksty jednolite) for current law
+  // Updated: November 2025
   private ACT_CODES: Record<string, { publisher: string; year: number; position: number; title: string }> = {
     'kc': { publisher: 'DU', year: 2025, position: 1071, title: 'Kodeks cywilny' },
     'kodeks cywilny': { publisher: 'DU', year: 2025, position: 1071, title: 'Kodeks cywilny' },
-    'kp': { publisher: 'DU', year: 1974, position: 296, title: 'Kodeks pracy' },
-    'kodeks pracy': { publisher: 'DU', year: 1974, position: 296, title: 'Kodeks pracy' },
-    'kk': { publisher: 'DU', year: 1997, position: 553, title: 'Kodeks karny' },
-    'kodeks karny': { publisher: 'DU', year: 1997, position: 553, title: 'Kodeks karny' },
-    'kpk': { publisher: 'DU', year: 1997, position: 555, title: 'Kodeks postępowania karnego' },
-    'kpc': { publisher: 'DU', year: 1964, position: 296, title: 'Kodeks postępowania cywilnego' },
+    'kp': { publisher: 'DU', year: 2025, position: 277, title: 'Kodeks pracy' },
+    'kodeks pracy': { publisher: 'DU', year: 2025, position: 277, title: 'Kodeks pracy' },
+    'kk': { publisher: 'DU', year: 2025, position: 383, title: 'Kodeks karny' },
+    'kodeks karny': { publisher: 'DU', year: 2025, position: 383, title: 'Kodeks karny' },
+    'kpk': { publisher: 'DU', year: 2025, position: 46, title: 'Kodeks postępowania karnego' },
+    'kodeks postępowania karnego': { publisher: 'DU', year: 2025, position: 46, title: 'Kodeks postępowania karnego' },
+    'kpc': { publisher: 'DU', year: 2024, position: 1568, title: 'Kodeks postępowania cywilnego' },
+    'kodeks postępowania cywilnego': { publisher: 'DU', year: 2024, position: 1568, title: 'Kodeks postępowania cywilnego' },
     'konstytucja': { publisher: 'DU', year: 1997, position: 483, title: 'Konstytucja Rzeczypospolitej Polskiej' },
   };
 
