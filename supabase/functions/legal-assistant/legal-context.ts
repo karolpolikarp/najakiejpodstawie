@@ -533,6 +533,94 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
       "Art. 505 - egzekucja"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640430296"
+  },
+
+  /**
+   * PRAWO O RUCHU DROGOWYM (Traffic Law)
+   */
+  jazda_warunki_zmniejszonej_widocznosci: {
+    name: "Jazda w warunkach zmniejszonej przejrzystości powietrza",
+    keywords: ["mgła", "deszcz", "śnieg", "widoczność", "światła", "art 30", "warunki atmosferyczne"],
+    mcpArticles: [
+      { actCode: 'prd', articleNumber: '30' },
+      { actCode: 'prd', articleNumber: '29' }, // ostrzeganie
+    ],
+    mainActs: [
+      "Ustawa z dnia 20 czerwca 1997 r. - Prawo o ruchu drogowym"
+    ],
+    mainArticles: [
+      "Art. 30 - jazda w warunkach zmniejszonej przejrzystości powietrza (mgła, opady)",
+      "Art. 29 - ostrzeganie"
+    ],
+    relatedArticles: [
+      "Art. 51 - oświetlenie pojazdów",
+      "Art. 20 - dostosowanie prędkości do warunków",
+      "Art. 3 - definicje"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20240001251"
+  },
+
+  predkosc_jazdy: {
+    name: "Prędkość jazdy",
+    keywords: ["prędkość", "limit", "ograniczenie", "przekroczenie prędkości", "mandat"],
+    mcpArticles: [
+      { actCode: 'prd', articleNumber: '20' },
+      { actCode: 'prd', articleNumber: '92a' }, // punkty karne
+    ],
+    mainActs: [
+      "Ustawa z dnia 20 czerwca 1997 r. - Prawo o ruchu drogowym"
+    ],
+    mainArticles: [
+      "Art. 20 - dostosowanie prędkości do warunków ruchu",
+      "Art. 92a - punkty karne za przekroczenie prędkości"
+    ],
+    relatedArticles: [
+      "Art. 92 - mandaty karne",
+      "Art. 97 - zatrzymanie prawa jazdy"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20240001251"
+  },
+
+  punkty_karne: {
+    name: "Punkty karne",
+    keywords: ["punkty", "punkty karne", "ewidencja kierowców", "zatrzymanie prawa jazdy"],
+    mcpArticles: [
+      { actCode: 'prd', articleNumber: '92a' },
+      { actCode: 'prd', articleNumber: '97' },
+    ],
+    mainActs: [
+      "Ustawa z dnia 20 czerwca 1997 r. - Prawo o ruchu drogowym"
+    ],
+    mainArticles: [
+      "Art. 92a - system punktów karnych",
+      "Art. 97 - zatrzymanie prawa jazdy"
+    ],
+    relatedArticles: [
+      "Art. 92 - mandaty karne",
+      "Art. 101 - kasowanie punktów"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20240001251"
+  },
+
+  prawo_jazdy: {
+    name: "Prawo jazdy - kategorie i uprawnienia",
+    keywords: ["prawo jazdy", "kategorie", "uprawnienia", "egzamin", "kurs"],
+    mcpArticles: [
+      { actCode: 'prd', articleNumber: '87' },
+      { actCode: 'prd', articleNumber: '88' },
+    ],
+    mainActs: [
+      "Ustawa z dnia 20 czerwca 1997 r. - Prawo o ruchu drogowym"
+    ],
+    mainArticles: [
+      "Art. 87 - kategorie prawa jazdy",
+      "Art. 88 - warunki uzyskania prawa jazdy"
+    ],
+    relatedArticles: [
+      "Art. 89 - egzamin na prawo jazdy",
+      "Art. 96 - cofnięcie uprawnień"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20240001251"
   }
 };
 

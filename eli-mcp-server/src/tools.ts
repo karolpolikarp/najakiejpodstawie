@@ -46,6 +46,9 @@ export class ELITools {
 
     'prawo budowlane': { publisher: 'DU', year: 2025, position: 418, title: 'Prawo budowlane' },
     'pb': { publisher: 'DU', year: 2025, position: 418, title: 'Prawo budowlane' },
+
+    'prawo o ruchu drogowym': { publisher: 'DU', year: 2024, position: 1251, title: 'Prawo o ruchu drogowym' },
+    'prd': { publisher: 'DU', year: 2024, position: 1251, title: 'Prawo o ruchu drogowym' },
   };
 
   constructor(client: ELIClient) {

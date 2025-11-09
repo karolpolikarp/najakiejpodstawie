@@ -37,10 +37,10 @@ Skomplikowane przepisy tłumaczone na prosty, przystępny język.
 Każda odpowiedź zawiera odniesienie do konkretnego aktu prawnego z **oficjalnych źródeł rządowych** (api.sejm.gov.pl).
 
 ### Aktualne teksty jednolite
-System automatycznie pobiera **15 najpopularniejszych ustaw** z aktualnych tekstów jednolitych Dziennika Ustaw RP:
+System automatycznie pobiera **16 najpopularniejszych ustaw** z aktualnych tekstów jednolitych Dziennika Ustaw RP:
 - 7 kodeksów (KC, KP, KK, KPK, KPC, KKS, KSH)
 - Konstytucja RP
-- 4 kluczowe ustawy (PZP, Ordynacja podatkowa, Prawo budowlane, Prawa konsumenta)
+- 5 kluczowych ustaw (PZP, Ordynacja podatkowa, Prawo budowlane, Prawo o ruchu drogowym, Prawa konsumenta)
 
 ### Dosłowne cytowanie przepisów
 Gdy system wykryje pytanie o konkretny artykuł (np. "art 10 kp"), automatycznie pobiera i cytuje **dokładną treść przepisu** z oficjalnych źródeł.
