@@ -79,6 +79,7 @@ export class ActResolver {
   private readonly maxCacheSize = 200;
   private readonly cacheTTL = 86400000; // 24 hours
   private readonly diskCachePath = '/tmp/eli-act-cache.json';
+  private saveTimeoutId: number | null = null; // For debouncing disk writes
 
   // Monitoring stats
   private stats = {
@@ -404,11 +405,16 @@ export class ActResolver {
   }
 
   /**
-   * Save cache to disk (async, non-blocking)
+   * Save cache to disk (async, non-blocking with proper debouncing)
    */
   private saveCacheToDiskAsync(): void {
-    // Debounce writes - don't save on every cache update
-    setTimeout(() => {
+    // Clear previous timeout if exists (debouncing)
+    if (this.saveTimeoutId !== null) {
+      clearTimeout(this.saveTimeoutId);
+    }
+
+    // Schedule new save after 5 seconds of inactivity
+    this.saveTimeoutId = setTimeout(() => {
       try {
         const data: Record<string, CachedAct> = {};
         for (const [key, value] of this.cache.entries()) {
@@ -416,10 +422,12 @@ export class ActResolver {
         }
         Deno.writeTextFileSync(this.diskCachePath, JSON.stringify(data, null, 2));
         console.log(`[ActResolver] Saved ${this.cache.size} cached acts to disk`);
+        this.saveTimeoutId = null;
       } catch (error) {
         console.error(`[ActResolver] Failed to save cache: ${error.message}`);
+        this.saveTimeoutId = null;
       }
-    }, 5000); // Save after 5 seconds of inactivity
+    }, 5000) as unknown as number; // Cast needed for Deno's setTimeout return type
   }
 
   /**
