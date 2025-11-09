@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { checkRateLimit } from './rate-limiter.ts';
 import { LEGAL_CONTEXT, LEGAL_TOPICS } from './legal-context.ts';
-import { enrichWithArticles } from './eli-tools.ts';
+import { enrichWithArticles, type EnrichmentResult } from './eli-tools.ts';
 
 // CORS configuration - restrict to specific domains for security
 const getAllowedOrigin = (requestOrigin: string | null): string => {
@@ -178,10 +178,10 @@ serve(async (req) => {
 
     // Pobierz treści artykułów z ELI MCP jeśli pytanie dotyczy konkretnych artykułów
     console.log('[ELI] Checking for article references in message...');
-    const articleContext = await enrichWithArticles(message);
-    if (articleContext) {
-      console.log('[ELI] Successfully enriched with article context');
-    }
+    const enrichmentResult = await enrichWithArticles(message);
+    console.log(`[ELI] Enrichment result: ${enrichmentResult.successCount} successful, ${enrichmentResult.failureCount} failed`);
+
+    const articleContext = enrichmentResult.context;
 
     let systemPrompt = `Jesteś profesjonalnym asystentem prawnym specjalizującym się w polskim prawie. Udzielasz merytorycznych, szczegółowych odpowiedzi z konkretnymi podstawami prawnymi.
 
@@ -284,6 +284,25 @@ https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827
 Użytkownik załączył dokument. PRIORYTETOWO wykorzystuj ten dokument do odpowiedzi.
 Jeśli odpowiedź znajduje się w załączonym dokumencie, cytuj konkretne fragmenty.
 Jeśli pytanie wykracza poza załączony dokument, powiedz o tym wyraźnie i użyj swojej wiedzy.`;
+    }
+
+    // Dodaj ostrzeżenia MCP jeśli wystąpiły problemy
+    if (enrichmentResult.warnings.length > 0) {
+      systemPrompt += `
+
+⚠️ WAŻNE OSTRZEŻENIE - UMIEŚĆ NA POCZĄTKU ODPOWIEDZI:
+
+Na początku swojej odpowiedzi (przed sekcją PODSTAWA PRAWNA) MUSISZ umieścić następujące ostrzeżenie:
+
+---
+⚠️ **OSTRZEŻENIE O ŹRÓDŁACH**
+
+${enrichmentResult.warnings.join('\n')}
+
+${enrichmentResult.failureCount > 0 ? 'Nie udało się pobrać aktualnych treści artykułów z oficjalnych źródeł. Poniższa odpowiedź opiera się na wiedzy AI i może być nieaktualna lub niepełna. Dla pewności sprawdź treść na oficjalnych stronach: https://isap.sejm.gov.pl\n' : ''}
+---
+
+Po tym ostrzeżeniu przejdź do normalnej odpowiedzi ze standardowymi sekcjami.`;
     }
 
     let userMessage = message;
