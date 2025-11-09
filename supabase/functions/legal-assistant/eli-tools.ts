@@ -10,6 +10,8 @@ const ELI_API_KEY = Deno.env.get('ELI_API_KEY') || 'dev-secret-key';
 const MCP_TIMEOUT_MS = 10000; // 10 seconds
 const MCP_MAX_RETRIES = 3;
 const MCP_RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
+const MAX_ARTICLES_FROM_TOPICS = 5; // Limit articles from auto-detected topics
+const MAX_TOTAL_ARTICLES = 10; // Total limit (query + topics combined)
 
 // Mapping of common legal code abbreviations
 const ACT_CODE_PATTERNS: Record<string, string[]> = {
@@ -148,8 +150,15 @@ function validateArticleContent(data: ArticleResponse): { valid: boolean; reason
     return { valid: false, reason: `Article text too short (${text.length} chars)` };
   }
 
-  // Check if it looks like an article (contains "Art." or the article number)
-  const hasArticleMarker = text.includes('Art.') || text.includes(data.article.number);
+  // Check if it looks like an article (contains "Art.", "Artykuł", "art" or the article number)
+  const lowerText = text.toLowerCase();
+  const hasArticleMarker =
+    text.includes('Art.') ||
+    lowerText.includes('art.') ||
+    lowerText.includes('artykuł') ||
+    lowerText.includes('art ') ||
+    text.includes(data.article.number);
+
   if (!hasArticleMarker) {
     return { valid: false, reason: 'Text does not appear to be a legal article' };
   }
@@ -283,46 +292,66 @@ export interface EnrichmentResult {
 }
 
 /**
- * Deduplicate articles by actCode + articleNumber
- */
-function deduplicateArticles(articles: ArticleRequest[]): ArticleRequest[] {
-  const seen = new Set<string>();
-  const unique: ArticleRequest[] = [];
-
-  for (const article of articles) {
-    const key = `${article.actCode}:${article.articleNumber}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      unique.push(article);
-    }
-  }
-
-  return unique;
-}
-
-/**
  * Main function to detect and fetch articles from user message
  * Also accepts additional articles from detected legal topics
  * Returns enrichment result with context and status information
+ *
+ * PRIORITIZATION:
+ * - Articles from user query (explicitly asked) have HIGHEST priority (no limit)
+ * - Articles from topics are limited to MAX_ARTICLES_FROM_TOPICS
+ * - Total limit is MAX_TOTAL_ARTICLES
  */
 export async function enrichWithArticles(
   message: string,
   additionalArticles: ArticleRequest[] = []
 ): Promise<EnrichmentResult> {
-  // Combine articles from:
-  // 1. User query (regex detection: "art 10 kp")
+  // 1. Articles from user query (regex detection: "art 10 kp")
   const fromQuery = detectArticleReferences(message);
 
-  // 2. Legal topics (e.g., "obrona konieczna" → Art. 25 kk)
+  // 2. Articles from legal topics (e.g., "obrona konieczna" → Art. 25 kk)
   const fromTopics = additionalArticles;
 
-  // Merge and deduplicate
-  const allReferences = [...fromQuery, ...fromTopics];
-  const uniqueReferences = deduplicateArticles(allReferences);
+  // 3. Smart merge with prioritization and deduplication
+  const seen = new Set<string>();
+  const prioritizedReferences: ArticleRequest[] = [];
 
-  console.log(`[ELI] Articles from query: ${fromQuery.length}, from topics: ${fromTopics.length}, unique: ${uniqueReferences.length}`);
+  // FIRST: Add all articles from user query (HIGHEST priority, no limit)
+  for (const article of fromQuery) {
+    const key = `${article.actCode}:${article.articleNumber}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      prioritizedReferences.push(article);
+    }
+  }
 
-  if (uniqueReferences.length === 0) {
+  const fromQueryCount = prioritizedReferences.length;
+
+  // SECOND: Add articles from topics (limited to MAX_ARTICLES_FROM_TOPICS)
+  let topicsAdded = 0;
+  for (const article of fromTopics) {
+    if (topicsAdded >= MAX_ARTICLES_FROM_TOPICS) {
+      break; // Limit reached
+    }
+
+    const key = `${article.actCode}:${article.articleNumber}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      prioritizedReferences.push(article);
+      topicsAdded++;
+    }
+  }
+
+  // 4. Apply total limit (safety cap)
+  const limitedReferences = prioritizedReferences.slice(0, MAX_TOTAL_ARTICLES);
+  const totalSkipped = prioritizedReferences.length - limitedReferences.length;
+
+  console.log(
+    `[ELI] Prioritization: ${fromQueryCount} from query (unlimited), ` +
+    `${topicsAdded} from topics (max ${MAX_ARTICLES_FROM_TOPICS}), ` +
+    `${limitedReferences.length} total (max ${MAX_TOTAL_ARTICLES})`
+  );
+
+  if (limitedReferences.length === 0) {
     return {
       context: '',
       hasArticles: false,
@@ -332,17 +361,15 @@ export async function enrichWithArticles(
     };
   }
 
-  console.log(`[ELI] Attempting to fetch ${uniqueReferences.length} article(s)...`);
-
-  // Fetch all articles in parallel (max 5 to avoid overloading)
-  const limitedReferences = uniqueReferences.slice(0, 5);
+  // 5. Fetch all prioritized articles in parallel
+  console.log(`[ELI] Fetching ${limitedReferences.length} article(s)...`);
   const articlePromises = limitedReferences.map(ref =>
     fetchArticle(ref.actCode, ref.articleNumber)
   );
 
   const articles = await Promise.all(articlePromises);
 
-  // Analyze results
+  // 6. Analyze results
   const successfulArticles = articles.filter(a => a.success);
   const failedArticles = articles.filter(a => !a.success);
 
@@ -351,7 +378,7 @@ export async function enrichWithArticles(
 
   console.log(`[ELI] Results: ${successCount} successful, ${failureCount} failed`);
 
-  // Build warnings
+  // 7. Build warnings
   const warnings: string[] = [];
 
   if (failureCount > 0) {
@@ -365,9 +392,18 @@ export async function enrichWithArticles(
     );
   }
 
-  if (uniqueReferences.length > 5) {
+  // Warn if we had to skip articles from topics due to limits
+  const topicsSkipped = fromTopics.length - topicsAdded;
+  if (topicsSkipped > 0) {
     warnings.push(
-      `Wykryto ${uniqueReferences.length} artykułów, ale pobrano tylko 5 pierwszych.`
+      `Wykryto ${fromTopics.length} artykułów z tematów, ale pobrano tylko ${topicsAdded} (limit: ${MAX_ARTICLES_FROM_TOPICS}).`
+    );
+  }
+
+  // Warn if we hit the total limit
+  if (totalSkipped > 0) {
+    warnings.push(
+      `Osiągnięto maksymalny limit ${MAX_TOTAL_ARTICLES} artykułów. Pominięto ${totalSkipped}.`
     );
   }
 
