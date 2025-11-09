@@ -96,23 +96,54 @@ const parseMessage = (content: string): Section[] => {
   }
 
   // Post-process: detect and convert implicit suggested questions
-  // Look for sections that contain multiple questions in quotes
+  // Look for sections that contain multiple questions in quotes OR bullet points with suggestion context
   return sections.map((section) => {
     if (section.type === 'text') {
-      // Check if this section contains multiple quoted questions
-      const quotedQuestions = extractQuotedQuestions(section.content);
+      // Try to extract suggested questions/topics from the section
+      const suggestedQuestions = extractSuggestedQuestions(section.content);
 
-      if (quotedQuestions.length >= 2) {
+      if (suggestedQuestions.length >= 2) {
         // Convert to suggested-questions section
         return {
           type: 'suggested-questions',
           title: 'Sugerowane pytania',
-          content: quotedQuestions.join('\n')
+          content: suggestedQuestions.join('\n')
         };
       }
     }
     return section;
   });
+};
+
+// Helper function to extract suggested questions/topics from text
+// Handles both quoted questions and bullet-pointed topics
+const extractSuggestedQuestions = (text: string): string[] => {
+  // First try to extract questions in quotes
+  const quotedQuestions = extractQuotedQuestions(text);
+  if (quotedQuestions.length >= 2) {
+    return quotedQuestions;
+  }
+
+  // If no quoted questions, check for bullet-pointed suggestions
+  // Look for context phrases that indicate suggested topics
+  const suggestionPhrases = [
+    /jeśli chciałbyś wiedzieć o:/i,
+    /możesz zapytać o:/i,
+    /spróbuj zapytać o:/i,
+    /może zapytaj o:/i,
+    /przykładowe pytania:/i,
+    /możesz spytać o:/i,
+    /dowiedz się o:/i,
+  ];
+
+  const hasSuggestionContext = suggestionPhrases.some(phrase => phrase.test(text));
+
+  if (hasSuggestionContext) {
+    // Extract bullet points as suggested topics
+    return extractBulletPointTopics(text);
+  }
+
+  return [];
 };
 
 // Helper function to extract questions in quotes from text
@@ -133,6 +164,63 @@ const extractQuotedQuestions = (text: string): string[] => {
   }
 
   return questions;
+};
+
+// Helper function to extract bullet-pointed topics and convert them to questions
+const extractBulletPointTopics = (text: string): string[] => {
+  const topics: string[] = [];
+  const lines = text.split('\n');
+
+  for (const line of lines) {
+    // Match bullet points: "• Topic" or "- Topic"
+    const bulletMatch = line.match(/^[•\-]\s*(.+)$/);
+    if (bulletMatch) {
+      let topic = bulletMatch[1].trim();
+
+      // Skip very short items or items that are just punctuation
+      if (topic.length < 10) continue;
+
+      // Convert topic to question format if it's not already a question
+      if (!topic.includes('?')) {
+        // If the topic is in a form like "Przepisach ruchu drogowego..."
+        // Convert it to "Jakie przepisy ruchu drogowego..." or similar
+        topic = convertTopicToQuestion(topic);
+      }
+
+      topics.push(topic);
+    }
+  }
+
+  return topics;
+};
+
+// Helper function to convert a topic phrase to a question
+const convertTopicToQuestion = (topic: string): string => {
+  // Remove trailing punctuation
+  topic = topic.replace(/[.,;:]+$/, '').trim();
+
+  // If it's in locative case (ends with common locative endings),
+  // prepend "Powiedz mi o" to make it a valid question
+  // Examples: "Przepisach..." -> "Powiedz mi o przepisach..."
+  const locativeEndings = ['ach', 'ach', 'ech', 'iu'];
+  const endsWithLocative = locativeEndings.some(ending =>
+    topic.toLowerCase().match(new RegExp(`\\w+${ending}\\s`))
+  );
+
+  if (endsWithLocative || topic.match(/^\w+ach\s/i)) {
+    // Make first letter lowercase unless it's a proper noun
+    const firstChar = topic[0];
+    const restOfTopic = topic.slice(1);
+    const normalizedTopic = firstChar.toLowerCase() + restOfTopic;
+    return `Powiedz mi o ${normalizedTopic}`;
+  }
+
+  // For other forms, try to detect the case and convert appropriately
+  // Default: prepend "Jakie są" for general questions
+  const firstWord = topic.split(' ')[0].toLowerCase();
+
+  // If starts with a verb form or noun, add "Jakie są"
+  return `Jakie są ${topic.toLowerCase()}`;
 };
 
 // Helper function to parse inline markdown formatting

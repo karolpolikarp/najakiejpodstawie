@@ -349,6 +349,64 @@ Art. 27 Ustawy`;
 
       expect(mockSendMessage).toHaveBeenCalledWith('Urlop na żądanie - ile dni w roku?');
     });
+
+    it('automatically detects bullet-pointed topics after suggestion phrases', () => {
+      const content = `❌ Przepraszam, ale jestem asystentem prawnym i odpowiadam tylko na pytania związane z polskim prawem.
+
+Pytanie o "rower" samo w sobie nie dotyczy prawa. Jednak jeśli chciałbyś wiedzieć o:
+
+• Przepisach ruchu drogowego dotyczących rowerów
+• Obowiązkach ubezpieczenia roweru
+• Prawach i obowiązkach rowerzysty
+• Odpowiedzialności za szkodę wyrządzoną rowerem
+• Kradzieży roweru i ochronie prawnej
+...to chętnie pomogę! 🚴`;
+
+      const mockSendMessage = vi.fn();
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+          onSendMessage={mockSendMessage}
+        />
+      );
+
+      // Should detect and render as suggested questions
+      expect(screen.getByText(/Sugerowane pytania/i)).toBeInTheDocument();
+
+      // Check if topics are rendered as clickable buttons (converted to questions)
+      expect(screen.getByRole('button', { name: /przepisach ruchu drogowego/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /obowiązkach ubezpieczenia/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /prawach i obowiązkach rowerzysty/i })).toBeInTheDocument();
+    });
+
+    it('calls onSendMessage with converted question when bullet-point topic button is clicked', () => {
+      const content = `Możesz zapytać o:
+
+• Przepisach ruchu drogowego dotyczących rowerów
+• Obowiązkach ubezpieczenia roweru`;
+
+      const mockSendMessage = vi.fn();
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+          onSendMessage={mockSendMessage}
+        />
+      );
+
+      // Click on the first button
+      const buttons = screen.getAllByRole('button');
+      const firstQuestionButton = buttons[0];
+      fireEvent.click(firstQuestionButton);
+
+      // Should call with the converted question
+      expect(mockSendMessage).toHaveBeenCalledOnce();
+      const calledWith = mockSendMessage.mock.calls[0][0];
+      expect(calledWith.toLowerCase()).toContain('przepisach ruchu drogowego');
+    });
   });
 
   describe('Edge cases', () => {
