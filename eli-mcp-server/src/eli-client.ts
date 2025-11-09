@@ -98,6 +98,8 @@ export class ELIClient {
     const response = await fetch(url.toString(), {
       headers: {
         'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
+        'Accept-Language': 'pl-PL,pl;q=0.9',
       },
     });
 
@@ -130,6 +132,8 @@ export class ELIClient {
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
+        'Accept-Language': 'pl-PL,pl;q=0.9',
       },
     });
 
@@ -163,6 +167,8 @@ export class ELIClient {
     const response = await fetch(url, {
       headers: {
         'Accept': 'text/html',
+        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
+        'Accept-Language': 'pl-PL,pl;q=0.9',
       },
     });
 
@@ -191,6 +197,8 @@ export class ELIClient {
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
+        'Accept-Language': 'pl-PL,pl;q=0.9',
       },
     });
 
