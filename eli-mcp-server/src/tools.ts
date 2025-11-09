@@ -521,14 +521,14 @@ export class ELITools {
     // Try to find article in PDF text
     // Common patterns for Polish legal acts
     const patterns = [
-      // Pattern 1: "Art. 10." or "Art.10." with optional spaces
-      new RegExp(`Art\\.?\\s*${articleNumber}\\.\\s*([\\s\\S]{10,3000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+      // Pattern 1: "Art. 10." - requires newline before next article to avoid matching mid-text references like "art. 148"
+      new RegExp(`Art\\.?\\s*${articleNumber}\\.\\s*([\\s\\S]{10,3000}?)(?=\\n+\\s*Art\\.?\\s*\\d|$)`, 'i'),
       // Pattern 2: "Artykuł 10" (full word)
-      new RegExp(`Artykuł\\s+${articleNumber}[\\s\\S]{10,3000}?(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
-      // Pattern 3: More lenient - just "Art" followed by number
-      new RegExp(`Art\\s*\\.?\\s*${articleNumber}\\s*\\.?\\s+([\\s\\S]{10,3000}?)(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
-      // Pattern 4: Try with paragraph marker §
-      new RegExp(`Art\\.?\\s*${articleNumber}\\.?\\s*§?\\s*([\\s\\S]{10,3000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+      new RegExp(`Artykuł\\s+${articleNumber}[\\s\\S]{10,3000}?(?=\\n+\\s*Artykuł\\s+\\d|$)`, 'i'),
+      // Pattern 3: More lenient - requires newline before next article
+      new RegExp(`Art\\s*\\.?\\s*${articleNumber}\\s*\\.?\\s+([\\s\\S]{10,3000}?)(?=\\n+\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
+      // Pattern 4: Fallback - original pattern without newline requirement (for edge cases)
+      new RegExp(`Art\\.?\\s*${articleNumber}\\.\\s*([\\s\\S]{10,3000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
     ];
 
     for (let i = 0; i < patterns.length; i++) {
