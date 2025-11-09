@@ -381,7 +381,7 @@ Pytanie o "rower" samo w sobie nie dotyczy prawa. Jednak jeśli chciałbyś wied
       expect(screen.getByRole('button', { name: /prawach i obowiązkach rowerzysty/i })).toBeInTheDocument();
     });
 
-    it('calls onSendMessage with converted question when bullet-point topic button is clicked', () => {
+    it('calls onSendMessage with original topic text when bullet-point button is clicked', () => {
       const content = `Możesz zapytać o:
 
 • Przepisach ruchu drogowego dotyczących rowerów
@@ -402,10 +402,8 @@ Pytanie o "rower" samo w sobie nie dotyczy prawa. Jednak jeśli chciałbyś wied
       const firstQuestionButton = buttons[0];
       fireEvent.click(firstQuestionButton);
 
-      // Should call with the converted question
-      expect(mockSendMessage).toHaveBeenCalledOnce();
-      const calledWith = mockSendMessage.mock.calls[0][0];
-      expect(calledWith.toLowerCase()).toContain('przepisach ruchu drogowego');
+      // Should call with the original text (as-is from AI)
+      expect(mockSendMessage).toHaveBeenCalledWith('Przepisach ruchu drogowego dotyczących rowerów');
     });
   });
 

@@ -180,47 +180,16 @@ const extractBulletPointTopics = (text: string): string[] => {
       // Skip very short items or items that are just punctuation
       if (topic.length < 10) continue;
 
-      // Convert topic to question format if it's not already a question
-      if (!topic.includes('?')) {
-        // If the topic is in a form like "Przepisach ruchu drogowego..."
-        // Convert it to "Jakie przepisy ruchu drogowego..." or similar
-        topic = convertTopicToQuestion(topic);
-      }
+      // Remove trailing punctuation but keep the original text
+      topic = topic.replace(/[.,;:]+$/, '').trim();
 
+      // Use the topic as-is - the AI has already formatted it appropriately
+      // No need to convert, just use it directly as a clickable question
       topics.push(topic);
     }
   }
 
   return topics;
-};
-
-// Helper function to convert a topic phrase to a question
-const convertTopicToQuestion = (topic: string): string => {
-  // Remove trailing punctuation
-  topic = topic.replace(/[.,;:]+$/, '').trim();
-
-  // If it's in locative case (ends with common locative endings),
-  // prepend "Powiedz mi o" to make it a valid question
-  // Examples: "Przepisach..." -> "Powiedz mi o przepisach..."
-  const locativeEndings = ['ach', 'ach', 'ech', 'iu'];
-  const endsWithLocative = locativeEndings.some(ending =>
-    topic.toLowerCase().match(new RegExp(`\\w+${ending}\\s`))
-  );
-
-  if (endsWithLocative || topic.match(/^\w+ach\s/i)) {
-    // Make first letter lowercase unless it's a proper noun
-    const firstChar = topic[0];
-    const restOfTopic = topic.slice(1);
-    const normalizedTopic = firstChar.toLowerCase() + restOfTopic;
-    return `Powiedz mi o ${normalizedTopic}`;
-  }
-
-  // For other forms, try to detect the case and convert appropriately
-  // Default: prepend "Jakie są" for general questions
-  const firstWord = topic.split(' ')[0].toLowerCase();
-
-  // If starts with a verb form or noun, add "Jakie są"
-  return `Jakie są ${topic.toLowerCase()}`;
 };
 
 // Helper function to parse inline markdown formatting
