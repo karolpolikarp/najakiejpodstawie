@@ -69,13 +69,24 @@ const parseMessage = (content: string): Section[] => {
       } else if (line) {
         currentSection.content += line;
       }
-    } else if (line) {
-      // Content before any section header
-      sections.push({
-        type: 'text',
-        title: '',
-        content: line
-      });
+    } else {
+      // Content before any section header - group with previous text section
+      if (sections.length > 0 && sections[sections.length - 1].type === 'text') {
+        // Add to existing text section
+        if (line) {
+          sections[sections.length - 1].content += '\n' + line;
+        } else if (sections[sections.length - 1].content) {
+          // Add empty line to preserve formatting
+          sections[sections.length - 1].content += '\n';
+        }
+      } else if (line) {
+        // Create new text section
+        sections.push({
+          type: 'text',
+          title: '',
+          content: line
+        });
+      }
     }
   }
 
@@ -84,7 +95,101 @@ const parseMessage = (content: string): Section[] => {
     sections.push(currentSection);
   }
 
-  return sections;
+  // Post-process: detect and convert implicit suggested questions
+  // Look for sections that contain multiple questions in quotes OR bullet points with suggestion context
+  return sections.map((section) => {
+    if (section.type === 'text') {
+      // Try to extract suggested questions/topics from the section
+      const suggestedQuestions = extractSuggestedQuestions(section.content);
+
+      if (suggestedQuestions.length >= 2) {
+        // Convert to suggested-questions section
+        return {
+          type: 'suggested-questions',
+          title: 'Sugerowane pytania',
+          content: suggestedQuestions.join('\n')
+        };
+      }
+    }
+    return section;
+  });
+};
+
+// Helper function to extract suggested questions/topics from text
+// Handles both quoted questions and bullet-pointed topics
+const extractSuggestedQuestions = (text: string): string[] => {
+  // First try to extract questions in quotes
+  const quotedQuestions = extractQuotedQuestions(text);
+  if (quotedQuestions.length >= 2) {
+    return quotedQuestions;
+  }
+
+  // If no quoted questions, check for bullet-pointed suggestions
+  // Look for context phrases that indicate suggested topics
+  const suggestionPhrases = [
+    /jeśli chciałbyś wiedzieć o:/i,
+    /możesz zapytać o:/i,
+    /spróbuj zapytać o:/i,
+    /może zapytaj o:/i,
+    /przykładowe pytania:/i,
+    /możesz spytać o:/i,
+    /dowiedz się o:/i,
+  ];
+
+  const hasSuggestionContext = suggestionPhrases.some(phrase => phrase.test(text));
+
+  if (hasSuggestionContext) {
+    // Extract bullet points as suggested topics
+    return extractBulletPointTopics(text);
+  }
+
+  return [];
+};
+
+// Helper function to extract questions in quotes from text
+const extractQuotedQuestions = (text: string): string[] => {
+  const questions: string[] = [];
+  const lines = text.split('\n');
+
+  for (const line of lines) {
+    // Match text in quotes - support various quote types: " " " „ "
+    const quoteMatch = line.match(/["""„"]([^"""„"]+)["""„"]/);
+    if (quoteMatch) {
+      const question = quoteMatch[1].trim();
+      // Only include if it looks like a question (has ? or is reasonably long)
+      if (question.includes('?') || question.length > 10) {
+        questions.push(question);
+      }
+    }
+  }
+
+  return questions;
+};
+
+// Helper function to extract bullet-pointed topics and convert them to questions
+const extractBulletPointTopics = (text: string): string[] => {
+  const topics: string[] = [];
+  const lines = text.split('\n');
+
+  for (const line of lines) {
+    // Match bullet points: "• Topic" or "- Topic"
+    const bulletMatch = line.match(/^[•\-]\s*(.+)$/);
+    if (bulletMatch) {
+      let topic = bulletMatch[1].trim();
+
+      // Skip very short items or items that are just punctuation
+      if (topic.length < 10) continue;
+
+      // Remove trailing punctuation but keep the original text
+      topic = topic.replace(/[.,;:]+$/, '').trim();
+
+      // Use the topic as-is - the AI has already formatted it appropriately
+      // No need to convert, just use it directly as a clickable question
+      topics.push(topic);
+    }
+  }
+
+  return topics;
 };
 
 // Helper function to parse inline markdown formatting

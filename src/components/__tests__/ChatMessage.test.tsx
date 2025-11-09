@@ -301,6 +301,110 @@ Art. 27 Ustawy`;
       const questionButton = screen.getByRole('button', { name: /Test question/i });
       expect(questionButton).toBeDisabled();
     });
+
+    it('automatically detects and converts questions in quotes to clickable buttons', () => {
+      const content = `Sformułuj proszę pytanie bardziej precyzyjnie, np.:
+
+• "Jakie są obowiązki kierowcy na czerwonym świetle na przejściu dla pieszych?"
+• "Co oznacza czerwone światło dla pieszego na przejściu?"
+• "Jakie są kary za przejechanie na czerwonym na przejściu?"`;
+
+      const mockSendMessage = vi.fn();
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+          onSendMessage={mockSendMessage}
+        />
+      );
+
+      // Should detect and render as suggested questions
+      expect(screen.getByText(/Sugerowane pytania/i)).toBeInTheDocument();
+
+      // Check if questions are rendered as buttons
+      expect(screen.getByRole('button', { name: /Jakie są obowiązki kierowcy na czerwonym świetle/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Co oznacza czerwone światło dla pieszego/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Jakie są kary za przejechanie na czerwonym/i })).toBeInTheDocument();
+    });
+
+    it('calls onSendMessage when auto-detected question button is clicked', () => {
+      const content = `Sformułuj pytanie inaczej:
+
+• "Urlop na żądanie - ile dni w roku?"
+• "Nadgodziny - jak są płatne?"`;
+
+      const mockSendMessage = vi.fn();
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+          onSendMessage={mockSendMessage}
+        />
+      );
+
+      const questionButton = screen.getByRole('button', { name: /Urlop na żądanie - ile dni w roku?/i });
+      fireEvent.click(questionButton);
+
+      expect(mockSendMessage).toHaveBeenCalledWith('Urlop na żądanie - ile dni w roku?');
+    });
+
+    it('automatically detects bullet-pointed topics after suggestion phrases', () => {
+      const content = `❌ Przepraszam, ale jestem asystentem prawnym i odpowiadam tylko na pytania związane z polskim prawem.
+
+Pytanie o "rower" samo w sobie nie dotyczy prawa. Jednak jeśli chciałbyś wiedzieć o:
+
+• Przepisach ruchu drogowego dotyczących rowerów
+• Obowiązkach ubezpieczenia roweru
+• Prawach i obowiązkach rowerzysty
+• Odpowiedzialności za szkodę wyrządzoną rowerem
+• Kradzieży roweru i ochronie prawnej
+...to chętnie pomogę! 🚴`;
+
+      const mockSendMessage = vi.fn();
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+          onSendMessage={mockSendMessage}
+        />
+      );
+
+      // Should detect and render as suggested questions
+      expect(screen.getByText(/Sugerowane pytania/i)).toBeInTheDocument();
+
+      // Check if topics are rendered as clickable buttons (converted to questions)
+      expect(screen.getByRole('button', { name: /przepisach ruchu drogowego/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /obowiązkach ubezpieczenia/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /prawach i obowiązkach rowerzysty/i })).toBeInTheDocument();
+    });
+
+    it('calls onSendMessage with original topic text when bullet-point button is clicked', () => {
+      const content = `Możesz zapytać o:
+
+• Przepisach ruchu drogowego dotyczących rowerów
+• Obowiązkach ubezpieczenia roweru`;
+
+      const mockSendMessage = vi.fn();
+
+      render(
+        <ChatMessage
+          role="assistant"
+          content={content}
+          onSendMessage={mockSendMessage}
+        />
+      );
+
+      // Click on the first button
+      const buttons = screen.getAllByRole('button');
+      const firstQuestionButton = buttons[0];
+      fireEvent.click(firstQuestionButton);
+
+      // Should call with the original text (as-is from AI)
+      expect(mockSendMessage).toHaveBeenCalledWith('Przepisach ruchu drogowego dotyczących rowerów');
+    });
   });
 
   describe('Edge cases', () => {
