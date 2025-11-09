@@ -69,13 +69,24 @@ const parseMessage = (content: string): Section[] => {
       } else if (line) {
         currentSection.content += line;
       }
-    } else if (line) {
-      // Content before any section header
-      sections.push({
-        type: 'text',
-        title: '',
-        content: line
-      });
+    } else {
+      // Content before any section header - group with previous text section
+      if (sections.length > 0 && sections[sections.length - 1].type === 'text') {
+        // Add to existing text section
+        if (line) {
+          sections[sections.length - 1].content += '\n' + line;
+        } else if (sections[sections.length - 1].content) {
+          // Add empty line to preserve formatting
+          sections[sections.length - 1].content += '\n';
+        }
+      } else if (line) {
+        // Create new text section
+        sections.push({
+          type: 'text',
+          title: '',
+          content: line
+        });
+      }
     }
   }
 
@@ -84,7 +95,44 @@ const parseMessage = (content: string): Section[] => {
     sections.push(currentSection);
   }
 
-  return sections;
+  // Post-process: detect and convert implicit suggested questions
+  // Look for sections that contain multiple questions in quotes
+  return sections.map((section) => {
+    if (section.type === 'text') {
+      // Check if this section contains multiple quoted questions
+      const quotedQuestions = extractQuotedQuestions(section.content);
+
+      if (quotedQuestions.length >= 2) {
+        // Convert to suggested-questions section
+        return {
+          type: 'suggested-questions',
+          title: 'Sugerowane pytania',
+          content: quotedQuestions.join('\n')
+        };
+      }
+    }
+    return section;
+  });
+};
+
+// Helper function to extract questions in quotes from text
+const extractQuotedQuestions = (text: string): string[] => {
+  const questions: string[] = [];
+  const lines = text.split('\n');
+
+  for (const line of lines) {
+    // Match text in quotes - support various quote types: " " " „ "
+    const quoteMatch = line.match(/["""„"]([^"""„"]+)["""„"]/);
+    if (quoteMatch) {
+      const question = quoteMatch[1].trim();
+      // Only include if it looks like a question (has ? or is reasonably long)
+      if (question.includes('?') || question.length > 10) {
+        questions.push(question);
+      }
+    }
+  }
+
+  return questions;
 };
 
 // Helper function to parse inline markdown formatting
