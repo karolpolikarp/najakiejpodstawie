@@ -1,0 +1,14 @@
+{
+  "tasks": {
+    "start": "deno run --allow-net --allow-env src/server.ts",
+    "dev": "deno run --allow-net --allow-env --watch src/server.ts",
+    "test": "deno run --allow-net src/test-eli.ts"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window", "dom"]
+  },
+  "fmt": {
+    "semiColons": true,
+    "singleQuote": true
+  }
+}

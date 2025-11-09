@@ -1,0 +1,25 @@
+# Environment files
+.env
+.env.local
+
+# Deno
+.deno/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test outputs
+/tmp/
+*.txt
