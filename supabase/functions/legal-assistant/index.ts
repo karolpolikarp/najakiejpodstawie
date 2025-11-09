@@ -225,6 +225,16 @@ Pełna nazwa aktu prawnego + konkretne artykuły
 Przykład: "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta, Art. 27"
 
 
+**TREŚĆ PRZEPISU:**
+KRYTYCZNE: Jeśli w kontekście znajdują się AKTUALNE TREŚCI ARTYKUŁÓW (sekcja 📜), to MUSISZ przytocz dosłownie treść przepisu z tej sekcji!
+Cytuj tekst dokładnie tak jak jest podany w sekcji "AKTUALNE TREŚCI ARTYKUŁÓW".
+Format: Cytuj w bloku (bez dodatkowych oznaczeń)
+Przykład:
+Art. 533. § 1. Przez umowę sprzedaży sprzedawca zobowiązuje się przenieść na kupującego własność rzeczy i wydać mu rzecz, a kupujący zobowiązuje się rzecz odebrać i zapłacić sprzedawcy cenę.
+
+Jeśli brak oficjalnej treści w kontekście - pomiń tę sekcję i przejdź do CO TO OZNACZA.
+
+
 **CO TO OZNACZA:**
 Wyjaśnienie w prostym języku (2-4 zdania), co przepis oznacza w praktyce
 
@@ -262,10 +272,14 @@ KRYTYCZNE ZASADY:
 4. Listy punktowane: ZAWSZE "• Tekst" w jednej linii
 5. Listy numerowane: "1. Tekst" w jednej linii
 
-PRZYKŁAD POPRAWNEGO FORMATOWANIA:
+PRZYKŁAD POPRAWNEGO FORMATOWANIA (gdy mamy oficjalną treść z MCP):
 
 **PODSTAWA PRAWNA:**
 Ustawa z dnia 30 maja 2014 r. o prawach konsumenta, Art. 27
+
+
+**TREŚĆ PRZEPISU:**
+Art. 27. Konsumentowi, który zawarł umowę na odległość, przysługuje prawo odstąpienia od niej bez podawania przyczyny i bez ponoszenia kosztów, z wyjątkiem kosztów określonych w art. 33, art. 34 ust. 2 i art. 35.
 
 
 **CO TO OZNACZA:**
