@@ -382,7 +382,10 @@ export class ELITools {
    */
   private async extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
     try {
-      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) }).promise;
+      const pdf = await pdfjsLib.getDocument({
+        data: new Uint8Array(pdfBuffer),
+        standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/standard_fonts/',
+      }).promise;
       let fullText = '';
 
       for (let i = 1; i <= pdf.numPages; i++) {
