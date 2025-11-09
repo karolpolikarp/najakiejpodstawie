@@ -43,6 +43,22 @@ export interface ArticleResponse {
   error?: string;
 }
 
+// Supported act codes that can be fetched from ELI MCP server
+// Updated: November 2025 - dodano PZP, KSH, KKS, OP, PB i ustawę o prawach konsumenta
+const SUPPORTED_ACT_CODES = [
+  'kc', 'kp', 'kk', 'kpk', 'kpc', 'konstytucja',
+  'kks', 'ksh', 'pzp', 'op', 'pb',
+  'ordynacja podatkowa', 'prawo budowlane',
+  'prawo zamówień publicznych', 'prawo zamowien publicznych',
+  'ustawa o prawach konsumenta', 'prawa konsumenta',
+  'kodeks karny skarbowy', 'kodeks spółek handlowych'
+];
+
+// Known but unsupported act codes (przykłady - większość ustaw jest teraz wspierana)
+const UNSUPPORTED_ACT_INFO: Record<string, string> = {
+  // Dodaj tutaj inne ustawy w przyszłości
+};
+
 /**
  * Detect article references in user message
  * Examples: "art 10 kp", "artykuł 533 kc", "art. 148 kodeks karny"
@@ -52,7 +68,8 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
   const references: ArticleRequest[] = [];
 
   // Pattern 1: "art 10 kp", "art. 10 kp", "artykuł 10 kp"
-  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(kc|kp|kk|kpk|kpc|k\.?c\.?|k\.?p\.?|k\.?k\.?|k\.?p\.?k\.?|k\.?p\.?c\.?)/gi;
+  // Extended to include PZP, OP, PB and other codes
+  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(kc|kp|kk|kpk|kpc|pzp|ksh|kks|op|pb|k\.?c\.?|k\.?p\.?|k\.?k\.?|k\.?p\.?k\.?|k\.?p\.?c\.?|k\.?s\.?h\.?|k\.?k\.?s\.?)/gi;
   let match;
   while ((match = pattern1.exec(message)) !== null) {
     const articleNumber = match[1];
@@ -65,12 +82,17 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     else if (codeAbbr === 'kk' || codeAbbr === 'kk') actCode = 'kk';
     else if (codeAbbr === 'kpk' || codeAbbr === 'kpk') actCode = 'kpk';
     else if (codeAbbr === 'kpc' || codeAbbr === 'kpc') actCode = 'kpc';
+    else if (codeAbbr === 'pzp') actCode = 'pzp';
+    else if (codeAbbr === 'ksh') actCode = 'ksh';
+    else if (codeAbbr === 'kks') actCode = 'kks';
+    else if (codeAbbr === 'op') actCode = 'op';
+    else if (codeAbbr === 'pb') actCode = 'pb';
 
     references.push({ actCode, articleNumber });
   }
 
   // Pattern 2: "art 10 kodeks pracy", "artykuł 533 kodeksu cywilnego"
-  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym)/gi;
+  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym|karny skarbowy|karnego skarbowego|spółek handlowych|spolek handlowych)/gi;
   while ((match = pattern2.exec(message)) !== null) {
     const articleNumber = match[1];
     const codeName = match[2].toLowerCase();
@@ -78,7 +100,9 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     let actCode = '';
     if (codeName.startsWith('prac')) actCode = 'kp';
     else if (codeName.startsWith('cywil')) actCode = 'kc';
+    else if (codeName.startsWith('karny skarbowy') || codeName.startsWith('karnego skarbowego')) actCode = 'kks';
     else if (codeName.startsWith('kar')) actCode = 'kk';
+    else if (codeName.startsWith('spółek') || codeName.startsWith('spolek')) actCode = 'ksh';
 
     if (actCode) {
       references.push({ actCode, articleNumber });
@@ -90,6 +114,23 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
   while ((match = pattern3.exec(message)) !== null) {
     const articleNumber = match[1];
     references.push({ actCode: 'konstytucja', articleNumber });
+  }
+
+  // Pattern 4: "art 10 pzp", "art 15 ordynacji podatkowej", "art 20 prawa budowlanego"
+  const pattern4 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:pzp|(?:praw[ao]|ustawy)\s+(?:zamówień publicznych|zamowien publicznych|budowlane|budowlanego)|ordynacj[iae] podatkow[aje]|praw konsumenta)/gi;
+  while ((match = pattern4.exec(message)) !== null) {
+    const articleNumber = match[1];
+    const fullMatch = match[0].toLowerCase();
+
+    let actCode = '';
+    if (fullMatch.includes('zamówień') || fullMatch.includes('zamowien') || fullMatch.includes('pzp')) actCode = 'pzp';
+    else if (fullMatch.includes('ordynacj')) actCode = 'op';
+    else if (fullMatch.includes('budowlan')) actCode = 'pb';
+    else if (fullMatch.includes('konsumenta')) actCode = 'prawa konsumenta';
+
+    if (actCode) {
+      references.push({ actCode, articleNumber });
+    }
   }
 
   console.log(`[ELI] Detected ${references.length} article references:`, references);
@@ -174,6 +215,15 @@ export async function fetchArticle(
   articleNumber: string,
   retryCount = 0
 ): Promise<ArticleResponse> {
+  // Check if the act code is supported by ELI MCP
+  if (!SUPPORTED_ACT_CODES.includes(actCode)) {
+    const actName = UNSUPPORTED_ACT_INFO[actCode] || actCode.toUpperCase();
+    return {
+      success: false,
+      error: `Ustawa "${actName}" nie jest obecnie wspierana przez system ELI MCP. Wspierane: ${SUPPORTED_ACT_CODES.join(', ')}`,
+    };
+  }
+
   try {
     console.log(`[ELI] Fetching article (attempt ${retryCount + 1}/${MCP_MAX_RETRIES}): ${actCode} ${articleNumber}`);
 
@@ -382,14 +432,45 @@ export async function enrichWithArticles(
   const warnings: string[] = [];
 
   if (failureCount > 0) {
-    const failedRefs = limitedReferences
-      .filter((_, i) => !articles[i].success)
-      .map(ref => `${ref.actCode.toUpperCase()} art. ${ref.articleNumber}`)
-      .join(', ');
-
-    warnings.push(
-      `Nie udało się pobrać treści dla: ${failedRefs}. Odpowiedź może być niepełna.`
+    // Separate unsupported acts from other failures
+    const unsupportedArticles = articles.filter(
+      a => !a.success && a.error?.includes('nie jest obecnie wspierana')
     );
+    const otherFailedArticles = articles.filter(
+      a => !a.success && !a.error?.includes('nie jest obecnie wspierana')
+    );
+
+    // Warning for unsupported acts
+    if (unsupportedArticles.length > 0) {
+      const unsupportedRefs = limitedReferences
+        .filter((_, i) => {
+          const article = articles[i];
+          return !article.success && article.error?.includes('nie jest obecnie wspierana');
+        })
+        .map(ref => `${ref.actCode.toUpperCase()} art. ${ref.articleNumber}`)
+        .join(', ');
+
+      warnings.push(
+        `⚠️ **NIEWSPIERANA USTAWA**: Artykuły ${unsupportedRefs} - System MCP nie wspiera jeszcze tej ustawy. ` +
+        `Odpowiedź poniżej opiera się na wiedzy AI i może być nieaktualna. ` +
+        `Zweryfikuj na https://isap.sejm.gov.pl`
+      );
+    }
+
+    // Warning for other failures
+    if (otherFailedArticles.length > 0) {
+      const failedRefs = limitedReferences
+        .filter((_, i) => {
+          const article = articles[i];
+          return !article.success && !article.error?.includes('nie jest obecnie wspierana');
+        })
+        .map(ref => `${ref.actCode.toUpperCase()} art. ${ref.articleNumber}`)
+        .join(', ');
+
+      warnings.push(
+        `Nie udało się pobrać treści dla: ${failedRefs}. Odpowiedź może być niepełna.`
+      );
+    }
   }
 
   // Warn if we had to skip articles from topics due to limits

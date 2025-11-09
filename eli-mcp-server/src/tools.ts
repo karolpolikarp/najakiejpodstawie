@@ -14,6 +14,7 @@ export class ELITools {
   // IMPORTANT: Always use consolidated texts (teksty jednolite) for current law
   // Updated: November 2025
   private ACT_CODES: Record<string, { publisher: string; year: number; position: number; title: string }> = {
+    // Kodeksy podstawowe
     'kc': { publisher: 'DU', year: 2025, position: 1071, title: 'Kodeks cywilny' },
     'kodeks cywilny': { publisher: 'DU', year: 2025, position: 1071, title: 'Kodeks cywilny' },
     'kp': { publisher: 'DU', year: 2025, position: 277, title: 'Kodeks pracy' },
@@ -24,7 +25,27 @@ export class ELITools {
     'kodeks postępowania karnego': { publisher: 'DU', year: 2025, position: 46, title: 'Kodeks postępowania karnego' },
     'kpc': { publisher: 'DU', year: 2024, position: 1568, title: 'Kodeks postępowania cywilnego' },
     'kodeks postępowania cywilnego': { publisher: 'DU', year: 2024, position: 1568, title: 'Kodeks postępowania cywilnego' },
+    'kks': { publisher: 'DU', year: 2025, position: 633, title: 'Kodeks karny skarbowy' },
+    'kodeks karny skarbowy': { publisher: 'DU', year: 2025, position: 633, title: 'Kodeks karny skarbowy' },
+    'ksh': { publisher: 'DU', year: 2024, position: 18, title: 'Kodeks spółek handlowych' },
+    'kodeks spółek handlowych': { publisher: 'DU', year: 2024, position: 18, title: 'Kodeks spółek handlowych' },
+
+    // Konstytucja
     'konstytucja': { publisher: 'DU', year: 1997, position: 483, title: 'Konstytucja Rzeczypospolitej Polskiej' },
+
+    // Ustawy szczególne
+    'pzp': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
+    'prawo zamówień publicznych': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
+    'prawo zamowien publicznych': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
+
+    'ustawa o prawach konsumenta': { publisher: 'DU', year: 2023, position: 2759, title: 'Ustawa o prawach konsumenta' },
+    'prawa konsumenta': { publisher: 'DU', year: 2023, position: 2759, title: 'Ustawa o prawach konsumenta' },
+
+    'ordynacja podatkowa': { publisher: 'DU', year: 2025, position: 111, title: 'Ordynacja podatkowa' },
+    'op': { publisher: 'DU', year: 2025, position: 111, title: 'Ordynacja podatkowa' },
+
+    'prawo budowlane': { publisher: 'DU', year: 2025, position: 418, title: 'Prawo budowlane' },
+    'pb': { publisher: 'DU', year: 2025, position: 418, title: 'Prawo budowlane' },
   };
 
   constructor(client: ELIClient) {

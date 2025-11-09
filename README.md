@@ -34,7 +34,16 @@ Zamiast godzin researchu - odpowiedź w 5-10 sekund.
 Skomplikowane przepisy tłumaczone na prosty, przystępny język.
 
 ### Wiarygodne źródła
-Każda odpowiedź zawiera odniesienie do konkretnego aktu prawnego.
+Każda odpowiedź zawiera odniesienie do konkretnego aktu prawnego z **oficjalnych źródeł rządowych** (api.sejm.gov.pl).
+
+### Aktualne teksty jednolite
+System automatycznie pobiera **15 najpopularniejszych ustaw** z aktualnych tekstów jednolitych Dziennika Ustaw RP:
+- 7 kodeksów (KC, KP, KK, KPK, KPC, KKS, KSH)
+- Konstytucja RP
+- 4 kluczowe ustawy (PZP, Ordynacja podatkowa, Prawo budowlane, Prawa konsumenta)
+
+### Dosłowne cytowanie przepisów
+Gdy system wykryje pytanie o konkretny artykuł (np. "art 10 kp"), automatycznie pobiera i cytuje **dokładną treść przepisu** z oficjalnych źródeł.
 
 ### Dostępność 24/7
 Aplikacja dostępna zawsze, z dowolnego urządzenia z przeglądarką.
@@ -92,10 +101,21 @@ Po skonfigurowaniu sekretów, każdy merge do `main` automatycznie:
 Aplikacja wykorzystuje najnowocześniejsze modele sztucznej inteligencji Anthropic Claude, specjalizujące się w analizie języka naturalnego i wyszukiwaniu informacji prawnych.
 
 **Stack technologiczny:**
-- Frontend: React + TypeScript
-- Backend: Supabase (serverless)
-- AI: Anthropic Claude
-- Hosting: Vercel
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: Supabase Edge Functions (serverless)
+- **AI**: Anthropic Claude (Sonnet 4.5 / Haiku 4)
+- **Hosting**: Vercel (frontend) + Raspberry Pi (ELI MCP Server)
+- **Źródła prawne**:
+  - API Sejmu RP (api.sejm.gov.pl) - oficjalne teksty ustaw
+  - ELI MCP Server - ekstrakcja i czyszczenie treści artykułów z PDF
+  - Automatyczna walidacja i weryfikacja treści
+
+**Przepływ danych:**
+1. Użytkownik zadaje pytanie
+2. System wykrywa odniesienia do artykułów (regex + NLP)
+3. ELI MCP Server pobiera aktualną treść z api.sejm.gov.pl
+4. Claude otrzymuje dokładną treść artykułu w kontekście
+5. Odpowiedź zawiera dosłowne cytaty z oficjalnych źródeł
 
 Wszystko oparte na nowoczesnych, sprawdzonych technologiach używanych przez największe firmy tech na świecie.
 
