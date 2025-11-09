@@ -36,11 +36,18 @@ Skomplikowane przepisy tłumaczone na prosty, przystępny język.
 ### Wiarygodne źródła
 Każda odpowiedź zawiera odniesienie do konkretnego aktu prawnego z **oficjalnych źródeł rządowych** (api.sejm.gov.pl).
 
-### Aktualne teksty jednolite
-System automatycznie pobiera **16 najpopularniejszych ustaw** z aktualnych tekstów jednolitych Dziennika Ustaw RP:
-- 7 kodeksów (KC, KP, KK, KPK, KPC, KKS, KSH)
-- Konstytucja RP
-- 5 kluczowych ustaw (PZP, Ordynacja podatkowa, Prawo budowlane, Prawo o ruchu drogowym, Prawa konsumenta)
+### Dostęp do WSZYSTKICH ustaw polskich
+System obsługuje **WSZYSTKIE ~15 000 aktów prawnych z ISAP**:
+- ⚡ 16 najpopularniejszych ustaw - błyskawiczny dostęp (hardcoded)
+- 🔍 Dynamiczne wyszukiwanie - dowolna ustawa z ISAP
+- 💾 Inteligentny cache - przyspiesza kolejne zapytania
+- 🎯 Fuzzy matching - działa nawet z literówkami
+
+**Przykłady obsługiwanych zapytań:**
+- Popularne: "art 30 prawa o ruchu drogowym" ⚡
+- Rzadsze: "art 5 ustawy o energetyce odnawialnej" 🔍
+- Z synonimami: "art 30 kodeksu drogowego" 🎯
+- Z literówkami: "art 30 ruchu drogowm" (autokorekta)
 
 ### Dosłowne cytowanie przepisów
 Gdy system wykryje pytanie o konkretny artykuł (np. "art 10 kp"), automatycznie pobiera i cytuje **dokładną treść przepisu** z oficjalnych źródeł.

@@ -4,11 +4,13 @@
  */
 
 import { ELIClient, ELISearchParams } from './eli-client.ts';
+import { ActResolver, ResolvedAct } from './act-resolver.ts';
 // @deno-types="npm:@types/pdfjs-dist@2.10.378"
 import * as pdfjsLib from 'npm:pdfjs-dist@4.0.379/legacy/build/pdf.mjs';
 
 export class ELITools {
   private client: ELIClient;
+  private actResolver: ActResolver;
 
   // Mapping of common act codes to their official identifiers
   // IMPORTANT: Always use consolidated texts (teksty jednolite) for current law
@@ -53,6 +55,7 @@ export class ELITools {
 
   constructor(client: ELIClient) {
     this.client = client;
+    this.actResolver = new ActResolver(client);
   }
 
   /**
@@ -96,25 +99,12 @@ export class ELITools {
   }
 
   /**
-   * Get a specific article from an act
-   * Parse queries like "art 533 kc" or "artykuł 10 konstytucji"
+   * Helper: Fetch article text from a resolved act
    */
-  async getArticle(params: {
-    articleNumber: string;
-    actCode: string;
-  }) {
-    const { articleNumber, actCode } = params;
-    const actCodeLower = actCode.toLowerCase().trim();
-
-    // Find the act in our mapping
-    const actInfo = this.ACT_CODES[actCodeLower];
-    if (!actInfo) {
-      return {
-        success: false,
-        error: `Nieznany kod aktu: ${actCode}. Znane kody: ${Object.keys(this.ACT_CODES).join(', ')}`,
-      };
-    }
-
+  private async fetchArticleFromAct(
+    actInfo: { publisher: string; year: number; position: number; title: string },
+    articleNumber: string
+  ) {
     try {
       // Get act details
       const act = await this.client.getActDetails(
@@ -168,6 +158,73 @@ export class ELITools {
       return {
         success: false,
         error: `Błąd pobierania artykułu: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Get a specific article from an act
+   * Now supports both hardcoded acts AND dynamic search for all 15k+ ISAP acts!
+   *
+   * Examples:
+   *   - "art 30 prd" (hardcoded)
+   *   - "art 10 kodeksu pracy" (hardcoded)
+   *   - "art 5 ustawy o energetyce odnawialnej" (dynamic search!)
+   *   - "art 20 prawo bankowe" (dynamic search!)
+   */
+  async getArticle(params: {
+    articleNumber: string;
+    actCode: string;
+  }) {
+    const { articleNumber, actCode } = params;
+    const actCodeLower = actCode.toLowerCase().trim();
+
+    console.log(`[ELI] getArticle: "${actCode}" art ${articleNumber}`);
+
+    // LEVEL 1: Check hardcoded mapping (fast path - 16 popular acts)
+    const hardcodedActInfo = this.ACT_CODES[actCodeLower];
+    if (hardcodedActInfo) {
+      console.log(`[ELI] ✓ Found in hardcoded map: ${hardcodedActInfo.title}`);
+      return this.fetchArticleFromAct(hardcodedActInfo, articleNumber);
+    }
+
+    // LEVEL 2: Use ActResolver (dynamic search + cache)
+    console.log(`[ELI] Not in hardcoded map, trying dynamic resolution...`);
+
+    try {
+      const resolved = await this.actResolver.resolveAct(actCode);
+
+      if (resolved) {
+        console.log(`[ELI] ✓ Dynamically resolved: ${resolved.title} (source: ${resolved.source})`);
+        return this.fetchArticleFromAct(resolved, articleNumber);
+      }
+
+      // LEVEL 3: Not found - suggest similar acts
+      console.log(`[ELI] ✗ Could not resolve act: "${actCode}"`);
+
+      const similarActs = await this.actResolver.findSimilarActs(actCode, 5);
+
+      let errorMessage = `Nie znaleziono ustawy: "${actCode}".`;
+
+      if (similarActs.length > 0) {
+        errorMessage += `\n\nCzy chodziło o jedną z tych ustaw?\n`;
+        similarActs.forEach((title, i) => {
+          errorMessage += `  ${i + 1}. ${title}\n`;
+        });
+        errorMessage += `\nSpróbuj podać dokładniejszą nazwę.`;
+      } else {
+        errorMessage += ` Spróbuj podać pełną nazwę ustawy.`;
+      }
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    } catch (error) {
+      console.error(`[ELI] Error in dynamic resolution: ${error.message}`);
+      return {
+        success: false,
+        error: `Błąd podczas wyszukiwania ustawy: ${error.message}`,
       };
     }
   }
@@ -514,5 +571,13 @@ export class ELITools {
     }
 
     return null;
+  }
+
+  /**
+   * Get monitoring statistics
+   * Useful for tracking cache performance and popular searches
+   */
+  getStats() {
+    return this.actResolver.getStats();
   }
 }
