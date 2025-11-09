@@ -127,14 +127,32 @@ async function handler(req: Request): Promise<Response> {
       });
     }
 
+    // Statistics endpoint - monitoring cache performance
+    if (url.pathname === '/stats' && req.method === 'GET') {
+      const stats = tools.getStats();
+
+      return new Response(JSON.stringify({
+        success: true,
+        stats,
+        timestamp: new Date().toISOString(),
+      }), {
+        status: 200,
+        headers: {
+          ...corsHeaders(origin),
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
     // Not found
     return new Response(
       JSON.stringify({
         error: 'Not found',
         available_endpoints: [
           'GET /health - Health check (no auth)',
+          'GET /stats - Statistics and monitoring (requires auth)',
           'POST /tools/search_acts - Search for acts',
-          'POST /tools/get_article - Get specific article',
+          'POST /tools/get_article - Get specific article (now supports all 15k+ acts!)',
           'POST /tools/get_act_details - Get act details',
         ],
       }),
@@ -171,8 +189,14 @@ console.log(`⏱️  Cache TTL: ${CACHE_TTL}s`);
 console.log('');
 console.log('Available endpoints:');
 console.log('  GET  /health             - Health check (no auth)');
+console.log('  GET  /stats              - Statistics and monitoring');
 console.log('  POST /tools/search_acts  - Search for acts');
-console.log('  POST /tools/get_article  - Get specific article');
+console.log('  POST /tools/get_article  - Get article (supports ALL 15k+ acts!)');
 console.log('  POST /tools/get_act_details - Get act details');
+console.log('');
+console.log('🎯 NEW: Dynamic act resolution now supports all Polish legal acts!');
+console.log('   - 16 hardcoded popular acts (instant)');
+console.log('   - LRU cache for 200 recently accessed acts');
+console.log('   - Dynamic API search for any act in ISAP');
 
 Deno.serve({ port: parseInt(PORT) }, handler);
