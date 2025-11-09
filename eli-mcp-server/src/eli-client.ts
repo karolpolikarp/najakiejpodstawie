@@ -199,7 +199,8 @@ export class ELIClient {
   ): Promise<ArrayBuffer> {
     const cacheKey = `pdf:${publisher}/${year}/${position}`;
     const cached = this.cache.get(cacheKey);
-    if (cached) return cached;
+    // Return a copy of the cached buffer to prevent detached ArrayBuffer errors
+    if (cached) return cached.slice(0);
 
     const url =
       `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.pdf`;
@@ -223,7 +224,8 @@ export class ELIClient {
 
     const pdf = await response.arrayBuffer();
     this.cache.set(cacheKey, pdf);
-    return pdf;
+    // Return a copy of the buffer to prevent detached ArrayBuffer errors
+    return pdf.slice(0);
   }
 
   /**
