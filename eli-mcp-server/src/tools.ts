@@ -224,6 +224,82 @@ export class ELITools {
   }
 
   /**
+   * Clean Polish text from PDF extraction artifacts
+   */
+  private cleanPolishText(text: string): string {
+    // Step 1: Fix hyphenated words at line breaks
+    // Common pattern: "zastu- pienia" or "wyj ątkiem" -> "zastupienia", "wyjątkiem"
+    text = text.replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2');
+    text = text.replace(/(\w+)-\s+(\w+)/g, '$1$2');
+
+    // Step 2: Fix broken Polish diacritic characters
+    // Common pattern: "wyj ątkiem" -> "wyjątkiem"
+    const polishCharFixes = [
+      { broken: /([a-z])\s+ą/gi, fixed: '$1ą' },
+      { broken: /([a-z])\s+ć/gi, fixed: '$1ć' },
+      { broken: /([a-z])\s+ę/gi, fixed: '$1ę' },
+      { broken: /([a-z])\s+ł/gi, fixed: '$1ł' },
+      { broken: /([a-z])\s+ń/gi, fixed: '$1ń' },
+      { broken: /([a-z])\s+ó/gi, fixed: '$1ó' },
+      { broken: /([a-z])\s+ś/gi, fixed: '$1ś' },
+      { broken: /([a-z])\s+ź/gi, fixed: '$1ź' },
+      { broken: /([a-z])\s+ż/gi, fixed: '$1ż' },
+      // Also fix when diacritic comes before space
+      { broken: /ą\s+([a-z])/gi, fixed: 'ą$1' },
+      { broken: /ć\s+([a-z])/gi, fixed: 'ć$1' },
+      { broken: /ę\s+([a-z])/gi, fixed: 'ę$1' },
+      { broken: /ł\s+([a-z])/gi, fixed: 'ł$1' },
+      { broken: /ń\s+([a-z])/gi, fixed: 'ń$1' },
+      { broken: /ó\s+([a-z])/gi, fixed: 'ó$1' },
+      { broken: /ś\s+([a-z])/gi, fixed: 'ś$1' },
+      { broken: /ź\s+([a-z])/gi, fixed: 'ź$1' },
+      { broken: /ż\s+([a-z])/gi, fixed: 'ż$1' },
+    ];
+
+    for (const fix of polishCharFixes) {
+      text = text.replace(fix.broken, fix.fixed);
+    }
+
+    // Step 3: Fix common broken words (manual corrections for known issues)
+    const commonFixes: Record<string, string> = {
+      'po krzywdzeniem': 'pokrzywdzeniem',
+      'za tru dnienia': 'zatrudnienia',
+      'do żywot niego': 'dożywotniego',
+      'peł nieniem': 'pełnieniem',
+      'popeł nionego': 'popełnionego',
+      'motywacj i': 'motywacji',
+      'więce j': 'więcej',
+      'czyn ności': 'czynności',
+      'ż ądającego': 'żądającego',
+      'wyj ątkiem': 'wyjątkiem',
+    };
+
+    for (const [broken, fixed] of Object.entries(commonFixes)) {
+      text = text.replace(new RegExp(broken, 'gi'), fixed);
+    }
+
+    // Step 4: Fix excessive spaces within words (but preserve intentional spacing)
+    // Remove space if it appears in the middle of a lowercase word
+    text = text.replace(/\b([a-ząćęłńóśźż]+)\s+([a-ząćęłńóśźż]{1,3}\b)/gi, (match, p1, p2) => {
+      // Only join if second part is very short (likely a suffix or broken part)
+      if (p2.length <= 3 && !['i', 'w', 'z', 'u', 'o', 'a', 'na', 'do', 'od', 'po', 'za'].includes(p2.toLowerCase())) {
+        return p1 + p2;
+      }
+      return match;
+    });
+
+    // Step 5: Clean up line breaks and spacing
+    // Replace multiple spaces with single space
+    text = text.replace(/[ \t]+/g, ' ');
+    // Clean up line breaks around punctuation
+    text = text.replace(/\s*\n\s*/g, '\n');
+    // Remove line break before punctuation
+    text = text.replace(/\s*\n\s*([.,;:])/g, '$1');
+
+    return text.trim();
+  }
+
+  /**
    * Extract text from PDF buffer
    */
   private async extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
@@ -238,31 +314,43 @@ export class ELITools {
         // Better text extraction - preserve word boundaries
         let pageText = '';
         let lastY = 0;
+        let lastX = 0;
 
         for (const item of textContent.items) {
           const itemData = item as any;
           const text = itemData.str;
           const transform = itemData.transform;
           const y = transform ? transform[5] : 0;
+          const x = transform ? transform[4] : 0;
 
           // Add newline if Y position changed significantly (new line)
           if (lastY && Math.abs(y - lastY) > 5) {
             pageText += '\n';
+            lastX = 0; // Reset X position on new line
           }
 
           // Add text with proper spacing
           if (text) {
             // Check if we need a space before this text
+            // Don't add space if:
+            // - it's the start of the page
+            // - previous char is already space or newline
+            // - current text starts with space
+            // - current text is punctuation
+            // - large horizontal gap (likely a new section)
             const needsSpace = pageText.length > 0 &&
                              !pageText.endsWith(' ') &&
                              !pageText.endsWith('\n') &&
-                             !text.startsWith(' ');
+                             !text.startsWith(' ') &&
+                             !/^[.,;:!?)\]}]/.test(text) &&
+                             (lastX === 0 || Math.abs(x - lastX) < 100); // Don't add space for large gaps
 
             if (needsSpace) {
               pageText += ' ';
             }
 
             pageText += text;
+            lastX = x + (text.length * 5); // Approximate next position
           }
 
           lastY = y;
@@ -270,6 +358,9 @@ export class ELITools {
 
         fullText += pageText + '\n';
       }
+
+      // Apply Polish text cleaning
+      fullText = this.cleanPolishText(fullText);
 
       return fullText;
     } catch (error) {
@@ -310,6 +401,9 @@ export class ELITools {
         // Clean up extra whitespace while preserving paragraph structure
         text = text.replace(/[ \t]+/g, ' ');
         text = text.replace(/\n\s*\n\s*\n+/g, '\n\n'); // Max 2 newlines
+
+        // Apply Polish text cleaning to the article
+        text = this.cleanPolishText(text);
 
         // Ensure we include the article header if not already there
         if (!text.match(/^Art/i)) {
