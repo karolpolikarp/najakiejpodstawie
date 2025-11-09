@@ -95,55 +95,7 @@ const parseMessage = (content: string): Section[] => {
     sections.push(currentSection);
   }
 
-  // Post-process: detect and convert implicit suggested questions
-  // Look for sections that contain multiple questions in quotes OR bullet points with suggestion context
-  return sections.map((section) => {
-    if (section.type === 'text') {
-      // Try to extract suggested questions/topics from the section
-      const suggestedQuestions = extractSuggestedQuestions(section.content);
-
-      if (suggestedQuestions.length >= 2) {
-        // Convert to suggested-questions section
-        return {
-          type: 'suggested-questions',
-          title: 'Sugerowane pytania',
-          content: suggestedQuestions.join('\n')
-        };
-      }
-    }
-    return section;
-  });
-};
-
-// Helper function to extract suggested questions/topics from text
-// Handles both quoted questions and bullet-pointed topics
-const extractSuggestedQuestions = (text: string): string[] => {
-  // First try to extract questions in quotes
-  const quotedQuestions = extractQuotedQuestions(text);
-  if (quotedQuestions.length >= 2) {
-    return quotedQuestions;
-  }
-
-  // If no quoted questions, check for bullet-pointed suggestions
-  // Look for context phrases that indicate suggested topics
-  const suggestionPhrases = [
-    /jeśli chciałbyś wiedzieć o:/i,
-    /możesz zapytać o:/i,
-    /spróbuj zapytać o:/i,
-    /może zapytaj o:/i,
-    /przykładowe pytania:/i,
-    /możesz spytać o:/i,
-    /dowiedz się o:/i,
-  ];
-
-  const hasSuggestionContext = suggestionPhrases.some(phrase => phrase.test(text));
-
-  if (hasSuggestionContext) {
-    // Extract bullet points as suggested topics
-    return extractBulletPointTopics(text);
-  }
-
-  return [];
+  return sections;
 };
 
 // Helper function to extract questions in quotes from text
@@ -164,32 +116,6 @@ const extractQuotedQuestions = (text: string): string[] => {
   }
 
   return questions;
-};
-
-// Helper function to extract bullet-pointed topics and convert them to questions
-const extractBulletPointTopics = (text: string): string[] => {
-  const topics: string[] = [];
-  const lines = text.split('\n');
-
-  for (const line of lines) {
-    // Match bullet points: "• Topic" or "- Topic"
-    const bulletMatch = line.match(/^[•\-]\s*(.+)$/);
-    if (bulletMatch) {
-      let topic = bulletMatch[1].trim();
-
-      // Skip very short items or items that are just punctuation
-      if (topic.length < 10) continue;
-
-      // Remove trailing punctuation but keep the original text
-      topic = topic.replace(/[.,;:]+$/, '').trim();
-
-      // Use the topic as-is - the AI has already formatted it appropriately
-      // No need to convert, just use it directly as a clickable question
-      topics.push(topic);
-    }
-  }
-
-  return topics;
 };
 
 // Helper function to parse inline markdown formatting
@@ -220,8 +146,23 @@ const parseInlineMarkdown = (text: string) => {
   return parts.length > 0 ? parts : text;
 };
 
-const formatContent = (content: string) => {
+const formatContent = (content: string, onSendMessage?: (content: string) => void) => {
   const lines = content.split('\n').filter(line => line.trim());
+
+  // Check if content has suggestion context phrases
+  const hasSuggestionContext = [
+    /jeśli chciałbyś wiedzieć o:/i,
+    /możesz zapytać o:/i,
+    /spróbuj zapytać o:/i,
+    /może zapytaj o:/i,
+    /przykładowe pytania:/i,
+    /możesz spytać o:/i,
+    /dowiedz się o:/i,
+    /potrzebuję konkretnego pytania prawnego, np\.?:/i,
+  ].some(phrase => phrase.test(content));
+
+  // Check if content has questions in quotes
+  const hasQuotedQuestions = extractQuotedQuestions(content).length >= 2;
 
   return lines.map((line, idx) => {
     const trimmed = line.trim();
@@ -238,9 +179,53 @@ const formatContent = (content: string) => {
       );
     }
 
-    // Bullet list
+    // Bullet list - check if it should be clickable
     if (/^[-•]\s/.test(trimmed)) {
       const text = trimmed.replace(/^[-•]\s/, '');
+
+      // Skip very short items
+      if (text.trim().length < 10) {
+        return (
+          <div key={idx} className="flex gap-2 mb-1 ml-2">
+            <span className="text-primary">•</span>
+            <span>{parseInlineMarkdown(text)}</span>
+          </div>
+        );
+      }
+
+      // Check if this is a quoted question
+      const quoteMatch = text.match(/^["""„"]([^"""„"]+)["""„"]$/);
+      if (hasQuotedQuestions && quoteMatch) {
+        const question = quoteMatch[1].trim();
+        return (
+          <Button
+            key={idx}
+            variant="outline"
+            onClick={() => onSendMessage?.(question)}
+            disabled={!onSendMessage}
+            className="mb-2 text-xs sm:text-sm hover:scale-105 transition-transform duration-200 border-amber-600/50 dark:border-amber-400/50 bg-amber-100/50 dark:bg-amber-900/30 hover:bg-amber-200/70 dark:hover:bg-amber-800/50 hover:border-amber-700 dark:hover:border-amber-300 text-amber-900 dark:text-amber-100 hover:text-amber-950 dark:hover:text-amber-50 w-full justify-start"
+          >
+            {question}
+          </Button>
+        );
+      }
+
+      // Check if this is a suggested topic (in suggestion context)
+      if (hasSuggestionContext && onSendMessage) {
+        const cleanedText = text.replace(/[.,;:]+$/, '').trim();
+        return (
+          <Button
+            key={idx}
+            variant="outline"
+            onClick={() => onSendMessage(cleanedText)}
+            className="mb-2 text-xs sm:text-sm hover:scale-105 transition-transform duration-200 border-amber-600/50 dark:border-amber-400/50 bg-amber-100/50 dark:bg-amber-900/30 hover:bg-amber-200/70 dark:hover:bg-amber-800/50 hover:border-amber-700 dark:hover:border-amber-300 text-amber-900 dark:text-amber-100 hover:text-amber-950 dark:hover:text-amber-50 w-full justify-start"
+          >
+            {cleanedText}
+          </Button>
+        );
+      }
+
+      // Regular bullet point
       return (
         <div key={idx} className="flex gap-2 mb-1 ml-2">
           <span className="text-primary">•</span>
@@ -392,7 +377,7 @@ const formatAssistantMessage = (content: string, onSendMessage?: (content: strin
         if (!section.content.trim()) return null;
         return (
           <div key={idx} className="mb-2 text-muted-foreground">
-            {formatContent(section.content)}
+            {formatContent(section.content, onSendMessage)}
           </div>
         );
     }

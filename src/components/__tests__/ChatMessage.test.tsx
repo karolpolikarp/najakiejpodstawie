@@ -319,13 +319,13 @@ Art. 27 Ustawy`;
         />
       );
 
-      // Should detect and render as suggested questions
-      expect(screen.getByText(/Sugerowane pytania/i)).toBeInTheDocument();
-
-      // Check if questions are rendered as buttons
+      // Check if questions are rendered as clickable buttons (inline, preserving original text)
       expect(screen.getByRole('button', { name: /Jakie są obowiązki kierowcy na czerwonym świetle/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Co oznacza czerwone światło dla pieszego/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Jakie są kary za przejechanie na czerwonym/i })).toBeInTheDocument();
+
+      // Original text should be preserved
+      expect(screen.getByText(/Sformułuj proszę pytanie bardziej precyzyjnie, np.:/i)).toBeInTheDocument();
     });
 
     it('calls onSendMessage when auto-detected question button is clicked', () => {
@@ -372,13 +372,15 @@ Pytanie o "rower" samo w sobie nie dotyczy prawa. Jednak jeśli chciałbyś wied
         />
       );
 
-      // Should detect and render as suggested questions
-      expect(screen.getByText(/Sugerowane pytania/i)).toBeInTheDocument();
-
-      // Check if topics are rendered as clickable buttons (converted to questions)
+      // Check if topics are rendered as clickable buttons (inline, preserving original text)
       expect(screen.getByRole('button', { name: /przepisach ruchu drogowego/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /obowiązkach ubezpieczenia/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /prawach i obowiązkach rowerzysty/i })).toBeInTheDocument();
+
+      // Original text should be preserved
+      expect(screen.getByText(/❌ Przepraszam, ale jestem asystentem prawnym/i)).toBeInTheDocument();
+      expect(screen.getByText(/jeśli chciałbyś wiedzieć o:/i)).toBeInTheDocument();
+      expect(screen.getByText(/to chętnie pomogę!/i)).toBeInTheDocument();
     });
 
     it('calls onSendMessage with original topic text when bullet-point button is clicked', () => {
