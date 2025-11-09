@@ -190,6 +190,43 @@ export class ELIClient {
   }
 
   /**
+   * Get PDF text of an act
+   */
+  async getActPDF(
+    publisher: string,
+    year: number,
+    position: number,
+  ): Promise<ArrayBuffer> {
+    const cacheKey = `pdf:${publisher}/${year}/${position}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const url =
+      `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.pdf`;
+    console.log(`[ELI] Getting PDF: ${url}`);
+
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/pdf',
+        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
+        'Accept-Language': 'pl-PL,pl;q=0.9',
+      },
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
+      throw new Error(
+        `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
+      );
+    }
+
+    const pdf = await response.arrayBuffer();
+    this.cache.set(cacheKey, pdf);
+    return pdf;
+  }
+
+  /**
    * Get act structure (table of contents)
    */
   async getActStructure(
