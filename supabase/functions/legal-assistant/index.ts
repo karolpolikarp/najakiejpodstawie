@@ -93,7 +93,7 @@ serve(async (req) => {
 
   try {
     const requestBody = await req.json();
-    const { message, fileContext, sessionId, messageId } = requestBody || {};
+    const { message, fileContext, sessionId, messageId, usePremiumModel } = requestBody || {};
 
     // Log incoming request for debugging
     console.log('Received request:', {
@@ -103,7 +103,8 @@ serve(async (req) => {
       hasFileContext: !!fileContext,
       hasSessionId: !!sessionId,
       hasMessageId: !!messageId,
-      messageId: messageId // Log actual messageId value
+      messageId: messageId, // Log actual messageId value
+      usePremiumModel: !!usePremiumModel
     });
 
     // Validate required fields
@@ -165,6 +166,13 @@ serve(async (req) => {
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    // Wybierz model: Haiku (domyślny, tani) vs Sonnet (premium, droższy)
+    const selectedModel = usePremiumModel
+      ? 'claude-sonnet-4-20250514'  // Premium: Sonnet 4.5
+      : 'claude-haiku-4-5'; // Domyślny: Haiku 4.5
+
+    console.log(`🤖 Using model: ${selectedModel} (premium: ${!!usePremiumModel})`);
 
     // Wykryj kontekst prawny na podstawie pytania
     const detectedLegalContext = detectLegalContext(message);
@@ -295,7 +303,7 @@ ${message}`;
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: selectedModel,
         max_tokens: 4096,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
