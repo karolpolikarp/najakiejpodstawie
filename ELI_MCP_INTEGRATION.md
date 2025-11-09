@@ -172,14 +172,49 @@ Przetestuj różne warianty:
 
 ## Wspierane kody aktów 📚
 
-| Kod | Nazwa aktu | Przykład |
-|-----|-----------|----------|
-| `kc` | Kodeks cywilny | "art 533 kc" |
-| `kp` | Kodeks pracy | "art 10 kp" |
-| `kk` | Kodeks karny | "art 148 kk" |
-| `kpk` | Kodeks postępowania karnego | "art 5 kpk" |
-| `kpc` | Kodeks postępowania cywilnego | "art 187 kpc" |
-| `konstytucja` | Konstytucja RP | "art 30 konstytucji" |
+### Kodeksy (7)
+
+| Kod | Nazwa aktu | Tekst jednolity | Przykład |
+|-----|-----------|-----------------|----------|
+| `kc` | Kodeks cywilny | DU/2025/1071 | "art 533 kc" |
+| `kp` | Kodeks pracy | DU/2025/277 | "art 10 kp" |
+| `kk` | Kodeks karny | DU/2025/383 | "art 148 kk" |
+| `kpk` | Kodeks postępowania karnego | DU/2025/46 | "art 5 kpk" |
+| `kpc` | Kodeks postępowania cywilnego | DU/2024/1568 | "art 187 kpc" |
+| `kks` | Kodeks karny skarbowy | DU/2025/633 | "art 100 kks" |
+| `ksh` | Kodeks spółek handlowych | DU/2024/18 | "art 5 ksh" |
+
+### Konstytucja (1)
+
+| Kod | Nazwa aktu | Tekst jednolity | Przykład |
+|-----|-----------|-----------------|----------|
+| `konstytucja` | Konstytucja Rzeczypospolitej Polskiej | DU/1997/483 | "art 30 konstytucji" |
+
+### Ustawy szczególne (4)
+
+| Kod | Nazwa aktu | Tekst jednolity | Przykład |
+|-----|-----------|-----------------|----------|
+| `pzp` | Prawo zamówień publicznych | DU/2024/1320 | "art 10 pzp" |
+| `op` | Ordynacja podatkowa | DU/2025/111 | "art 15 op" |
+| `pb` | Prawo budowlane | DU/2025/418 | "art 20 pb" |
+| — | Ustawa o prawach konsumenta | DU/2023/2759 | "art 27 ustawy o prawach konsumenta" |
+
+**Łącznie: 15 ustaw** (aktualizacja: listopad 2025)
+
+### Obsługiwane formaty zapytań:
+
+```
+✅ "art 10 kp"
+✅ "artykuł 533 kodeksu cywilnego"
+✅ "art. 148 k.k."
+✅ "art 100 kodeksu karnego skarbowego"
+✅ "art 5 kodeksu spółek handlowych"
+✅ "art 10 pzp"
+✅ "art 15 ordynacji podatkowej"
+✅ "art 20 prawa budowlanego"
+✅ "art 27 ustawy o prawach konsumenta"
+✅ "co mówi artykuł 30 konstytucji"
+```
 
 ## Debugging 🔍
 
