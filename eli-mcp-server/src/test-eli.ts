@@ -53,10 +53,10 @@ try {
 
 console.log('');
 
-// Test 3: Get specific act (Kodeks cywilny)
-console.log('Test 3: GET /acts/DU/1964/16 (Kodeks cywilny)');
+// Test 3: Get specific act (Kodeks cywilny - corrected position)
+console.log('Test 3: GET /acts/DU/1964/93 (Kodeks cywilny)');
 try {
-  const response = await fetch(`${ELI_API_BASE}/acts/DU/1964/16`, {
+  const response = await fetch(`${ELI_API_BASE}/acts/DU/1964/93`, {
     headers: { 'Accept': 'application/json' },
   });
   console.log(`  Status: ${response.status} ${response.statusText}`);
@@ -75,10 +75,10 @@ try {
 
 console.log('');
 
-// Test 4: Get HTML text
-console.log('Test 4: GET /acts/DU/1964/16/text.html (Kodeks cywilny - HTML)');
+// Test 4: Get HTML text (corrected position)
+console.log('Test 4: GET /acts/DU/1964/93/text.html (Kodeks cywilny - HTML)');
 try {
-  const response = await fetch(`${ELI_API_BASE}/acts/DU/1964/16/text.html`, {
+  const response = await fetch(`${ELI_API_BASE}/acts/DU/1964/93/text.html`, {
     headers: { 'Accept': 'text/html' },
   });
   console.log(`  Status: ${response.status} ${response.statusText}`);
