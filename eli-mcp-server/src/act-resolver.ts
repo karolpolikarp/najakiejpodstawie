@@ -39,9 +39,10 @@ interface CachedAct {
 /**
  * Synonyms map - common alternative names for acts
  * This will be expanded based on user analytics
+ * Updated: November 2025 - Expanded to 60+ synonyms
  */
 const ACT_SYNONYMS: Record<string, string> = {
-  // Kodeksy - potoczne nazwy
+  // ==================== KODEKSY - POTOCZNE NAZWY ====================
   'kodeks drogowy': 'prawo o ruchu drogowym',
   'k.c.': 'kodeks cywilny',
   'k.p.': 'kodeks pracy',
@@ -50,24 +51,121 @@ const ACT_SYNONYMS: Record<string, string> = {
   'k.p.c.': 'kodeks postępowania cywilnego',
   'k.k.s.': 'kodeks karny skarbowy',
   'k.s.h.': 'kodeks spółek handlowych',
-
-  // Skróty i alternatywne nazwy
-  'ustawa o oze': 'energetyce odnawialnej',
-  'ustawa o vat': 'podatku od towarów i usług',
-  'ustawa covidowa': 'covid-19',
-  'tarcza antykryzysowa': 'covid-19',
+  'k.r.o.': 'kodeks rodzinny i opiekuńczy',
+  'k.p.a.': 'kodeks postępowania administracyjnego',
+  'k.k.w.': 'kodeks karny wykonawczy',
   'prawo pracy': 'kodeks pracy',
   'prawo karne': 'kodeks karny',
   'prawo cywilne': 'kodeks cywilny',
-  'uokik': 'ochronie konkurencji i konsumentów',
-  'rodo polska': 'ochronie danych osobowych',
 
-  // Częste błędy i warianty
-  'ruchu drogowego': 'ruchu drogowym',
-  'zamowien publicznych': 'zamówień publicznych',
-  'budowlanego': 'budowlane',
+  // ==================== KONSTYTUCJA ====================
   'konstytucja polski': 'konstytucja rzeczypospolitej polskiej',
   'konstytucja rp': 'konstytucja rzeczypospolitej polskiej',
+  'konstytucja polska': 'konstytucja rzeczypospolitej polskiej',
+
+  // ==================== PRAWO PODATKOWE ====================
+  'ustawa o pit': 'podatek dochodowy od osób fizycznych',
+  'ustawa o cit': 'podatek dochodowy od osób prawnych',
+  'ustawa o vat': 'podatek od towarów i usług',
+  'podatek vat': 'podatek od towarów i usług',
+  'podatek pit': 'podatek dochodowy od osób fizycznych',
+  'podatek cit': 'podatek dochodowy od osób prawnych',
+  'ordynacja': 'ordynacja podatkowa',
+
+  // ==================== PRAWO GOSPODARCZE ====================
+  'ustawa o uokik': 'ochronie konkurencji i konsumentów',
+  'ustawa antymonopolowa': 'ochronie konkurencji i konsumentów',
+  'krs': 'krajowy rejestr sądowy',
+  'rejestr sądowy': 'krajowy rejestr sądowy',
+  'ustawa o krs': 'krajowy rejestr sądowy',
+  'ustawa o przedsiębiorcach': 'prawo przedsiębiorców',
+  'działalność gospodarcza': 'prawo przedsiębiorców',
+  'upadłość': 'prawo upadłościowe',
+  'bankructwo': 'prawo upadłościowe',
+
+  // ==================== PRAWO NIERUCHOMOŚCI ====================
+  'ustawa o nieruchomościach': 'gospodarka nieruchomościami',
+  'nieruchomości': 'gospodarka nieruchomościami',
+  'hipoteka': 'księgi wieczyste i hipoteka',
+  'księgi': 'księgi wieczyste i hipoteka',
+  'planowanie przestrzenne': 'planowanie i zagospodarowanie przestrzenne',
+  'mpzp': 'planowanie i zagospodarowanie przestrzenne',
+  'budowlanego': 'budowlane',
+  'prawo budowlane': 'budowlane',
+  'lokale': 'własność lokali',
+
+  // ==================== PRAWO SAMORZĄDOWE ====================
+  'gmina': 'samorząd gminny',
+  'powiat': 'samorząd powiatowy',
+  'województwo': 'samorząd województwa',
+  'samorząd terytorialny': 'samorząd gminny',
+
+  // ==================== PRAWO CYWILNE I OBRÓT ====================
+  'zamówienia publiczne': 'prawo zamówień publicznych',
+  'zamowien publicznych': 'zamówień publicznych',
+  'przetargi': 'prawo zamówień publicznych',
+  'konsument': 'prawa konsumenta',
+  'ochrona konsumentów': 'prawa konsumenta',
+  'notariusz': 'prawo o notariacie',
+  'notariusze': 'prawo o notariacie',
+  'rodo': 'ochrona danych osobowych',
+  'rodo polska': 'ochrona danych osobowych',
+  'dane osobowe': 'ochrona danych osobowych',
+  'ochrona danych': 'ochrona danych osobowych',
+
+  // ==================== PRAWO KOMUNIKACYJNE ====================
+  'ruchu drogowego': 'ruchu drogowym',
+  'ruch drogowy': 'ruchu drogowym',
+  'karta pojazdu': 'ruchu drogowym',
+  'prawo drogowe': 'ruchu drogowym',
+  'prawo o kierowcach': 'kierujący pojazdami',
+  'kierowcy': 'kierujący pojazdami',
+  'ubezpieczenie oc': 'ubezpieczenia obowiązkowe',
+  'oc auto': 'ubezpieczenia obowiązkowe',
+  'oc pojazdu': 'ubezpieczenia obowiązkowe',
+
+  // ==================== PRAWO ZDROWOTNE ====================
+  'farmaceutyka': 'prawo farmaceutyczne',
+  'farmacja': 'prawo farmaceutyczne',
+  'apteka': 'prawo farmaceutyczne',
+  'apteki': 'prawo farmaceutyczne',
+  'pacjent': 'prawa pacjenta',
+  'pacjenci': 'prawa pacjenta',
+  'ochrona pacjenta': 'prawa pacjenta',
+  'lekarz': 'zawód lekarza',
+  'lekarze': 'zawód lekarza',
+  'świadczenia medyczne': 'działalność lecznicza',
+  'służba zdrowia': 'działalność lecznicza',
+
+  // ==================== PRAWO OŚWIATOWE ====================
+  'szkoła': 'prawo oświatowe',
+  'szkolnictwo': 'prawo oświatowe',
+  'edukacja': 'prawo oświatowe',
+  'nauczyciel': 'karta nauczyciela',
+  'nauczyciele': 'karta nauczyciela',
+  'uniwersytet': 'prawo o szkolnictwie wyższym i nauce',
+  'uczelnie': 'prawo o szkolnictwie wyższym i nauce',
+  'uczelnia': 'prawo o szkolnictwie wyższym i nauce',
+
+  // ==================== PRAWO PRACY I UBEZPIECZENIA ====================
+  'ubezpieczenia społeczne': 'system ubezpieczeń społecznych',
+  'składki zus': 'system ubezpieczeń społecznych',
+  'minimalna płaca': 'minimalne wynagrodzenie',
+  'płaca minimalna': 'minimalne wynagrodzenie',
+  'najniższa pensja': 'minimalne wynagrodzenie',
+
+  // ==================== INNE ====================
+  'telekomunikacja': 'prawo telekomunikacyjne',
+  'internet': 'prawo telekomunikacyjne',
+  'prasa': 'prawo prasowe',
+  'media': 'prawo prasowe',
+  'energia': 'prawo energetyczne',
+  'energetyka': 'prawo energetyczne',
+
+  // ==================== CZĘSTE BŁĘDY I WARIANTY ====================
+  'ustawa covidowa': 'covid-19',
+  'tarcza antykryzysowa': 'covid-19',
+  'ustawa o oze': 'energetyce odnawialnej',
 };
 
 /**
