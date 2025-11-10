@@ -358,9 +358,51 @@ cloudflared tunnel --url http://localhost:8080
 # Dostaniesz losowy URL typu:
 # https://eli-mcp-random-name.trycloudflare.com
 
-# Ale uwaga: URL zmienia się po każdym restarcie!
-# Lepiej wykupić domenę (~20 PLN/rok)
+# ⚠️ UWAGA: URL zmienia się po każdym restarcie!
+# ⚠️ NIE UŻYWAJ w produkcji - tylko do testów!
+# Lepiej wykupić domenę (~20 PLN/rok) lub użyj nazwanego tunelu
 ```
+
+### Dlaczego NIE używać tymczasowych URL w produkcji?
+
+❌ **Problemy z tymczasowymi URL**:
+- URL zmienia się przy każdym restarcie cloudflared
+- Wymaga ręcznej aktualizacji zmiennych środowiskowych w Supabase
+- Tunnel może przestać działać bez powiadomienia
+- Brak kontroli nad nazwą (trudne do zapamiętania)
+- **Error 1033** gdy cloudflared się zrestartuje
+
+✅ **Rozwiązanie - nazwany tunnel (bez własnej domeny)**:
+
+Możesz utworzyć **stały nazwany tunnel** bez kupowania domeny:
+
+```bash
+# 1. Utwórz nazwany tunnel
+cloudflared tunnel create eli-mcp
+
+# 2. Uruchom z konfiguracją (bez hostname w ingress)
+cat > /etc/cloudflared/config.yml << 'EOF'
+tunnel: YOUR-TUNNEL-UUID
+credentials-file: /home/pi/.cloudflared/YOUR-TUNNEL-UUID.json
+
+ingress:
+  - service: http://localhost:8080
+EOF
+
+# 3. Uruchom tunnel
+cloudflared tunnel run eli-mcp
+
+# 4. Cloudflare pokaże stały URL typu:
+# https://YOUR-TUNNEL-UUID.cfargotunnel.com
+# Ten URL będzie ZAWSZE taki sam!
+```
+
+Następnie ustaw w Supabase:
+```bash
+ELI_MCP_URL=https://YOUR-TUNNEL-UUID.cfargotunnel.com
+```
+
+**To jest darmowe i stabilne!** 🎉
 
 ## 🎯 Podsumowanie kosztów
 
