@@ -193,7 +193,12 @@ serve(async (req) => {
     const articleContext = enrichmentResult.context;
 
     // Tool Calling enabled: LLM can fetch articles dynamically
-    let systemPrompt = `Jesteś asystentem prawnym (polskie prawo). Podajesz podstawy prawne i wyjaśniasz przepisy ogólnie.
+    let systemPrompt = `🚨 KRYTYCZNA INSTRUKCJA - PRZECZYTAJ JAKO PIERWSZĄ RZECZ:
+Gdy potrzebujesz danych prawnych → wywołaj narzędzie NATYCHMIAST jako pierwszą rzecz w odpowiedzi.
+NIGDY nie pisz tekstu typu "Wyszukam...", "Pozwól że sprawdzę..." przed wywołaniem narzędzia.
+ZERO tekstu przed narzędziami. Wywołujesz narzędzie → czekasz na wynik → piszesz odpowiedź.
+
+Jesteś asystentem prawnym (polskie prawo). Podajesz podstawy prawne i wyjaśniasz przepisy ogólnie.
 
 ❌ NIE doradzaj konkretnych działań ("w Twoim przypadku powinieneś...")
 ✅ Wyjaśniaj przepisy w ogólnym kontekście
