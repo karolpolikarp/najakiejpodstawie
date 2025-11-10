@@ -6,7 +6,7 @@
  */
 
 import { fetchArticle, type ArticleResponse } from './eli-tools.ts';
-import { detectLegalContext, type ArticleReference } from './legal-context.ts';
+import { LEGAL_CONTEXT, type ArticleReference, type LegalTopic } from './legal-context.ts';
 
 /**
  * Tool definitions for Claude API
@@ -169,10 +169,25 @@ export async function executeToolCall(tool: ToolUse): Promise<ToolResult> {
         };
       }
 
-      // Search in legal context
-      const contextResult = detectLegalContext(query);
+      // Search in legal context (duplicated from index.ts to avoid circular dependency)
+      const lowerQuery = query.toLowerCase();
+      const detectedTopics: LegalTopic[] = [];
+      const allMcpArticles: ArticleReference[] = [];
 
-      if (!contextResult.contextText) {
+      for (const [topicKey, topicData] of Object.entries(LEGAL_CONTEXT)) {
+        const keywords = topicData.keywords || [];
+        const matches = keywords.some(keyword =>
+          lowerQuery.includes(keyword.toLowerCase())
+        );
+
+        if (matches) {
+          console.log(`[TOOL] Detected topic: ${topicData.name} (${topicKey})`);
+          detectedTopics.push(topicData);
+          allMcpArticles.push(...topicData.mcpArticles);
+        }
+      }
+
+      if (detectedTopics.length === 0) {
         return {
           type: 'tool_result',
           tool_use_id: tool.id,
@@ -181,11 +196,21 @@ export async function executeToolCall(tool: ToolUse): Promise<ToolResult> {
         };
       }
 
+      // Format context text
+      let contextText = '\n\n📚 RELEWANTNA BAZA WIEDZY PRAWNEJ:\n';
+      for (const topic of detectedTopics) {
+        contextText += `\n**${topic.name}:**\n`;
+        contextText += `Główne akty prawne: ${topic.mainActs.join(', ')}\n`;
+        contextText += `Kluczowe artykuły:\n${topic.mainArticles.map(a => `- ${a}`).join('\n')}\n`;
+        contextText += `Powiązane przepisy:\n${topic.relatedArticles.map(a => `- ${a}`).join('\n')}\n`;
+        contextText += `Źródło: ${topic.source}\n`;
+      }
+
       // Fetch articles mentioned in the context
       const articleResults: string[] = [];
 
       // Fetch up to 3 articles from the context
-      const articlesToFetch = contextResult.mcpArticles.slice(0, 3);
+      const articlesToFetch = allMcpArticles.slice(0, 3);
 
       for (const ref of articlesToFetch) {
         const result = await fetchArticle(ref.actCode, ref.articleNumber);
@@ -196,7 +221,7 @@ export async function executeToolCall(tool: ToolUse): Promise<ToolResult> {
         }
       }
 
-      const finalContent = contextResult.contextText +
+      const finalContent = contextText +
         (articleResults.length > 0 ? '\n\nAKTUALNE TREŚCI ARTYKUŁÓW:\n' + articleResults.join('\n') : '');
 
       return {
