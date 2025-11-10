@@ -522,11 +522,8 @@ ${message}`;
                     // Normal text delta (only stream if no tools)
                     if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
                       fullResponse += parsed.delta.text;
-                      // Don't stream if we've seen ANY tool_use blocks
-                      // This prevents duplicate text when LLM writes before calling tools
-                      if (!hasSeenToolUse && toolUses.length === 0) {
-                        controller.enqueue(encoder.encode(chunk));
-                      }
+                      // Don't stream individual deltas here - we'll stream the whole chunk below
+                      // to avoid sending duplicate data (chunk contains multiple SSE events)
                     }
                   } catch (e) {
                     // Ignore parse errors
