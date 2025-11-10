@@ -73,9 +73,67 @@ class SimpleCache {
 
 export class ELIClient {
   private cache: SimpleCache;
+  private lastRequestTime: number = 0;
+  private readonly minRequestInterval = 200; // 200ms between requests
 
   constructor(cacheTTL: number = 3600) {
     this.cache = new SimpleCache(cacheTTL);
+  }
+
+  /**
+   * Rate limiting: Wait before making a request
+   */
+  private async rateLimit(): Promise<void> {
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+    if (timeSinceLastRequest < this.minRequestInterval) {
+      const delay = this.minRequestInterval - timeSinceLastRequest;
+      console.log(`[ELI] Rate limiting: waiting ${delay}ms`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+    this.lastRequestTime = Date.now();
+  }
+
+  /**
+   * Retry logic with exponential backoff for 403/429 errors
+   */
+  private async fetchWithRetry(
+    url: string,
+    options: RequestInit,
+    maxRetries: number = 3
+  ): Promise<Response> {
+    await this.rateLimit();
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+
+        // If success, return immediately
+        if (response.ok) {
+          return response;
+        }
+
+        // If 403/429, retry with backoff
+        if ((response.status === 403 || response.status === 429) && attempt < maxRetries) {
+          const backoffDelay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+          console.log(`[ELI] Got ${response.status}, retrying in ${backoffDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          continue;
+        }
+
+        // For other errors, return immediately
+        return response;
+      } catch (error) {
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        const backoffDelay = Math.pow(2, attempt) * 1000;
+        console.log(`[ELI] Network error, retrying in ${backoffDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      }
+    }
+
+    throw new Error('Max retries exceeded');
   }
 
   /**
@@ -95,11 +153,22 @@ export class ELIClient {
 
     console.log(`[ELI] Searching: ${url.toString()}`);
 
-    const response = await fetch(url.toString(), {
+    const response = await this.fetchWithRetry(url.toString(), {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
-        'Accept-Language': 'pl-PL,pl;q=0.9',
+        'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://eli.sejm.gov.pl/',
+        'Origin': 'https://eli.sejm.gov.pl',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
       },
     });
 
@@ -131,11 +200,20 @@ export class ELIClient {
     const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}`;
     console.log(`[ELI] Getting act: ${url}`);
 
-    const response = await fetch(url, {
+    const response = await this.fetchWithRetry(url, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
-        'Accept-Language': 'pl-PL,pl;q=0.9',
+        'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://eli.sejm.gov.pl/',
+        'Origin': 'https://eli.sejm.gov.pl',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
       },
     });
 
@@ -168,11 +246,19 @@ export class ELIClient {
       `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.html`;
     console.log(`[ELI] Getting HTML: ${url}`);
 
-    const response = await fetch(url, {
+    const response = await this.fetchWithRetry(url, {
       headers: {
-        'Accept': 'text/html',
-        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
-        'Accept-Language': 'pl-PL,pl;q=0.9',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://eli.sejm.gov.pl/',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'none',
       },
     });
 
@@ -206,11 +292,19 @@ export class ELIClient {
       `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.pdf`;
     console.log(`[ELI] Getting PDF: ${url}`);
 
-    const response = await fetch(url, {
+    const response = await this.fetchWithRetry(url, {
       headers: {
-        'Accept': 'application/pdf',
-        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
-        'Accept-Language': 'pl-PL,pl;q=0.9',
+        'Accept': 'application/pdf,application/octet-stream,*/*;q=0.9',
+        'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://eli.sejm.gov.pl/',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'none',
       },
     });
 
@@ -239,11 +333,20 @@ export class ELIClient {
     const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/struct`;
     console.log(`[ELI] Getting structure: ${url}`);
 
-    const response = await fetch(url, {
+    const response = await this.fetchWithRetry(url, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; NaJakiejPodstawie/1.0)',
-        'Accept-Language': 'pl-PL,pl;q=0.9',
+        'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://eli.sejm.gov.pl/',
+        'Origin': 'https://eli.sejm.gov.pl',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
       },
     });
 

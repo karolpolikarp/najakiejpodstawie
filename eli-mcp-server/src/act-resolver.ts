@@ -58,6 +58,21 @@ const ACT_SYNONYMS: Record<string, string> = {
   'prawo karne': 'kodeks karny',
   'prawo cywilne': 'kodeks cywilny',
 
+  // ==================== KODEKSY - FORMY DOPEŁNIACZA ====================
+  'kodeksu cywilnego': 'kodeks cywilny',
+  'kodeksu pracy': 'kodeks pracy',
+  'kodeksu karnego': 'kodeks karny',
+  'kodeksu postępowania karnego': 'kodeks postępowania karnego',
+  'kodeksu postepowania karnego': 'kodeks postępowania karnego',
+  'kodeksu postępowania cywilnego': 'kodeks postępowania cywilnego',
+  'kodeksu postepowania cywilnego': 'kodeks postępowania cywilnego',
+  'kodeksu karnego skarbowego': 'kodeks karny skarbowy',
+  'kodeksu spółek handlowych': 'kodeks spółek handlowych',
+  'kodeksu spolek handlowych': 'kodeks spółek handlowych',
+  'kodeksu rodzinnego i opiekuńczego': 'kodeks rodzinny i opiekuńczy',
+  'kodeksu postępowania administracyjnego': 'kodeks postępowania administracyjnego',
+  'kodeksu karnego wykonawczego': 'kodeks karny wykonawczy',
+
   // ==================== KONSTYTUCJA ====================
   'konstytucja polski': 'konstytucja rzeczypospolitej polskiej',
   'konstytucja rp': 'konstytucja rzeczypospolitej polskiej',
@@ -123,6 +138,11 @@ const ACT_SYNONYMS: Record<string, string> = {
   'ubezpieczenie oc': 'ubezpieczenia obowiązkowe',
   'oc auto': 'ubezpieczenia obowiązkowe',
   'oc pojazdu': 'ubezpieczenia obowiązkowe',
+
+  // ==================== PRAWO LOTNICZE ====================
+  'prawa lotniczego': 'prawo lotnicze',
+  'lotnictwo': 'prawo lotnicze',
+  'lotnicze': 'prawo lotnicze',
 
   // ==================== PRAWO ZDROWOTNE ====================
   'farmaceutyka': 'prawo farmaceutyczne',
