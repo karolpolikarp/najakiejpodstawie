@@ -27,6 +27,11 @@ Kody aktów (najczęstsze):
 - kk = Kodeks karny
 - kpk = Kodeks postępowania karnego
 - kpc = Kodeks postępowania cywilnego
+- ksh = Kodeks spółek handlowych
+- kks = Kodeks karny skarbowy
+- kro = Kodeks rodzinny i opiekuńczy
+- kpa = Kodeks postępowania administracyjnego
+- kkw = Kodeks karny wykonawczy
 - prd = Prawo o ruchu drogowym
 - konstytucja = Konstytucja RP
 - pzp = Prawo zamówień publicznych

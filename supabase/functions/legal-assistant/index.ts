@@ -347,6 +347,7 @@ ${message}`;
     const toolUses: ToolUse[] = [];
     let currentToolUse: Partial<ToolUse> | null = null;
     let currentToolInputJson = '';
+    let hasSeenToolUse = false; // Track if we've seen any tool_use blocks
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -486,6 +487,7 @@ ${message}`;
 
                     // Detect tool_use blocks
                     if (parsed.type === 'content_block_start' && parsed.content_block?.type === 'tool_use') {
+                      hasSeenToolUse = true; // Mark that we've seen a tool_use
                       currentToolUse = {
                         type: 'tool_use',
                         id: parsed.content_block.id,
@@ -520,8 +522,9 @@ ${message}`;
                     // Normal text delta (only stream if no tools)
                     if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
                       fullResponse += parsed.delta.text;
-                      if (toolUses.length === 0) {
-                        // Only stream text if we're not using tools
+                      // Don't stream if we've seen ANY tool_use blocks
+                      // This prevents duplicate text when LLM writes before calling tools
+                      if (!hasSeenToolUse && toolUses.length === 0) {
                         controller.enqueue(encoder.encode(chunk));
                       }
                     }
@@ -533,7 +536,8 @@ ${message}`;
             }
 
             // If not tool use, stream normally
-            if (toolUses.length === 0) {
+            // But don't stream if we've already seen tool_use blocks
+            if (!hasSeenToolUse && toolUses.length === 0) {
               controller.enqueue(encoder.encode(chunk));
             }
           }
