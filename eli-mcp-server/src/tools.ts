@@ -610,15 +610,17 @@ export class ELITools {
     // Try to find article in PDF text
     // Common patterns for Polish legal acts
     // CRITICAL: Use (?!\d) negative lookahead to prevent matching "10" in "100", "101", etc.
+    // NOTE: Increased limit to 50000 chars to handle long articles (especially transitional provisions)
+    // NOTE: Removed lazy quantifier (?) to make regex greedy - captures full article until next Art.
     const patterns = [
       // Pattern 1: "Art. 10." or "Art.10." with optional spaces (requires dot after number)
-      new RegExp(`Art\\.?\\s*${articleNumber}(?!\\d)\\.\\s*([\\s\\S]{10,3000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+      new RegExp(`Art\\.?\\s*${articleNumber}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
       // Pattern 2: "Artykuł 10" (full word) with word boundary
-      new RegExp(`Artykuł\\s+${articleNumber}(?!\\d)[\\s\\S]{10,3000}?(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
+      new RegExp(`Artykuł\\s+${articleNumber}(?!\\d)[\\s\\S]{10,50000}(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
       // Pattern 3: More lenient - just "Art" followed by number
-      new RegExp(`Art\\s*\\.?\\s*${articleNumber}(?!\\d)\\s*\\.?\\s+([\\s\\S]{10,3000}?)(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
+      new RegExp(`Art\\s*\\.?\\s*${articleNumber}(?!\\d)\\s*\\.?\\s+([\\s\\S]{10,50000})(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
       // Pattern 4: Try with paragraph marker §
-      new RegExp(`Art\\.?\\s*${articleNumber}(?!\\d)\\.?\\s*§?\\s*([\\s\\S]{10,3000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+      new RegExp(`Art\\.?\\s*${articleNumber}(?!\\d)\\.?\\s*§?\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
     ];
 
     for (let i = 0; i < patterns.length; i++) {
