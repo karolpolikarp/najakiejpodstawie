@@ -133,6 +133,7 @@ const ACT_SYNONYMS: Record<string, string> = {
   'ruch drogowy': 'ruchu drogowym',
   'karta pojazdu': 'ruchu drogowym',
   'prawo drogowe': 'ruchu drogowym',
+  'prawa o ruchu drogowym': 'ruchu drogowym',
   'prawo o kierowcach': 'kierujący pojazdami',
   'kierowcy': 'kierujący pojazdami',
   'ubezpieczenie oc': 'ubezpieczenia obowiązkowe',
@@ -144,11 +145,19 @@ const ACT_SYNONYMS: Record<string, string> = {
   'lotnictwo': 'prawo lotnicze',
   'lotnicze': 'prawo lotnicze',
 
+  // ==================== PRAWO GOSPODARCZE - FORMY DOPEŁNIACZA ====================
+  'prawa bankowego': 'prawo bankowe',
+  'ustawy prawo bankowe': 'prawo bankowe',
+  'prawa przedsiębiorców': 'prawo przedsiębiorców',
+  'prawa zamówień publicznych': 'prawo zamówień publicznych',
+  'prawa upadłościowego': 'prawo upadłościowe',
+
   // ==================== PRAWO ZDROWOTNE ====================
   'farmaceutyka': 'prawo farmaceutyczne',
   'farmacja': 'prawo farmaceutyczne',
   'apteka': 'prawo farmaceutyczne',
   'apteki': 'prawo farmaceutyczne',
+  'prawa farmaceutycznego': 'prawo farmaceutyczne',
   'pacjent': 'prawa pacjenta',
   'pacjenci': 'prawa pacjenta',
   'ochrona pacjenta': 'prawa pacjenta',
@@ -161,6 +170,7 @@ const ACT_SYNONYMS: Record<string, string> = {
   'szkoła': 'prawo oświatowe',
   'szkolnictwo': 'prawo oświatowe',
   'edukacja': 'prawo oświatowe',
+  'prawa oświatowego': 'prawo oświatowe',
   'nauczyciel': 'karta nauczyciela',
   'nauczyciele': 'karta nauczyciela',
   'uniwersytet': 'prawo o szkolnictwie wyższym i nauce',
@@ -177,10 +187,13 @@ const ACT_SYNONYMS: Record<string, string> = {
   // ==================== INNE ====================
   'telekomunikacja': 'prawo telekomunikacyjne',
   'internet': 'prawo telekomunikacyjne',
+  'prawa telekomunikacyjnego': 'prawo telekomunikacyjne',
   'prasa': 'prawo prasowe',
   'media': 'prawo prasowe',
+  'prawa prasowego': 'prawo prasowe',
   'energia': 'prawo energetyczne',
   'energetyka': 'prawo energetyczne',
+  'prawa energetycznego': 'prawo energetyczne',
 
   // ==================== CZĘSTE BŁĘDY I WARIANTY ====================
   'ustawa covidowa': 'covid-19',
