@@ -590,7 +590,20 @@ export class ELITools {
    */
   private extractArticleFromPDF(pdfText: string, articleNumber: string): string | null {
     // Normalize the text - remove excessive whitespace but keep structure
-    const normalizedText = pdfText.replace(/[ \t]+/g, ' ');
+    let normalizedText = pdfText.replace(/[ \t]+/g, ' ');
+
+    // Fix common PDF extraction errors BEFORE searching for articles
+    // Problem: PDF extraction sometimes breaks "Art." into "A rt.", "Ar t.", "Art ." etc.
+    // This prevents pattern matching from working
+    const beforeNormalization = normalizedText;
+    normalizedText = normalizedText.replace(/A\s+rt\s*\.\s*/gi, 'Art. ');  // "A rt." -> "Art. "
+    normalizedText = normalizedText.replace(/Ar\s+t\s*\.\s*/gi, 'Art. ');  // "Ar t." -> "Art. "
+    normalizedText = normalizedText.replace(/Art\s+\.\s*/gi, 'Art. ');     // "Art ." -> "Art. "
+
+    // Debug: show if normalization made any changes
+    if (beforeNormalization !== normalizedText) {
+      console.log(`[ELI] ✓ Fixed PDF extraction errors in article markers`);
+    }
 
     console.log(`[ELI] Looking for article ${articleNumber} in PDF text (${normalizedText.length} chars)`);
 
@@ -639,7 +652,8 @@ export class ELITools {
     }
 
     // Debug: Show context around the article number
-    const contextRegex = new RegExp(`.{0,200}${articleNumber}.{0,200}`, 'g');
+    // Use negative lookahead to match ONLY the exact article number (not "10" in "100")
+    const contextRegex = new RegExp(`.{0,200}\\b${articleNumber}(?!\\d).{0,200}`, 'g');
     const contexts = normalizedText.match(contextRegex);
     if (contexts) {
       console.log(`[ELI] Found ${contexts.length} occurrences of "${articleNumber}" in PDF:`);
