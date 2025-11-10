@@ -476,11 +476,67 @@ ${message}`;
                 // This happens when LLM can answer directly without tools
                 console.log('[STREAM] No tool calls made, streaming accumulated response');
                 if (fullResponse) {
-                  // Send as SSE chunks
-                  const lines = [`data: ${JSON.stringify({ type: 'content_block_delta', delta: { text: fullResponse } })}\n\n`];
-                  for (const line of lines) {
-                    controller.enqueue(encoder.encode(line));
+                  // Filter out "thinking text" before sending to client
+                  const thinkingPhrases = [
+                    /Wyszukam dla Ciebie[^.]*\./gi,
+                    /Pozwól,?\s*że sprawdzę[^.]*\./gi,
+                    /Spróbuję wyszukać[^.]*\./gi,
+                    /Zajrzę do przepisów[^.]*\./gi,
+                    /Pozwól,?\s*że znajdę[^.]*\./gi,
+                    /Szukam informacji[^.]*\./gi,
+                    /Pozwól,?\s*że wyszukam[^.]*\./gi,
+                  ];
+
+                  let filteredResponse = fullResponse;
+                  for (const phrase of thinkingPhrases) {
+                    filteredResponse = filteredResponse.replace(phrase, '');
                   }
+                  filteredResponse = filteredResponse.trim();
+
+                  // Update fullResponse for database storage
+                  fullResponse = filteredResponse;
+
+                  // Send proper SSE event sequence
+                  // 1. message_start
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'message_start',
+                    message: { role: 'assistant' }
+                  })}\n\n`));
+
+                  // 2. content_block_start
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'content_block_start',
+                    index: 0,
+                    content_block: { type: 'text', text: '' }
+                  })}\n\n`));
+
+                  // 3. content_block_delta - split into smaller chunks for proper streaming
+                  const chunkSize = 100; // chars per chunk
+                  for (let i = 0; i < filteredResponse.length; i += chunkSize) {
+                    const chunk = filteredResponse.slice(i, i + chunkSize);
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                      type: 'content_block_delta',
+                      index: 0,
+                      delta: { type: 'text_delta', text: chunk }
+                    })}\n\n`));
+                  }
+
+                  // 4. content_block_stop
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'content_block_stop',
+                    index: 0
+                  })}\n\n`));
+
+                  // 5. message_delta (usage info)
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'message_delta',
+                    delta: { stop_reason: 'end_turn' }
+                  })}\n\n`));
+
+                  // 6. message_stop
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'message_stop'
+                  })}\n\n`));
                 }
               }
 
