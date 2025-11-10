@@ -522,8 +522,11 @@ ${message}`;
                     // Normal text delta (only stream if no tools)
                     if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
                       fullResponse += parsed.delta.text;
-                      // Don't stream individual deltas here - we'll stream the whole chunk below
-                      // to avoid sending duplicate data (chunk contains multiple SSE events)
+                      // Stream if we haven't seen tool_use blocks
+                      // This ensures text before tool calling is sent to frontend
+                      if (!hasSeenToolUse && toolUses.length === 0) {
+                        controller.enqueue(encoder.encode(chunk));
+                      }
                     }
                   } catch (e) {
                     // Ignore parse errors
@@ -532,11 +535,8 @@ ${message}`;
               }
             }
 
-            // If not tool use, stream normally
-            // But don't stream if we've already seen tool_use blocks
-            if (!hasSeenToolUse && toolUses.length === 0) {
-              controller.enqueue(encoder.encode(chunk));
-            }
+            // NOTE: Chunk streaming is now handled in the loop above (line 528)
+            // This prevents duplicate streaming that was causing text repetition
           }
         } catch (error) {
           console.error('Error streaming response:', error);
