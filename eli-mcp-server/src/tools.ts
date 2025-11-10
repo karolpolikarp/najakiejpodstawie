@@ -121,10 +121,12 @@ export class ELITools {
     'minimalne wynagrodzenie': { publisher: 'DU', year: 2023, position: 1667, title: 'Ustawa o minimalnym wynagrodzeniu za pracę' },
     'minimalna płaca': { publisher: 'DU', year: 2023, position: 1667, title: 'Ustawa o minimalnym wynagrodzeniu za pracę' },
 
-    // ==================== INNE WAŻNE (5) ====================
+    // ==================== INNE WAŻNE (6) ====================
     'prawo telekomunikacyjne': { publisher: 'DU', year: 2023, position: 1800, title: 'Prawo telekomunikacyjne' },
     'prawo prasowe': { publisher: 'DU', year: 2023, position: 838, title: 'Prawo prasowe' },
     'prawo energetyczne': { publisher: 'DU', year: 2024, position: 266, title: 'Prawo energetyczne' },
+    'prawo lotnicze': { publisher: 'DU', year: 2023, position: 1319, title: 'Prawo lotnicze' },
+    'prawa lotniczego': { publisher: 'DU', year: 2023, position: 1319, title: 'Prawo lotnicze' },
   };
 
   constructor(client: ELIClient) {
