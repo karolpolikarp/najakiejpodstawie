@@ -10,8 +10,7 @@ const ELI_API_KEY = Deno.env.get('ELI_API_KEY') || 'dev-secret-key';
 const MCP_TIMEOUT_MS = 10000; // 10 seconds
 const MCP_MAX_RETRIES = 3;
 const MCP_RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
-const MAX_ARTICLES_FROM_TOPICS = 5; // Limit articles from auto-detected topics
-const MAX_TOTAL_ARTICLES = 10; // Total limit (query + topics combined)
+// QW4: Moved MAX_ARTICLES to function parameters to support premium limits
 
 // Mapping of common legal code abbreviations
 const ACT_CODE_PATTERNS: Record<string, string[]> = {
@@ -62,7 +61,8 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
 
   // Pattern 1: "art 10 kp", "art. 10 kp", "artykuł 10 kp"
   // Extended to include PZP, OP, PB and other codes
-  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(kc|kp|kk|kpk|kpc|pzp|ksh|kks|op|pb|k\.?c\.?|k\.?p\.?|k\.?k\.?|k\.?p\.?k\.?|k\.?p\.?c\.?|k\.?s\.?h\.?|k\.?k\.?s\.?)/gi;
+  // QW1: Added support for ustęp/paragraf: "art 152 § 1 kp", "art. 152 ust. 1 kp"
+  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)(?:\s*(?:§|ust\.|par\.)\s*\d+)?\s+(kc|kp|kk|kpk|kpc|pzp|ksh|kks|op|pb|k\.?\s?c\.?|k\.?\s?p\.?|k\.?\s?k\.?|k\.?\s?p\.?\s?k\.?|k\.?\s?p\.?\s?c\.?|k\.?\s?s\.?\s?h\.?|k\.?\s?k\.?\s?s\.?)/gi;
   let match;
   while ((match = pattern1.exec(message)) !== null) {
     const articleNumber = match[1];
@@ -203,6 +203,25 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     alreadyDetected.add(key);
   }
 
+  // Pattern 6: "art 27 prawa konsumenta" (bez "ustawy o")
+  // QW5: Obsługuje formy "prawa X" i "prawo X"
+  // Przykłady: "art 27 prawa konsumenta", "art 10 prawa pracy", "art 5 prawo budowlane"
+  const pattern6 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+praw([ao])\s+([a-ząćęłńóśźż\s]{5,}?)(?=\s*[.?!,;]|\s*$)/gi;
+
+  while ((match = pattern6.exec(message)) !== null) {
+    const articleNumber = match[1];
+    const prawForm = match[2]; // 'a' lub 'o'
+    const actName = match[3].trim();
+    const fullActName = `praw${prawForm} ${actName}`;
+    const key = `${articleNumber.toLowerCase()}:${fullActName.toLowerCase()}`;
+
+    if (!alreadyDetected.has(key) && actName.length >= 5) {
+      console.log(`[ELI] Pattern 6 (praw${prawForm} X): Detected "art ${articleNumber} praw${prawForm} ${actName}"`);
+      references.push({ actCode: fullActName, articleNumber });
+      alreadyDetected.add(key);
+    }
+  }
+
   console.log(`[ELI] Detected ${references.length} article references:`, references);
 
   return references;
@@ -256,8 +275,9 @@ function validateArticleContent(data: ArticleResponse): { valid: boolean; reason
 
   const text = data.article.text.trim();
 
-  // Check minimum length (should be at least 50 characters for a valid article)
-  if (text.length < 50) {
+  // Check minimum length (should be at least 20 characters for a valid article)
+  // QW2: Reduced from 50 to 20 chars to allow shorter valid articles
+  if (text.length < 20) {
     return { valid: false, reason: `Article text too short (${text.length} chars)` };
   }
 
@@ -415,11 +435,18 @@ export interface EnrichmentResult {
  * - Articles from user query (explicitly asked) have HIGHEST priority (no limit)
  * - Articles from topics are limited to MAX_ARTICLES_FROM_TOPICS
  * - Total limit is MAX_TOTAL_ARTICLES
+ *
+ * QW4: Premium users get higher limits (10 topic articles, 15 total)
  */
 export async function enrichWithArticles(
   message: string,
-  additionalArticles: ArticleRequest[] = []
+  additionalArticles: ArticleRequest[] = [],
+  usePremiumModel = false
 ): Promise<EnrichmentResult> {
+  // QW4: Dynamic limits based on premium status
+  const MAX_ARTICLES_FROM_TOPICS = usePremiumModel ? 10 : 5;
+  const MAX_TOTAL_ARTICLES = usePremiumModel ? 15 : 10;
+
   // 1. Articles from user query (regex detection: "art 10 kp")
   const fromQuery = detectArticleReferences(message);
 
@@ -463,7 +490,8 @@ export async function enrichWithArticles(
   console.log(
     `[ELI] Prioritization: ${fromQueryCount} from query (unlimited), ` +
     `${topicsAdded} from topics (max ${MAX_ARTICLES_FROM_TOPICS}), ` +
-    `${limitedReferences.length} total (max ${MAX_TOTAL_ARTICLES})`
+    `${limitedReferences.length} total (max ${MAX_TOTAL_ARTICLES}) ` +
+    `[premium: ${usePremiumModel}]`
   );
 
   if (limitedReferences.length === 0) {

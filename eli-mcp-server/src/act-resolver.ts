@@ -281,6 +281,7 @@ export class ActResolver {
 
   /**
    * Rank search results to find the best match
+   * QW7: Added MIN_SIMILARITY threshold to reject poor matches
    */
   private rankSearchResults(
     results: ELIAct[],
@@ -289,24 +290,32 @@ export class ActResolver {
     if (results.length === 0) return null;
 
     const normalizedQuery = this.normalizeActName(searchQuery);
+    const MIN_SIMILARITY = 0.4; // QW7: Reject matches with similarity < 40%
 
-    const scored = results.map(act => {
-      let score = 0;
-      const normalizedTitle = this.normalizeActName(act.title);
+    const scored = results
+      .map(act => {
+        let score = 0;
+        const normalizedTitle = this.normalizeActName(act.title);
 
-      // 1. Exact match = highest priority
-      if (normalizedTitle === normalizedQuery) {
-        score += 100;
-      }
+        // 1. Exact match = highest priority
+        if (normalizedTitle === normalizedQuery) {
+          score += 100;
+        }
 
-      // 2. Title similarity (fuzzy matching)
-      const similarity = this.similarityScore(normalizedTitle, normalizedQuery);
-      score += similarity * 50;
+        // 2. Title similarity (fuzzy matching)
+        const similarity = this.similarityScore(normalizedTitle, normalizedQuery);
 
-      // 3. Title contains query
-      if (normalizedTitle.includes(normalizedQuery)) {
-        score += 30;
-      }
+        // QW7: Reject if similarity too low (unless exact substring match)
+        if (similarity < MIN_SIMILARITY && !normalizedTitle.includes(normalizedQuery)) {
+          return null; // Filter out this result
+        }
+
+        score += similarity * 50;
+
+        // 3. Title contains query
+        if (normalizedTitle.includes(normalizedQuery)) {
+          score += 30;
+        }
 
       // 4. Status "jednolity" = consolidated text (preferred)
       if (act.status?.toLowerCase().includes('jednolity')) {
@@ -336,7 +345,14 @@ export class ActResolver {
       }
 
       return { act, score };
-    });
+    })
+    .filter((item): item is { act: ELIAct; score: number } => item !== null); // QW7: Remove rejected matches
+
+    // QW7: Return null if all results were filtered out
+    if (scored.length === 0) {
+      console.log(`[ActResolver] All results rejected (similarity < ${MIN_SIMILARITY})`);
+      return null;
+    }
 
     // Sort by score descending
     scored.sort((a, b) => b.score - a.score);
