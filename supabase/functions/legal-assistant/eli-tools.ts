@@ -128,6 +128,42 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     }
   }
 
+  // Pattern 5 (FALLBACK): "art 10 [dowolna nazwa aktu]" - dynamiczne wyszukiwanie
+  // Ten pattern wykrywa artykuły z dowolnymi nazwami ustaw, które nie zostały wykryte wcześniej
+  // Przykłady: "art 10 prawo farmaceutyczne", "art 5 ustawa o energetyce", "art 20 prawo bankowe"
+  const pattern5 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+([a-ząćęłńóśźż\s]{3,}?)(?=\s*[.?!,;]|\s*$)/gi;
+
+  // Keep track of already detected article+act combinations to avoid duplicates
+  const alreadyDetected = new Set(
+    references.map(r => `${r.articleNumber.toLowerCase()}:${r.actCode.toLowerCase()}`)
+  );
+
+  while ((match = pattern5.exec(message)) !== null) {
+    const articleNumber = match[1];
+    const actName = match[2].trim();
+
+    // Skip if this is already detected by previous patterns
+    const key = `${articleNumber.toLowerCase()}:${actName.toLowerCase()}`;
+    if (alreadyDetected.has(key)) {
+      continue;
+    }
+
+    // Skip very short act names (likely false positives)
+    if (actName.length < 8) {
+      continue;
+    }
+
+    // Skip common false positives (question words, etc.)
+    const falsePositives = ['co to jest', 'jak to działa', 'czy mogę', 'gdzie znaleźć', 'kiedy można'];
+    if (falsePositives.some(fp => actName.toLowerCase().includes(fp))) {
+      continue;
+    }
+
+    console.log(`[ELI] Pattern 5 (dynamic): Detected "art ${articleNumber} ${actName}"`);
+    references.push({ actCode: actName, articleNumber });
+    alreadyDetected.add(key);
+  }
+
   console.log(`[ELI] Detected ${references.length} article references:`, references);
 
   return references;
