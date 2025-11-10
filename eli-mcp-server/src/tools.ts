@@ -14,9 +14,9 @@ export class ELITools {
 
   // Mapping of common act codes to their official identifiers
   // IMPORTANT: Always use consolidated texts (teksty jednolite) for current law
-  // Updated: November 2025
+  // Updated: November 2025 - Expanded to TOP 50+ acts
   private ACT_CODES: Record<string, { publisher: string; year: number; position: number; title: string }> = {
-    // Kodeksy podstawowe
+    // ==================== KODEKSY (11) ====================
     'kc': { publisher: 'DU', year: 2025, position: 1071, title: 'Kodeks cywilny' },
     'kodeks cywilny': { publisher: 'DU', year: 2025, position: 1071, title: 'Kodeks cywilny' },
     'kp': { publisher: 'DU', year: 2025, position: 277, title: 'Kodeks pracy' },
@@ -31,26 +31,100 @@ export class ELITools {
     'kodeks karny skarbowy': { publisher: 'DU', year: 2025, position: 633, title: 'Kodeks karny skarbowy' },
     'ksh': { publisher: 'DU', year: 2024, position: 18, title: 'Kodeks spółek handlowych' },
     'kodeks spółek handlowych': { publisher: 'DU', year: 2024, position: 18, title: 'Kodeks spółek handlowych' },
+    'kro': { publisher: 'DU', year: 2024, position: 1971, title: 'Kodeks rodzinny i opiekuńczy' },
+    'kodeks rodzinny i opiekuńczy': { publisher: 'DU', year: 2024, position: 1971, title: 'Kodeks rodzinny i opiekuńczy' },
+    'kpa': { publisher: 'DU', year: 2024, position: 572, title: 'Kodeks postępowania administracyjnego' },
+    'kodeks postępowania administracyjnego': { publisher: 'DU', year: 2024, position: 572, title: 'Kodeks postępowania administracyjnego' },
+    'kkw': { publisher: 'DU', year: 2024, position: 1547, title: 'Kodeks karny wykonawczy' },
+    'kodeks karny wykonawczy': { publisher: 'DU', year: 2024, position: 1547, title: 'Kodeks karny wykonawczy' },
 
-    // Konstytucja
+    // ==================== KONSTYTUCJA ====================
     'konstytucja': { publisher: 'DU', year: 1997, position: 483, title: 'Konstytucja Rzeczypospolitej Polskiej' },
+    'konstytucja rp': { publisher: 'DU', year: 1997, position: 483, title: 'Konstytucja Rzeczypospolitej Polskiej' },
+    'konstytucja rzeczypospolitej polskiej': { publisher: 'DU', year: 1997, position: 483, title: 'Konstytucja Rzeczypospolitej Polskiej' },
 
-    // Ustawy szczególne
+    // ==================== PRAWO PODATKOWE (10) ====================
+    'pit': { publisher: 'DU', year: 2024, position: 226, title: 'Ustawa o podatku dochodowym od osób fizycznych' },
+    'podatek dochodowy od osób fizycznych': { publisher: 'DU', year: 2024, position: 226, title: 'Ustawa o podatku dochodowym od osób fizycznych' },
+    'cit': { publisher: 'DU', year: 2023, position: 2805, title: 'Ustawa o podatku dochodowym od osób prawnych' },
+    'podatek dochodowy od osób prawnych': { publisher: 'DU', year: 2023, position: 2805, title: 'Ustawa o podatku dochodowym od osób prawnych' },
+    'vat': { publisher: 'DU', year: 2024, position: 361, title: 'Ustawa o podatku od towarów i usług' },
+    'podatek od towarów i usług': { publisher: 'DU', year: 2024, position: 361, title: 'Ustawa o podatku od towarów i usług' },
+    'akcyza': { publisher: 'DU', year: 2023, position: 1542, title: 'Ustawa o podatku akcyzowym' },
+    'podatek akcyzowy': { publisher: 'DU', year: 2023, position: 1542, title: 'Ustawa o podatku akcyzowym' },
+    'op': { publisher: 'DU', year: 2025, position: 111, title: 'Ordynacja podatkowa' },
+    'ordynacja podatkowa': { publisher: 'DU', year: 2025, position: 111, title: 'Ordynacja podatkowa' },
+
+    // ==================== PRAWO GOSPODARCZE (12) ====================
+    'prawo przedsiębiorców': { publisher: 'DU', year: 2024, position: 236, title: 'Prawo przedsiębiorców' },
+    'krs': { publisher: 'DU', year: 2024, position: 1553, title: 'Ustawa o Krajowym Rejestrze Sądowym' },
+    'krajowy rejestr sądowy': { publisher: 'DU', year: 2024, position: 1553, title: 'Ustawa o Krajowym Rejestrze Sądowym' },
+    'rachunkowość': { publisher: 'DU', year: 2023, position: 120, title: 'Ustawa o rachunkowości' },
+    'ustawa o rachunkowości': { publisher: 'DU', year: 2023, position: 120, title: 'Ustawa o rachunkowości' },
+    'prawo upadłościowe': { publisher: 'DU', year: 2022, position: 1520, title: 'Prawo upadłościowe' },
+    'uokik': { publisher: 'DU', year: 2024, position: 1616, title: 'Ustawa o ochronie konkurencji i konsumentów' },
+    'ochrona konkurencji i konsumentów': { publisher: 'DU', year: 2024, position: 1616, title: 'Ustawa o ochronie konkurencji i konsumentów' },
+    'prawo bankowe': { publisher: 'DU', year: 2023, position: 2488, title: 'Prawo bankowe' },
+
+    // ==================== PRAWO NIERUCHOMOŚCI (8) ====================
+    'gospodarka nieruchomościami': { publisher: 'DU', year: 2024, position: 1145, title: 'Ustawa o gospodarce nieruchomościami' },
+    'księgi wieczyste i hipoteka': { publisher: 'DU', year: 2023, position: 2023, title: 'Ustawa o księgach wieczystych i hipotece' },
+    'księgi wieczyste': { publisher: 'DU', year: 2023, position: 2023, title: 'Ustawa o księgach wieczystych i hipotece' },
+    'pb': { publisher: 'DU', year: 2025, position: 418, title: 'Prawo budowlane' },
+    'prawo budowlane': { publisher: 'DU', year: 2025, position: 418, title: 'Prawo budowlane' },
+    'planowanie i zagospodarowanie przestrzenne': { publisher: 'DU', year: 2024, position: 1047, title: 'Ustawa o planowaniu i zagospodarowaniu przestrzennym' },
+    'własność lokali': { publisher: 'DU', year: 2024, position: 1222, title: 'Ustawa o własności lokali' },
+
+    // ==================== PRAWO SAMORZĄDOWE (5) ====================
+    'samorząd gminny': { publisher: 'DU', year: 2023, position: 40, title: 'Ustawa o samorządzie gminnym' },
+    'ustawa o samorządzie gminnym': { publisher: 'DU', year: 2023, position: 40, title: 'Ustawa o samorządzie gminnym' },
+    'samorząd powiatowy': { publisher: 'DU', year: 2022, position: 1526, title: 'Ustawa o samorządzie powiatowym' },
+    'samorząd województwa': { publisher: 'DU', year: 2024, position: 1723, title: 'Ustawa o samorządzie województwa' },
+
+    // ==================== PRAWO CYWILNE I OBRÓT (6) ====================
     'pzp': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
     'prawo zamówień publicznych': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
     'prawo zamowien publicznych': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
-
     'ustawa o prawach konsumenta': { publisher: 'DU', year: 2023, position: 2759, title: 'Ustawa o prawach konsumenta' },
     'prawa konsumenta': { publisher: 'DU', year: 2023, position: 2759, title: 'Ustawa o prawach konsumenta' },
+    'notariat': { publisher: 'DU', year: 2024, position: 561, title: 'Prawo o notariacie' },
+    'prawo o notariacie': { publisher: 'DU', year: 2024, position: 561, title: 'Prawo o notariacie' },
+    'rodo polska': { publisher: 'DU', year: 2019, position: 1781, title: 'Ustawa o ochronie danych osobowych' },
+    'ochrona danych osobowych': { publisher: 'DU', year: 2019, position: 1781, title: 'Ustawa o ochronie danych osobowych' },
 
-    'ordynacja podatkowa': { publisher: 'DU', year: 2025, position: 111, title: 'Ordynacja podatkowa' },
-    'op': { publisher: 'DU', year: 2025, position: 111, title: 'Ordynacja podatkowa' },
-
-    'prawo budowlane': { publisher: 'DU', year: 2025, position: 418, title: 'Prawo budowlane' },
-    'pb': { publisher: 'DU', year: 2025, position: 418, title: 'Prawo budowlane' },
-
-    'prawo o ruchu drogowym': { publisher: 'DU', year: 2024, position: 1251, title: 'Prawo o ruchu drogowym' },
+    // ==================== PRAWO KOMUNIKACYJNE (6) ====================
     'prd': { publisher: 'DU', year: 2024, position: 1251, title: 'Prawo o ruchu drogowym' },
+    'prawo o ruchu drogowym': { publisher: 'DU', year: 2024, position: 1251, title: 'Prawo o ruchu drogowym' },
+    'kodeks drogowy': { publisher: 'DU', year: 2024, position: 1251, title: 'Prawo o ruchu drogowym' },
+    'prawo jazdy': { publisher: 'DU', year: 2024, position: 1200, title: 'Ustawa o kierujących pojazdami' },
+    'kierujący pojazdami': { publisher: 'DU', year: 2024, position: 1200, title: 'Ustawa o kierujących pojazdami' },
+    'oc': { publisher: 'DU', year: 2022, position: 2265, title: 'Ustawa o ubezpieczeniach obowiązkowych, Ubezpieczeniowym Funduszu Gwarancyjnym i Polskim Biurze Ubezpieczycieli Komunikacyjnych' },
+    'ubezpieczenia obowiązkowe': { publisher: 'DU', year: 2022, position: 2265, title: 'Ustawa o ubezpieczeniach obowiązkowych, Ubezpieczeniowym Funduszu Gwarancyjnym i Polskim Biurze Ubezpieczycieli Komunikacyjnych' },
+
+    // ==================== PRAWO ZDROWOTNE (6) ====================
+    'prawo farmaceutyczne': { publisher: 'DU', year: 2024, position: 686, title: 'Prawo farmaceutyczne' },
+    'ustawa farmaceutyczna': { publisher: 'DU', year: 2024, position: 686, title: 'Prawo farmaceutyczne' },
+    'prawa pacjenta': { publisher: 'DU', year: 2020, position: 849, title: 'Ustawa o prawach pacjenta i Rzeczniku Praw Pacjenta' },
+    'ustawa o prawach pacjenta': { publisher: 'DU', year: 2020, position: 849, title: 'Ustawa o prawach pacjenta i Rzeczniku Praw Pacjenta' },
+    'działalność lecznicza': { publisher: 'DU', year: 2024, position: 799, title: 'Ustawa o działalności leczniczej' },
+    'zawód lekarza': { publisher: 'DU', year: 2023, position: 1516, title: 'Ustawa o zawodach lekarza i lekarza dentysty' },
+
+    // ==================== PRAWO OŚWIATOWE (4) ====================
+    'prawo oświatowe': { publisher: 'DU', year: 2024, position: 737, title: 'Prawo oświatowe' },
+    'karta nauczyciela': { publisher: 'DU', year: 2024, position: 986, title: 'Karta Nauczyciela' },
+    'szkolnictwo wyższe': { publisher: 'DU', year: 2023, position: 742, title: 'Prawo o szkolnictwie wyższym i nauce' },
+    'prawo o szkolnictwie wyższym i nauce': { publisher: 'DU', year: 2023, position: 742, title: 'Prawo o szkolnictwie wyższym i nauce' },
+
+    // ==================== PRAWO PRACY I UBEZPIECZENIA (6) ====================
+    'zus': { publisher: 'DU', year: 2024, position: 497, title: 'Ustawa o systemie ubezpieczeń społecznych' },
+    'system ubezpieczeń społecznych': { publisher: 'DU', year: 2024, position: 497, title: 'Ustawa o systemie ubezpieczeń społecznych' },
+    'minimalne wynagrodzenie': { publisher: 'DU', year: 2023, position: 1667, title: 'Ustawa o minimalnym wynagrodzeniu za pracę' },
+    'minimalna płaca': { publisher: 'DU', year: 2023, position: 1667, title: 'Ustawa o minimalnym wynagrodzeniu za pracę' },
+
+    // ==================== INNE WAŻNE (5) ====================
+    'prawo telekomunikacyjne': { publisher: 'DU', year: 2023, position: 1800, title: 'Prawo telekomunikacyjne' },
+    'prawo prasowe': { publisher: 'DU', year: 2023, position: 838, title: 'Prawo prasowe' },
+    'prawo energetyczne': { publisher: 'DU', year: 2024, position: 266, title: 'Prawo energetyczne' },
   };
 
   constructor(client: ELIClient) {

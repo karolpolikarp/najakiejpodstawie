@@ -128,17 +128,49 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     }
   }
 
-  // Pattern 5 (FALLBACK): "art 10 [dowolna nazwa aktu]" - dynamiczne wyszukiwanie
-  // Ten pattern wykrywa artykuły z dowolnymi nazwami ustaw, które nie zostały wykryte wcześniej
-  // Przykłady: "art 10 prawo farmaceutyczne", "art 5 ustawa o energetyce", "art 20 prawo bankowe"
-  const pattern5 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+([a-ząćęłńóśźż\s]{3,}?)(?=\s*[.?!,;]|\s*$)/gi;
-
   // Keep track of already detected article+act combinations to avoid duplicates
   const alreadyDetected = new Set(
     references.map(r => `${r.articleNumber.toLowerCase()}:${r.actCode.toLowerCase()}`)
   );
 
-  while ((match = pattern5.exec(message)) !== null) {
+  // Pattern 5a: "art 10 ustawa z dnia 6 września 2001 r. ..." - z pełną datą
+  // Przykłady:
+  //   - "art 10 ustawy z dnia 6 września 2001 r. prawo farmaceutyczne"
+  //   - "art 5 ustawa z dnia 23 kwietnia 1964 kodeks cywilny"
+  const pattern5a = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+ustaw[aąyęe]?\s+z\s+dnia\s+\d{1,2}\s+\w+\s+\d{4}\s+r?\.?\s+(?:o\s+)?([a-ząćęłńóśźż\s-]{5,}?)(?=\s*[.?!,;]|\s*$)/gi;
+  while ((match = pattern5a.exec(message)) !== null) {
+    const articleNumber = match[1];
+    const actName = match[2].trim();
+    const key = `${articleNumber.toLowerCase()}:${actName.toLowerCase()}`;
+
+    if (!alreadyDetected.has(key) && actName.length >= 5) {
+      console.log(`[ELI] Pattern 5a (ustawa z dnia): Detected "art ${articleNumber} ${actName}"`);
+      references.push({ actCode: actName, articleNumber });
+      alreadyDetected.add(key);
+    }
+  }
+
+  // Pattern 5b: "art 10 ustawa o..." - forma bez daty
+  // Przykłady: "art 10 ustawy o prawach konsumenta", "art 5 ustawa o rachunkowości"
+  const pattern5b = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+ustaw[aąyęe]?\s+o\s+([a-ząćęłńóśźż\s]{5,}?)(?=\s*[.?!,;]|\s*$)/gi;
+  while ((match = pattern5b.exec(message)) !== null) {
+    const articleNumber = match[1];
+    const actName = `${match[2].trim()}`; // Dodajemy "o" z powrotem dla lepszego wyszukiwania
+    const key = `${articleNumber.toLowerCase()}:${actName.toLowerCase()}`;
+
+    if (!alreadyDetected.has(key) && actName.length >= 5) {
+      console.log(`[ELI] Pattern 5b (ustawa o): Detected "art ${articleNumber} ${actName}"`);
+      references.push({ actCode: actName, articleNumber });
+      alreadyDetected.add(key);
+    }
+  }
+
+  // Pattern 5c (FALLBACK): "art 10 [dowolna nazwa aktu]" - dynamiczne wyszukiwanie
+  // Ten pattern wykrywa artykuły z dowolnymi nazwami ustaw, które nie zostały wykryte wcześniej
+  // Przykłady: "art 10 prawo farmaceutyczne", "art 20 prawo bankowe"
+  const pattern5c = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+([a-ząćęłńóśźż\s]{8,}?)(?=\s*[.?!,;]|\s*$)/gi;
+
+  while ((match = pattern5c.exec(message)) !== null) {
     const articleNumber = match[1];
     const actName = match[2].trim();
 
@@ -154,12 +186,19 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     }
 
     // Skip common false positives (question words, etc.)
-    const falsePositives = ['co to jest', 'jak to działa', 'czy mogę', 'gdzie znaleźć', 'kiedy można'];
+    const falsePositives = ['co to jest', 'jak to działa', 'czy mogę', 'gdzie znaleźć', 'kiedy można', 'jak się', 'kto może'];
     if (falsePositives.some(fp => actName.toLowerCase().includes(fp))) {
       continue;
     }
 
-    console.log(`[ELI] Pattern 5 (dynamic): Detected "art ${articleNumber} ${actName}"`);
+    // Skip if it looks like a phrase ending (probably cut off incorrectly)
+    const badEndings = ['i', 'w', 'z', 'na', 'o', 'do', 'po', 'od', 'dla'];
+    const lastWord = actName.split(' ').pop()?.toLowerCase() || '';
+    if (badEndings.includes(lastWord)) {
+      continue;
+    }
+
+    console.log(`[ELI] Pattern 5c (dynamic fallback): Detected "art ${articleNumber} ${actName}"`);
     references.push({ actCode: actName, articleNumber });
     alreadyDetected.add(key);
   }
