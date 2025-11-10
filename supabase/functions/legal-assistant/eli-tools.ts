@@ -43,21 +43,14 @@ export interface ArticleResponse {
   error?: string;
 }
 
-// Supported act codes that can be fetched from ELI MCP server
-// Updated: November 2025 - dodano PZP, KSH, KKS, OP, PB i ustawę o prawach konsumenta
-const SUPPORTED_ACT_CODES = [
-  'kc', 'kp', 'kk', 'kpk', 'kpc', 'konstytucja',
-  'kks', 'ksh', 'pzp', 'op', 'pb',
-  'ordynacja podatkowa', 'prawo budowlane',
-  'prawo zamówień publicznych', 'prawo zamowien publicznych',
-  'ustawa o prawach konsumenta', 'prawa konsumenta',
-  'kodeks karny skarbowy', 'kodeks spółek handlowych'
-];
-
-// Known but unsupported act codes (przykłady - większość ustaw jest teraz wspierana)
-const UNSUPPORTED_ACT_INFO: Record<string, string> = {
-  // Dodaj tutaj inne ustawy w przyszłości
-};
+// REMOVED: Static list of supported acts
+// The ELI MCP server now supports ALL ~15,000 acts from ISAP through dynamic search!
+// No need for hardcoded whitelist - the MCP server will:
+// 1. Check hardcoded map (16 popular acts) - fast
+// 2. Check LRU cache (200 acts) - fast
+// 3. Search ISAP API dynamically - all remaining acts
+//
+// This change enables full coverage of Polish legal acts without maintaining a static list.
 
 /**
  * Detect article references in user message
@@ -91,14 +84,16 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     references.push({ actCode, articleNumber });
   }
 
-  // Pattern 2: "art 10 kodeks pracy", "artykuł 533 kodeksu cywilnego"
-  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym|karny skarbowy|karnego skarbowego|spółek handlowych|spolek handlowych)/gi;
+  // Pattern 2: "art 10 kodeks pracy", "artykuł 533 kodeksu cywilnego", "art 69 kodeksu postępowania cywilnego"
+  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym|karny skarbowy|karnego skarbowego|spółek handlowych|spolek handlowych|postępowania\s+(?:cywilnego|karnego)|postepowania\s+(?:cywilnego|karnego))/gi;
   while ((match = pattern2.exec(message)) !== null) {
     const articleNumber = match[1];
     const codeName = match[2].toLowerCase();
 
     let actCode = '';
     if (codeName.startsWith('prac')) actCode = 'kp';
+    else if (codeName.includes('postępowania cywilnego') || codeName.includes('postepowania cywilnego')) actCode = 'kpc';
+    else if (codeName.includes('postępowania karnego') || codeName.includes('postepowania karnego')) actCode = 'kpk';
     else if (codeName.startsWith('cywil')) actCode = 'kc';
     else if (codeName.startsWith('karny skarbowy') || codeName.startsWith('karnego skarbowego')) actCode = 'kks';
     else if (codeName.startsWith('kar')) actCode = 'kk';
@@ -215,14 +210,9 @@ export async function fetchArticle(
   articleNumber: string,
   retryCount = 0
 ): Promise<ArticleResponse> {
-  // Check if the act code is supported by ELI MCP
-  if (!SUPPORTED_ACT_CODES.includes(actCode)) {
-    const actName = UNSUPPORTED_ACT_INFO[actCode] || actCode.toUpperCase();
-    return {
-      success: false,
-      error: `Ustawa "${actName}" nie jest obecnie wspierana przez system ELI MCP. Wspierane: ${SUPPORTED_ACT_CODES.join(', ')}`,
-    };
-  }
+  // REMOVED: Static check for supported acts
+  // The MCP server now has dynamic search capabilities - it will handle all acts!
+  // This allows the system to access ALL ~15,000 acts from ISAP, not just hardcoded ones.
 
   try {
     console.log(`[ELI] Fetching article (attempt ${retryCount + 1}/${MCP_MAX_RETRIES}): ${actCode} ${articleNumber}`);
