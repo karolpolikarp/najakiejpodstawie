@@ -212,11 +212,14 @@ Masz dostęp do 2 narzędzi:
    - Użyj gdy NIE znasz dokładnego artykułu
    - Przykład: search_legal_info("przedawnienie roszczeń")
 
-WAŻNE:
+KRYTYCZNE - ZASADY UŻYWANIA NARZĘDZI:
+- ⚠️ NIE pisz ŻADNEGO tekstu przed wywołaniem narzędzi (np. "Wyszukam dla Ciebie...", "Pozwól, że sprawdzę...")
+- ⚠️ Wywołuj narzędzia OD RAZU bez żadnych wstępnych komunikatów
 - ZAWSZE używaj narzędzi gdy potrzebujesz konkretnych artykułów
 - NIE cytuj artykułów z pamięci - zawsze pobierz przez get_article
 - Jeśli użytkownik pyta "art X kc" → wywołaj get_article("kc", "X")
 - Jeśli pytanie ogólne ("co grozi za...") → najpierw search_legal_info
+- Tekst pisz DOPIERO po otrzymaniu wyników z narzędzi
 
 # STRUKTURA ODPOWIEDZI (OBOWIĄZKOWA)
 
@@ -361,6 +364,8 @@ ${message}`;
               // Check if LLM wants to use tools
               if (toolUses.length > 0) {
                 console.log(`[TOOL] LLM requested ${toolUses.length} tool call(s)`);
+                // Reset fullResponse - we don't want to keep the "thinking text" before tool calling
+                fullResponse = '';
 
                 // Execute all tool calls
                 const toolResults = await executeToolCalls(toolUses);
@@ -439,6 +444,17 @@ ${message}`;
                   }
 
                   controller.enqueue(encoder.encode(chunk2));
+                }
+              } else {
+                // No tool calls were made - send accumulated response
+                // This happens when LLM can answer directly without tools
+                console.log('[STREAM] No tool calls made, streaming accumulated response');
+                if (fullResponse) {
+                  // Send as SSE chunks
+                  const lines = [`data: ${JSON.stringify({ type: 'content_block_delta', delta: { text: fullResponse } })}\n\n`];
+                  for (const line of lines) {
+                    controller.enqueue(encoder.encode(line));
+                  }
                 }
               }
 
@@ -519,14 +535,12 @@ ${message}`;
                       currentToolInputJson = '';
                     }
 
-                    // Normal text delta (only stream if no tools)
+                    // Normal text delta
+                    // IMPORTANT: Do NOT stream first response - only accumulate it
+                    // We only stream the final response after tool calling is complete
                     if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
                       fullResponse += parsed.delta.text;
-                      // Stream if we haven't seen tool_use blocks
-                      // This ensures text before tool calling is sent to frontend
-                      if (!hasSeenToolUse && toolUses.length === 0) {
-                        controller.enqueue(encoder.encode(chunk));
-                      }
+                      // NOTE: We do NOT stream here - streaming happens only in second response
                     }
                   } catch (e) {
                     // Ignore parse errors
