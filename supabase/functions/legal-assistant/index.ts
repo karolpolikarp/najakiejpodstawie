@@ -578,6 +578,9 @@ ${message}`;
                 if (!reader2) throw new Error('Second response not readable');
 
                 let buffer2 = '';
+                let textBuffer2 = ''; // Accumulate text to check for thinking patterns
+                let thinkingTextDetected2 = false;
+
                 while (true) {
                   const { done: done2, value: value2 } = await reader2.read();
                   if (done2) break;
@@ -593,8 +596,25 @@ ${message}`;
                       if (data2 !== '[DONE]') {
                         try {
                           const parsed2 = JSON.parse(data2);
+
+                          // Track text content
                           if (parsed2.type === 'content_block_delta' && parsed2.delta?.text) {
-                            fullResponse += parsed2.delta.text;
+                            const deltaText2 = parsed2.delta.text;
+                            fullResponse += deltaText2;
+                            textBuffer2 += deltaText2;
+
+                            // CRITICAL: Check for thinking text in accumulated buffer
+                            if (!thinkingTextDetected2 && containsThinkingText(textBuffer2)) {
+                              thinkingTextDetected2 = true;
+                              console.log('[ARCH] ⚠️  Detected thinking text in SECOND response:', textBuffer2.substring(0, 100));
+                              console.log('[ARCH] 🛑 BLOCKING streaming - thinking text will be filtered');
+                            }
+
+                            // DO NOT stream if thinking text detected
+                            // We'll filter and send clean response at the end
+                            if (thinkingTextDetected2) {
+                              continue; // Skip this chunk
+                            }
                           }
                         } catch (e) {
                           // Ignore parse errors
@@ -603,7 +623,67 @@ ${message}`;
                     }
                   }
 
-                  controller.enqueue(encoder.encode(chunk2));
+                  // Only stream chunks if no thinking text detected
+                  if (!thinkingTextDetected2) {
+                    controller.enqueue(encoder.encode(chunk2));
+                  }
+                }
+
+                // If thinking text was detected, send filtered response now
+                if (thinkingTextDetected2) {
+                  console.log('[ARCH] ✓ Filtering thinking text from full response...');
+
+                  const thinkingPhrases2 = [
+                    /Wyszukam dla Ciebie[^.]*\./gi,
+                    /Pozwól,?\s*że sprawdzę[^.]*\./gi,
+                    /Spróbuję wyszukać[^.]*\./gi,
+                    /Zajrzę do przepisów[^.]*\./gi,
+                    /Pozwól,?\s*że znajdę[^.]*\./gi,
+                    /Szukam informacji[^.]*\./gi,
+                    /Pozwól,?\s*że wyszukam[^.]*\./gi,
+                    /Pozwól,?\s*że wyjaśnię[^.]*\./gi,
+                    /Rozumiem,?\s*że pytasz[^.]*\./gi,
+                    /Pytanie dotyczy[^.]*\./gi,
+                  ];
+
+                  let filteredResponse2 = fullResponse;
+                  for (const phrase of thinkingPhrases2) {
+                    filteredResponse2 = filteredResponse2.replace(phrase, '');
+                  }
+                  filteredResponse2 = filteredResponse2.trim();
+
+                  // Update for database
+                  fullResponse = filteredResponse2;
+
+                  console.log('[ARCH] ✓ Filtered response length:', filteredResponse2.length);
+                  console.log('[ARCH] ✓ Sending filtered response to client...');
+
+                  // Send filtered response as proper SSE sequence
+                  // Split into chunks for streaming effect
+                  const chunkSize = 100;
+                  for (let i = 0; i < filteredResponse2.length; i += chunkSize) {
+                    const chunk = filteredResponse2.slice(i, i + chunkSize);
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                      type: 'content_block_delta',
+                      index: 0,
+                      delta: { type: 'text_delta', text: chunk }
+                    })}\n\n`));
+                  }
+
+                  // Send completion events
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'content_block_stop',
+                    index: 0
+                  })}\n\n`));
+
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'message_delta',
+                    delta: { stop_reason: 'end_turn' }
+                  })}\n\n`));
+
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'message_stop'
+                  })}\n\n`));
                 }
               } else {
                 // No tool calls were made - send accumulated response
