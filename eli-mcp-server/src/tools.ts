@@ -88,6 +88,7 @@ export class ELITools {
     'prawo zamowien publicznych': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
     'ustawa o prawach konsumenta': { publisher: 'DU', year: 2023, position: 2759, title: 'Ustawa o prawach konsumenta' },
     'prawa konsumenta': { publisher: 'DU', year: 2023, position: 2759, title: 'Ustawa o prawach konsumenta' },
+    'upk': { publisher: 'DU', year: 2023, position: 2759, title: 'Ustawa o prawach konsumenta' },
     'notariat': { publisher: 'DU', year: 2024, position: 561, title: 'Prawo o notariacie' },
     'prawo o notariacie': { publisher: 'DU', year: 2024, position: 561, title: 'Prawo o notariacie' },
     'rodo polska': { publisher: 'DU', year: 2019, position: 1781, title: 'Ustawa o ochronie danych osobowych' },

@@ -126,7 +126,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
     name: "Zwrot towaru kupionego online",
     keywords: ["zwrot", "odstąpienie", "sklep internetowy", "zakupy online", "14 dni"],
     mcpArticles: [
-      { actCode: 'kc', articleNumber: '27' }, // Uwaga: to może być błąd - Art. 27 Ustawy o prawach konsumenta
+      { actCode: 'upk', articleNumber: '27' }, // Art. 27 Ustawy o prawach konsumenta (prawo odstąpienia - 14 dni)
     ],
     mainActs: [
       "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta"
