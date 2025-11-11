@@ -3,6 +3,13 @@
  * Wrapper dla api.sejm.gov.pl/eli zgodny z OpenAPI spec
  */
 
+// Simple logger for standalone MCP server
+const DEBUG = Deno.env.get('DEBUG') === 'true';
+const logger = {
+  debug: (...args: any[]) => DEBUG && console.log('[ELI]', ...args),
+  error: (...args: any[]) => console.error('[ELI]', ...args),
+};
+
 const ELI_API_BASE = 'https://api.sejm.gov.pl/eli';
 
 export interface ELISearchParams {
@@ -88,6 +95,7 @@ export class ELIClient {
     const timeSinceLastRequest = now - this.lastRequestTime;
     if (timeSinceLastRequest < this.minRequestInterval) {
       const delay = this.minRequestInterval - timeSinceLastRequest;
+      logger.debug(`Rate limiting: waiting ${delay}ms`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
     this.lastRequestTime = Date.now();
@@ -116,7 +124,7 @@ export class ELIClient {
         // If 403/429, retry with backoff (2s, 4s, 8s, 16s)
         if ((response.status === 403 || response.status === 429) && attempt < maxRetries) {
           const backoffDelay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s, 16s
-          console.log(`[ELI] Got ${response.status}, retrying in ${backoffDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          logger.debug(`Got ${response.status}, retrying in ${backoffDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, backoffDelay));
           continue;
         }
@@ -128,7 +136,7 @@ export class ELIClient {
           throw error;
         }
         const backoffDelay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s, 16s
-        console.log(`[ELI] Network error, retrying in ${backoffDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
+        logger.debug(`Network error, retrying in ${backoffDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, backoffDelay));
       }
     }
@@ -151,6 +159,11 @@ export class ELIClient {
       }
     });
 
+<<<<<<< HEAD
+    logger.debug(`Searching: ${url.toString()}`);
+
+=======
+>>>>>>> origin/main
     const response = await this.fetchWithRetry(url.toString(), {
       headers: {
         'Accept': 'application/json',
@@ -172,7 +185,7 @@ export class ELIClient {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
+      logger.error(`API Error ${response.status}: ${errorBody}`);
       throw new Error(
         `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
       );
@@ -196,6 +209,10 @@ export class ELIClient {
     if (cached) return cached;
 
     const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}`;
+<<<<<<< HEAD
+    logger.debug(`Getting act: ${url}`);
+=======
+>>>>>>> origin/main
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -216,7 +233,7 @@ export class ELIClient {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
+      logger.error(`API Error ${response.status}: ${errorBody}`);
       throw new Error(
         `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
       );
@@ -241,6 +258,10 @@ export class ELIClient {
 
     const url =
       `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.html`;
+<<<<<<< HEAD
+    logger.debug(`Getting HTML: ${url}`);
+=======
+>>>>>>> origin/main
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -260,7 +281,7 @@ export class ELIClient {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
+      logger.error(`API Error ${response.status}: ${errorBody}`);
       throw new Error(
         `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
       );
@@ -286,6 +307,10 @@ export class ELIClient {
 
     const url =
       `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.pdf`;
+<<<<<<< HEAD
+    logger.debug(`Getting PDF: ${url}`);
+=======
+>>>>>>> origin/main
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -305,7 +330,7 @@ export class ELIClient {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
+      logger.error(`API Error ${response.status}: ${errorBody}`);
       throw new Error(
         `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
       );
@@ -326,6 +351,10 @@ export class ELIClient {
     position: number,
   ): Promise<any> {
     const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/struct`;
+<<<<<<< HEAD
+    logger.debug(`Getting structure: ${url}`);
+=======
+>>>>>>> origin/main
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -346,7 +375,7 @@ export class ELIClient {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error(`[ELI] API Error ${response.status}: ${errorBody}`);
+      logger.error(`API Error ${response.status}: ${errorBody}`);
       throw new Error(
         `ELI API error: ${response.status} ${response.statusText} - ${errorBody}`,
       );

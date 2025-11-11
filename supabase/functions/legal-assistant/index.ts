@@ -5,6 +5,7 @@ import { checkRateLimit } from './rate-limiter.ts';
 import { LEGAL_CONTEXT, LEGAL_TOPICS, type ArticleReference, type LegalTopic } from './legal-context.ts';
 import { enrichWithArticles, type EnrichmentResult } from './eli-tools.ts';
 import { LEGAL_TOOLS, executeToolCalls, type ToolUse } from './tool-calling.ts';
+import { eliLogger } from '../_shared/logger.ts';
 
 // CORS configuration - restrict to specific domains for security
 const getAllowedOrigin = (requestOrigin: string | null): string => {
@@ -247,9 +248,9 @@ serve(async (req) => {
     // 1. Artykuły z pytania użytkownika (regex: "art 10 kp")
     // 2. Artykuły z wykrytych tematów (np. "obrona konieczna" → Art. 25 kk)
     // QW4: Pass usePremiumModel for dynamic article limits
-    console.log('[ELI] Fetching articles from both user query and detected topics...');
+    eliLogger.debug('Fetching articles from both user query and detected topics...');
     const enrichmentResult = await enrichWithArticles(message, legalContextResult.mcpArticles, usePremiumModel);
-    console.log(`[ELI] Enrichment result: ${enrichmentResult.successCount} successful, ${enrichmentResult.failureCount} failed`);
+    eliLogger.debug(`Enrichment result: ${enrichmentResult.successCount} successful, ${enrichmentResult.failureCount} failed`);
 
     const articleContext = enrichmentResult.context;
 

@@ -4,6 +4,7 @@
  */
 
 import { withRetry, isRetryableError } from '../_shared/retry.ts';
+import { eliLogger } from '../_shared/logger.ts';
 
 const ELI_MCP_URL = Deno.env.get('ELI_MCP_URL') || 'http://localhost:8080';
 const ELI_API_KEY = Deno.env.get('ELI_API_KEY') || 'dev-secret-key';
@@ -146,7 +147,7 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     const key = `${articleNumber.toLowerCase()}:${actName.toLowerCase()}`;
 
     if (!alreadyDetected.has(key) && actName.length >= 5) {
-      console.log(`[ELI] Pattern 5a (ustawa z dnia): Detected "art ${articleNumber} ${actName}"`);
+      eliLogger.debug(`Pattern 5a (ustawa z dnia): Detected "art ${articleNumber} ${actName}"`);
       references.push({ actCode: actName, articleNumber });
       alreadyDetected.add(key);
     }
@@ -161,7 +162,7 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     const key = `${articleNumber.toLowerCase()}:${actName.toLowerCase()}`;
 
     if (!alreadyDetected.has(key) && actName.length >= 5) {
-      console.log(`[ELI] Pattern 5b (ustawa o): Detected "art ${articleNumber} ${actName}"`);
+      eliLogger.debug(`Pattern 5b (ustawa o): Detected "art ${articleNumber} ${actName}"`);
       references.push({ actCode: actName, articleNumber });
       alreadyDetected.add(key);
     }
@@ -200,7 +201,7 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
       continue;
     }
 
-    console.log(`[ELI] Pattern 5c (dynamic fallback): Detected "art ${articleNumber} ${actName}"`);
+    eliLogger.debug(`Pattern 5c (dynamic fallback): Detected "art ${articleNumber} ${actName}"`);
     references.push({ actCode: actName, articleNumber });
     alreadyDetected.add(key);
   }
@@ -218,13 +219,13 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     const key = `${articleNumber.toLowerCase()}:${fullActName.toLowerCase()}`;
 
     if (!alreadyDetected.has(key) && actName.length >= 5) {
-      console.log(`[ELI] Pattern 6 (praw${prawForm} X): Detected "art ${articleNumber} praw${prawForm} ${actName}"`);
+      eliLogger.debug(`Pattern 6 (praw${prawForm} X): Detected "art ${articleNumber} praw${prawForm} ${actName}"`);
       references.push({ actCode: fullActName, articleNumber });
       alreadyDetected.add(key);
     }
   }
 
-  console.log(`[ELI] Detected ${references.length} article references:`, references);
+  eliLogger.debug(`Detected ${references.length} article references:`, references);
 
   return references;
 }
@@ -303,7 +304,7 @@ export async function fetchArticle(
   // The MCP server now has dynamic search capabilities - it will handle all acts!
   // This allows the system to access ALL ~15,000 acts from ISAP, not just hardcoded ones.
 
-  console.log(`[ELI] Fetching article: ${actCode} ${articleNumber}`);
+  eliLogger.debug(`Fetching article: ${actCode} ${articleNumber}`);
 
   return await withRetry(
     async () => {
@@ -325,7 +326,7 @@ export async function fetchArticle(
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[ELI] API error: ${response.status} ${errorText}`);
+        eliLogger.error(`API error: ${response.status} ${errorText}`);
 
         // Throw error to trigger retry for 5xx
         if (response.status >= 500) {
@@ -343,11 +344,11 @@ export async function fetchArticle(
       // Validate the response content
       const validation = validateArticleContent(data);
       if (!validation.valid) {
-        console.warn(`[ELI] Invalid article content: ${validation.reason}`);
+        eliLogger.warn(`Invalid article content: ${validation.reason}`);
         throw new Error(`Invalid content: ${validation.reason}`);
       }
 
-      console.log(`[ELI] Successfully fetched and validated article ${actCode} ${articleNumber}`);
+      eliLogger.debug(`Successfully fetched and validated article ${actCode} ${articleNumber}`);
       return data;
     },
     {
@@ -361,7 +362,7 @@ export async function fetchArticle(
   ).catch((error) => {
     // If all retries failed, return error response
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[ELI] Failed to fetch article after retries:`, errorMessage);
+    eliLogger.error(`Failed to fetch article after retries:`, errorMessage);
 
     return {
       success: false,
@@ -468,8 +469,8 @@ export async function enrichWithArticles(
   const limitedReferences = prioritizedReferences.slice(0, MAX_TOTAL_ARTICLES);
   const totalSkipped = prioritizedReferences.length - limitedReferences.length;
 
-  console.log(
-    `[ELI] Prioritization: ${fromQueryCount} from query (unlimited), ` +
+  eliLogger.debug(
+    `Prioritization: ${fromQueryCount} from query (unlimited), ` +
     `${topicsAdded} from topics (max ${MAX_ARTICLES_FROM_TOPICS}), ` +
     `${limitedReferences.length} total (max ${MAX_TOTAL_ARTICLES}) ` +
     `[premium: ${usePremiumModel}]`
@@ -486,7 +487,7 @@ export async function enrichWithArticles(
   }
 
   // 5. Fetch all prioritized articles in parallel
-  console.log(`[ELI] Fetching ${limitedReferences.length} article(s)...`);
+  eliLogger.debug(`Fetching ${limitedReferences.length} article(s)...`);
   const articlePromises = limitedReferences.map(ref =>
     fetchArticle(ref.actCode, ref.articleNumber)
   );
@@ -500,7 +501,7 @@ export async function enrichWithArticles(
   const successCount = successfulArticles.length;
   const failureCount = failedArticles.length;
 
-  console.log(`[ELI] Results: ${successCount} successful, ${failureCount} failed`);
+  eliLogger.debug(`Results: ${successCount} successful, ${failureCount} failed`);
 
   // 7. Build warnings
   const warnings: string[] = [];

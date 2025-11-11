@@ -8,6 +8,13 @@ import { ActResolver, ResolvedAct } from './act-resolver.ts';
 // @deno-types="npm:@types/pdfjs-dist@2.10.378"
 import * as pdfjsLib from 'npm:pdfjs-dist@4.0.379/legacy/build/pdf.mjs';
 
+// Simple logger for standalone MCP server
+const DEBUG = Deno.env.get('DEBUG') === 'true';
+const logger = {
+  debug: (...args: any[]) => DEBUG && console.log('[ELI]', ...args),
+  error: (...args: any[]) => console.error('[ELI]', ...args),
+};
+
 export class ELITools {
   private client: ELIClient;
   private actResolver: ActResolver;
@@ -201,6 +208,7 @@ export class ELITools {
 
       // Try to get PDF first (preferred for newer consolidated texts)
       try {
+        logger.debug(`Attempting to fetch PDF for ${actInfo.title}...`);
         const pdfBuffer = await this.client.getActPDF(
           actInfo.publisher,
           actInfo.year,
@@ -209,6 +217,7 @@ export class ELITools {
         const pdfText = await this.extractTextFromPDF(pdfBuffer);
         articleText = this.extractArticleFromPDF(pdfText, articleNumber);
       } catch (pdfError) {
+        logger.debug(`PDF extraction failed, falling back to HTML: ${pdfError.message}`);
         // Fallback to HTML if PDF fails
         try {
           const html = await this.client.getActHTML(
@@ -260,21 +269,29 @@ export class ELITools {
     const { articleNumber, actCode } = params;
     const actCodeLower = actCode.toLowerCase().trim();
 
+    logger.debug(`getArticle: "${actCode}" art ${articleNumber}`);
+
     // LEVEL 1: Check hardcoded mapping (fast path - 16 popular acts)
     const hardcodedActInfo = this.ACT_CODES[actCodeLower];
     if (hardcodedActInfo) {
+      logger.debug(`✓ Found in hardcoded map: ${hardcodedActInfo.title}`);
       return this.fetchArticleFromAct(hardcodedActInfo, articleNumber);
     }
 
     // LEVEL 2: Use ActResolver (dynamic search + cache)
+    logger.debug(`Not in hardcoded map, trying dynamic resolution...`);
+
     try {
       const resolved = await this.actResolver.resolveAct(actCode);
 
       if (resolved) {
+        logger.debug(`✓ Dynamically resolved: ${resolved.title} (source: ${resolved.source})`);
         return this.fetchArticleFromAct(resolved, articleNumber);
       }
 
       // LEVEL 3: Not found - suggest similar acts
+      logger.debug(`✗ Could not resolve act: "${actCode}"`);
+
       const similarActs = await this.actResolver.findSimilarActs(actCode, 5);
 
       let errorMessage = `Nie znaleziono ustawy: "${actCode}".`;
@@ -294,7 +311,7 @@ export class ELITools {
         error: errorMessage,
       };
     } catch (error) {
-      console.error(`[ELI] Error: ${error.message}`);
+      logger.error(`Error in dynamic resolution: ${error.message}`);
       return {
         success: false,
         error: `Błąd podczas wyszukiwania ustawy: ${error.message}`,
@@ -645,17 +662,27 @@ export class ELITools {
       baseWithSpacedSuperscripts, // "67 33" (base + space + superscripts, common for multi-digit)
     ].filter((v, i, arr) => v && arr.indexOf(v) === i); // Remove duplicates and empty strings
 
+    logger.debug(`Article number variants to search: ${searchVariants.map(v => `"${v}"`).join(', ')}`);
+
     // Normalize the text - remove excessive whitespace but keep structure
     let normalizedText = pdfText.replace(/[ \t]+/g, ' ');
 
     // Fix common PDF extraction errors BEFORE searching for articles
     // Problem: PDF extraction sometimes breaks "Art." into "A rt.", "Ar t.", "Art ." etc.
-    normalizedText = normalizedText.replace(/A\s+rt\s*\.\s*/gi, 'Art. ');
-    normalizedText = normalizedText.replace(/Ar\s+t\s*\.\s*/gi, 'Art. ');
-    normalizedText = normalizedText.replace(/Art\s+\.\s*/gi, 'Art. ');
+    // This prevents pattern matching from working
+    const beforeNormalization = normalizedText;
+    normalizedText = normalizedText.replace(/A\s+rt\s*\.\s*/gi, 'Art. ');  // "A rt." -> "Art. "
+    normalizedText = normalizedText.replace(/Ar\s+t\s*\.\s*/gi, 'Art. ');  // "Ar t." -> "Art. "
+    normalizedText = normalizedText.replace(/Art\s+\.\s*/gi, 'Art. ');     // "Art ." -> "Art. "
+
+    // Debug: show if normalization made any changes
+    if (beforeNormalization !== normalizedText) {
+      logger.debug(`✓ Fixed PDF extraction errors in article markers`);
+    }
 
     // Try each variant until we find a match
     for (const variant of searchVariants) {
+      logger.debug(`Trying variant "${variant}" in PDF text (${normalizedText.length} chars)`);
       // Find ALL matches for this variant
       const candidateMatches: Array<{ text: string; score: number; index: number }> = [];
 
@@ -747,6 +774,7 @@ export class ELITools {
           text = text.replace(/\s+Art\.\s*\d+.*$/i, '');
 
           if (text.length > 50) {
+            logger.debug(`Extracted article text: ${text.substring(0, 150)}...`);
             return text;
           }
         }
@@ -756,7 +784,7 @@ export class ELITools {
     // If article with superscript not found, try searching for paragraph (§)
     // Example: User asks for "1015¹" but it's actually "Art. 1015 § 1¹"
     if (hasSuperscript) {
-      console.log(`[ELI] Article not found, trying to find as paragraph...`);
+      logger.debug(`Article not found, trying to find as paragraph...`);
 
       // Extract base article number (remove superscript)
       const baseNumber = normalizedArticleNumber.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, '').match(/^\d+/)?.[0];
@@ -765,7 +793,7 @@ export class ELITools {
         // Extract the superscript part (e.g., "1015¹" -> "1")
         const superscriptPart = normalizedArticleNumber.replace(baseNumber, '');
 
-        console.log(`[ELI] Searching for Art. ${baseNumber} § ${superscriptPart}...`);
+        logger.debug(`Searching for Art. ${baseNumber} § ${superscriptPart}...`);
 
         // Try to find the base article first
         const baseArticlePattern = new RegExp(
@@ -781,7 +809,7 @@ export class ELITools {
           // Generate paragraph variants: "§ 1¹", "§ 11", "§ 1 1"
           const paragraphVariants = searchVariants.map(v => v.replace(baseNumber, '')).filter(Boolean);
 
-          console.log(`[ELI] Paragraph variants to search: ${paragraphVariants.map(v => `"§ ${v}"`).join(', ')}`);
+          logger.debug(`Paragraph variants to search: ${paragraphVariants.map(v => `"§ ${v}"`).join(', ')}`);
 
           for (const pVar of paragraphVariants) {
             // Try different paragraph patterns
@@ -793,7 +821,7 @@ export class ELITools {
 
             for (const pPattern of paragraphPatterns) {
               if (pPattern.test(articleText)) {
-                console.log(`[ELI] ✓ Found paragraph § ${pVar} in Art. ${baseNumber}`);
+                logger.debug(`✓ Found paragraph § ${pVar} in Art. ${baseNumber}`);
 
                 // Clean up the article text
                 articleText = articleText.trim();
@@ -809,7 +837,7 @@ export class ELITools {
                 // Remove text that looks like it's from the next article
                 articleText = articleText.replace(/\s+Art\.\s*\d+.*$/i, '');
 
-                console.log(`[ELI] Extracted article with paragraph: ${articleText.substring(0, 150)}...`);
+                logger.debug(`Extracted article with paragraph: ${articleText.substring(0, 150)}...`);
 
                 // Add a note that this is a paragraph, not a separate article
                 return `Uwaga: Art. ${articleNumber} nie istnieje jako osobny artykuł. Poniżej znajduje się Art. ${baseNumber}, który zawiera § ${pVar}:\n\n${articleText}`;
@@ -821,14 +849,14 @@ export class ELITools {
     }
 
     // Debug: Show context around each variant
-    console.log(`[ELI] ✗ Article not found with any variant`);
+    logger.debug(`✗ Article not found with any variant`);
     for (const variant of searchVariants) {
       const contextRegex = new RegExp(`.{0,200}\\b${this.escapeRegex(variant)}(?!\\d).{0,200}`, 'g');
       const contexts = normalizedText.match(contextRegex);
       if (contexts) {
-        console.log(`[ELI] Found ${contexts.length} occurrences of variant "${variant}":`);
+        logger.debug(`Found ${contexts.length} occurrences of variant "${variant}":`);
         contexts.slice(0, 2).forEach((ctx, i) => {
-          console.log(`[ELI]   Context ${i + 1}: ...${ctx}...`);
+          logger.debug(`  Context ${i + 1}: ...${ctx}...`);
         });
       }
     }
