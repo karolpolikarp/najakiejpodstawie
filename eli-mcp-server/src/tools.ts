@@ -148,8 +148,7 @@ export class ELITools {
       keyword: params.keyword,
       inForce: params.inForce ? '1' : undefined,
       limit: params.limit || 10,
-      sortBy: 'change',
-      sortDir: 'desc',
+      // NOTE: sortBy/sortDir removed - they cause 403 errors from Sejm API
     };
 
     const result = await this.client.searchActs(searchParams);

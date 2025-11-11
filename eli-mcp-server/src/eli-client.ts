@@ -74,7 +74,7 @@ class SimpleCache {
 export class ELIClient {
   private cache: SimpleCache;
   private lastRequestTime: number = 0;
-  private readonly minRequestInterval = 200; // 200ms between requests
+  private readonly minRequestInterval = 500; // 500ms between requests (increased for Sejm API rate limiting)
 
   constructor(cacheTTL: number = 3600) {
     this.cache = new SimpleCache(cacheTTL);
@@ -96,11 +96,12 @@ export class ELIClient {
 
   /**
    * Retry logic with exponential backoff for 403/429 errors
+   * Uses 2s, 4s, 8s, 16s backoff strategy (4 retries = 5 total attempts)
    */
   private async fetchWithRetry(
     url: string,
     options: RequestInit,
-    maxRetries: number = 3
+    maxRetries: number = 4
   ): Promise<Response> {
     await this.rateLimit();
 
@@ -113,9 +114,9 @@ export class ELIClient {
           return response;
         }
 
-        // If 403/429, retry with backoff
+        // If 403/429, retry with backoff (2s, 4s, 8s, 16s)
         if ((response.status === 403 || response.status === 429) && attempt < maxRetries) {
-          const backoffDelay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+          const backoffDelay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s, 16s
           console.log(`[ELI] Got ${response.status}, retrying in ${backoffDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, backoffDelay));
           continue;
@@ -127,7 +128,7 @@ export class ELIClient {
         if (attempt === maxRetries) {
           throw error;
         }
-        const backoffDelay = Math.pow(2, attempt) * 1000;
+        const backoffDelay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s, 16s
         console.log(`[ELI] Network error, retrying in ${backoffDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, backoffDelay));
       }
