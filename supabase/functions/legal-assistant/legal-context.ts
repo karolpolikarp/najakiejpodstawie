@@ -652,6 +652,90 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
       "Art. 471 KC - odpowiedzialność za niewykonanie zobowiązania"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
+  },
+
+  /**
+   * ZNIESŁAWIENIE (Defamation)
+   */
+  znieslawienie: {
+    name: "Zniesławienie",
+    keywords: ["zniesławienie", "zniesławiony", "pomówienie", "zniesławił", "oczernianie", "poniżenie", "zniesławiająca", "internet", "facebook", "twitter", "social media"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '212' },  // zniesławienie
+      { actCode: 'kk', articleNumber: '213' },  // zniesławienie publicznie lub w mediach
+      { actCode: 'kk', articleNumber: '216' },  // zniewaga (powiązane)
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 212 - zniesławienie",
+      "Art. 213 - publiczne zniesławienie lub w mediach"
+    ],
+    relatedArticles: [
+      "Art. 214 - dowód prawdy",
+      "Art. 216 - zniewaga",
+      "Art. 23 KC - ochrona dóbr osobistych",
+      "Art. 24 KC - roszczenia z tytułu naruszenia dóbr osobistych"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  /**
+   * DECYZJE ADMINISTRACYJNE (Administrative Decisions)
+   */
+  decyzje_administracyjne: {
+    name: "Decyzje administracyjne - odwołanie i zaskarżenie",
+    keywords: ["decyzja administracyjna", "decyzji administracyjnej", "odwołanie od decyzji", "zaskarżenie decyzji", "kpa", "organ administracyjny", "samorządowe kolegium odwoławcze", "sąd administracyjny"],
+    mcpArticles: [
+      { actCode: 'kpa', articleNumber: '127' },  // odwołanie od decyzji
+      { actCode: 'kpa', articleNumber: '129' },  // termin na odwołanie
+      { actCode: 'kpa', articleNumber: '138' },  // rozpatrzenie odwołania
+      { actCode: 'kpa', articleNumber: '3' },    // zasada prawdy obiektywnej
+    ],
+    mainActs: [
+      "Ustawa z dnia 14 czerwca 1960 r. - Kodeks postępowania administracyjnego"
+    ],
+    mainArticles: [
+      "Art. 127 KPA - prawo do odwołania od decyzji",
+      "Art. 129 KPA - termin na wniesienie odwołania (14 dni)",
+      "Art. 138 KPA - rozpatrzenie odwołania"
+    ],
+    relatedArticles: [
+      "Art. 131 KPA - wniesienie odwołania przez pełnomocnika",
+      "Art. 141 KPA - ponowne rozpatrzenie sprawy",
+      "Art. 145 KPA - skarga do sądu administracyjnego",
+      "Art. 61 KPA - uzasadnienie decyzji"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19600300168"
+  },
+
+  /**
+   * ODSTĄPIENIE OD UMOWY NA ODLEGŁOŚĆ (Distance Contract Withdrawal)
+   */
+  odstapienie_umowy_na_odleglosc: {
+    name: "Odstąpienie od umowy zawartej na odległość",
+    keywords: ["odstąpienie od umowy", "umowa na odległość", "sklep internetowy", "zakupy online", "zwrot towaru", "14 dni", "prawo konsumenta"],
+    mcpArticles: [
+      { actCode: 'upk', articleNumber: '27' },  // prawo odstąpienia (14 dni)
+      { actCode: 'upk', articleNumber: '29' },  // zwrot pieniędzy
+      { actCode: 'upk', articleNumber: '38' },  // wyjątki od prawa odstąpienia
+    ],
+    mainActs: [
+      "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta"
+    ],
+    mainArticles: [
+      "Art. 27 - prawo odstąpienia od umowy (14 dni)",
+      "Art. 29 - zwrot płatności",
+      "Art. 38 - wyjątki od prawa odstąpienia"
+    ],
+    relatedArticles: [
+      "Art. 28 - forma odstąpienia",
+      "Art. 31 - koszty odesłania towaru",
+      "Art. 32 - obowiązki konsumenta",
+      "Art. 34 - odpowiedzialność za zmniejszenie wartości towaru"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827"
   }
 };
 
