@@ -62,10 +62,10 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
   const lowerMessage = message.toLowerCase();
   const references: ArticleRequest[] = [];
 
-  // Pattern 1: "art 10 kp", "art. 10 kp", "artykuł 10 kp", "art 27 upk", "art 13 uodip"
-  // Extended to include all popular act codes
+  // Pattern 1: "art 10 kp", "art. 10 kp", "artykuł 10 kp", "art 27 upk", "art 13 uodip", "art 10 kw"
+  // Extended to include all popular act codes including Electoral Code (kw)
   // QW1: Added support for ustęp/paragraf: "art 152 § 1 kp", "art. 152 ust. 1 kp"
-  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)(?:\s*(?:§|ust\.|par\.)\s*\d+)?\s+(kc|kp|kk|kpk|kpc|kro|kpa|pzp|ksh|kks|op|pb|upk|prd|uodip|k\.?\s?c\.?|k\.?\s?p\.?|k\.?\s?k\.?|k\.?\s?p\.?\s?k\.?|k\.?\s?p\.?\s?c\.?|k\.?\s?r\.?\s?o\.?|k\.?\s?p\.?\s?a\.?|k\.?\s?s\.?\s?h\.?|k\.?\s?k\.?\s?s\.?)/gi;
+  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)(?:\s*(?:§|ust\.|par\.)\s*\d+)?\s+(kc|kp|kk|kpk|kpc|kro|kpa|pzp|ksh|kks|op|pb|upk|prd|uodip|kw|k\.?\s?c\.?|k\.?\s?p\.?|k\.?\s?k\.?|k\.?\s?p\.?\s?k\.?|k\.?\s?p\.?\s?c\.?|k\.?\s?r\.?\s?o\.?|k\.?\s?p\.?\s?a\.?|k\.?\s?s\.?\s?h\.?|k\.?\s?k\.?\s?s\.?|k\.?\s?w\.?)/gi;
   let match;
   while ((match = pattern1.exec(message)) !== null) {
     const articleNumber = match[1];
@@ -88,12 +88,13 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     else if (codeAbbr === 'upk') actCode = 'upk';
     else if (codeAbbr === 'prd') actCode = 'prd';
     else if (codeAbbr === 'uodip') actCode = 'uodip';
+    else if (codeAbbr === 'kw') actCode = 'kodeks wyborczy';
 
     references.push({ actCode, articleNumber });
   }
 
-  // Pattern 2: "art 10 kodeks pracy", "artykuł 533 kodeksu cywilnego", "art 69 kodeksu postępowania cywilnego"
-  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym|karny skarbowy|karnego skarbowego|karny wykonawczy|karnego wykonawczego|spółek handlowych|spolek handlowych|rodzinny i opiekuńczy|rodzinnego i opiekuńczego|postępowania\s+(?:cywilnego|karnego|administracyjnego)|postepowania\s+(?:cywilnego|karnego|administracyjnego))/gi;
+  // Pattern 2: "art 10 kodeks pracy", "artykuł 533 kodeksu cywilnego", "art 69 kodeksu postępowania cywilnego", "art 10 kodeks wyborczy"
+  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym|karny skarbowy|karnego skarbowego|karny wykonawczy|karnego wykonawczego|spółek handlowych|spolek handlowych|rodzinny i opiekuńczy|rodzinnego i opiekuńczego|wyborczy|wyborczego|wyborczym|postępowania\s+(?:cywilnego|karnego|administracyjnego)|postepowania\s+(?:cywilnego|karnego|administracyjnego))/gi;
   while ((match = pattern2.exec(message)) !== null) {
     const articleNumber = match[1];
     const codeName = match[2].toLowerCase();
@@ -109,6 +110,7 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     else if (codeName.startsWith('karny wykonawczy') || codeName.startsWith('karnego wykonawczego')) actCode = 'kkw';
     else if (codeName.startsWith('kar')) actCode = 'kk';
     else if (codeName.startsWith('spółek') || codeName.startsWith('spolek')) actCode = 'ksh';
+    else if (codeName.startsWith('wybor')) actCode = 'kodeks wyborczy';
 
     if (actCode) {
       references.push({ actCode, articleNumber });
