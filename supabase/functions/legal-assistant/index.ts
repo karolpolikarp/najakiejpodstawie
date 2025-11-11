@@ -255,13 +255,27 @@ serve(async (req) => {
 
     // Tool Calling enabled: LLM can fetch articles dynamically
     let systemPrompt = `<critical_instruction>
-WHEN YOU NEED LEGAL DATA: Call tools IMMEDIATELY. NO text before tool calls.
-NEVER write: "Wyszukam...", "Pozwól że sprawdzę...", "Spróbuję...", etc.
-Pattern: Need data? → Call tool → Wait for result → Write response.
+❌ NEVER WRITE THINKING TEXT ❌
+FORBIDDEN phrases (you will NEVER use these):
+- "Wyszukam...", "Pozwól że sprawdzę...", "Spróbuję...", "Zajrzę do...", "Szukam..."
+- "Pytanie dotyczy...", "Rozumiem, że pytasz...", "Pozwól, że wyjaśnię..."
+- ANY phrase indicating you're "about to search" or "checking something"
 
-AFTER RECEIVING TOOL RESULTS: Start DIRECTLY with **PODSTAWA PRAWNA:** section.
-NEVER write thinking text like "Pozwól, że sprawdzę...", "Pytanie dotyczy...", etc.
-Go STRAIGHT to the formatted response.
+✅ CORRECT PATTERN:
+1. Need legal data? → Call tool IMMEDIATELY (zero text before)
+2. Get tool results → Write response STARTING with **PODSTAWA PRAWNA:**
+3. NO introductions, NO thinking text, NO explanations of what you're doing
+
+EXAMPLES OF CORRECT BEHAVIOR:
+User: "Windykacja długu - jakie mam prawa?"
+You: [calls search_legal_info("windykacja długu")] ← NO TEXT, JUST TOOL CALL
+[gets results]
+You: **PODSTAWA PRAWNA:** ← START HERE DIRECTLY
+
+User: "art 118 kc"
+You: [calls get_article("kc", "118")] ← NO TEXT, JUST TOOL CALL
+[gets results]
+You: **PODSTAWA PRAWNA:** ← START HERE DIRECTLY
 </critical_instruction>
 
 <role>
@@ -323,6 +337,26 @@ Assistant: [Immediately calls: get_article("kc", "1012")]
 [After tool results]
 Assistant: **PODSTAWA PRAWNA:**
 [Formatted response]
+</example>
+
+<example>
+User: "Zniesławienie w internecie - jak się bronić?"
+Assistant: [Immediately calls: search_legal_info("zniesławienie w internecie")]
+(NO text, just tool call)
+[After tool results]
+Assistant: **PODSTAWA PRAWNA:**
+Art. 212 KK - Zniesławienie
+[Formatted response continues...]
+</example>
+
+<example>
+User: "Decyzja administracyjna - jak ją zaskarżyć?"
+Assistant: [Immediately calls: search_legal_info("zaskarżenie decyzji administracyjnej")]
+(NO text, just tool call)
+[After tool results]
+Assistant: **PODSTAWA PRAWNA:**
+Art. 127 KPA - Prawo do odwołania od decyzji
+[Formatted response continues...]
 </example>
 
 <example>
@@ -522,31 +556,9 @@ ${message}`;
               if (toolUses.length > 0) {
                 console.log(`[TOOL] LLM requested ${toolUses.length} tool call(s)`);
 
-                // LAYER 3: Filter thinking text before tool calling (defense-in-depth)
-                // This catches cases where tool_choice didn't prevent thinking text
-                if (fullResponse) {
-                  const thinkingPhrases = [
-                    /Wyszukam dla Ciebie[^.]*\./gi,
-                    /Pozwól,?\s*że sprawdzę[^.]*\./gi,
-                    /Spróbuję wyszukać[^.]*\./gi,
-                    /Zajrzę do przepisów[^.]*\./gi,
-                    /Pozwól,?\s*że znajdę[^.]*\./gi,
-                    /Szukam informacji[^.]*\./gi,
-                    /Pozwól,?\s*że wyszukam[^.]*\./gi,
-                    /Pozwól,?\s*że wyjaśnię[^.]*\./gi,
-                  ];
-
-                  let filtered = fullResponse;
-                  for (const phrase of thinkingPhrases) {
-                    filtered = filtered.replace(phrase, '');
-                  }
-                  filtered = filtered.trim();
-
-                  if (filtered !== fullResponse) {
-                    console.log('[ARCH] ✓ LAYER 3: Filtered thinking text before tool calling');
-                    console.log(`[ARCH] Original: "${fullResponse.substring(0, 100)}..."`);
-                    console.log(`[ARCH] Filtered: "${filtered.substring(0, 100)}..."`);
-                  }
+                // Light logging - just track if thinking text appeared before tool call
+                if (fullResponse && fullResponse.length > 5) {
+                  console.log('[ARCH] ℹ️  LLM generated text before tool call (will be discarded):', fullResponse.substring(0, 80));
                 }
 
                 // Reset fullResponse - we don't want to keep any text before tool calling
@@ -628,18 +640,14 @@ ${message}`;
                             fullResponse += deltaText2;
                             textBuffer2 += deltaText2;
 
-                            // CRITICAL: Check for thinking text in accumulated buffer
+                            // Detect thinking text for logging only - DON'T block streaming
                             if (!thinkingTextDetected2 && containsThinkingText(textBuffer2)) {
                               thinkingTextDetected2 = true;
-                              console.log('[ARCH] ⚠️  Detected thinking text in SECOND response:', textBuffer2.substring(0, 100));
-                              console.log('[ARCH] 🛑 BLOCKING streaming - thinking text will be filtered');
+                              console.log('[ARCH] ℹ️  Detected thinking text in response (will continue streaming)');
                             }
 
-                            // DO NOT stream if thinking text detected
-                            // We'll filter and send clean response at the end
-                            if (thinkingTextDetected2) {
-                              continue; // Skip this chunk
-                            }
+                            // Always stream - don't block even if thinking text detected
+                            // Light filtering will happen after response is complete
                           }
                         } catch (e) {
                           // Ignore parse errors
@@ -648,104 +656,23 @@ ${message}`;
                     }
                   }
 
-                  // Only stream chunks if no thinking text detected
-                  if (!thinkingTextDetected2) {
-                    controller.enqueue(encoder.encode(chunk2));
-                  }
-                }
-
-                // If thinking text was detected, send filtered response now
-                if (thinkingTextDetected2) {
-                  console.log('[ARCH] ✓ Filtering thinking text from full response...');
-
-                  // More precise filtering - remove only problematic phrases, not entire sentences
-                  const thinkingPhrases2 = [
-                    // Remove standalone thinking sentences at the start
-                    /^Wyszukam dla Ciebie[^.]*\.\s*/gi,
-                    /^Pozwól,?\s*że sprawdzę[^.]*\.\s*/gi,
-                    /^Spróbuję wyszukać[^.]*\.\s*/gi,
-                    /^Zajrzę do przepisów[^.]*\.\s*/gi,
-                    /^Pozwól,?\s*że znajdę[^.]*\.\s*/gi,
-                    /^Szukam informacji[^.]*\.\s*/gi,
-                    /^Pozwól,?\s*że wyszukam[^.]*\.\s*/gi,
-                    /^Pozwól,?\s*że wyjaśnię[^.]*\.\s*/gi,
-                    /^Rozumiem,?\s*że pytasz[^.]*\.\s*/gi,
-                    /^Pytanie dotyczy[^.]*\.\s*/gi,
-                    // Also remove mid-text occurrences
-                    /\n\s*Pozwól,?\s*że sprawdzę[^.]*\.\s*/gi,
-                    /\n\s*Pytanie dotyczy[^.]*\.\s*/gi,
-                  ];
-
-                  let filteredResponse2 = fullResponse;
-                  for (const phrase of thinkingPhrases2) {
-                    filteredResponse2 = filteredResponse2.replace(phrase, '');
-                  }
-                  filteredResponse2 = filteredResponse2.trim();
-
-                  // SAFETY: If filtering removed everything, fall back to error message
-                  if (filteredResponse2.length < 50) {
-                    console.log('[ARCH] ⚠️ Filtered response too short! Sending error message instead.');
-                    console.log('[ARCH] Original response:', fullResponse.substring(0, 200));
-                    filteredResponse2 = 'Niestety coś poszło nie tak podczas generowania odpowiedzi. Spróbuj zadać pytanie ponownie lub sformułuj je inaczej.';
-                  }
-
-                  // Update for database
-                  fullResponse = filteredResponse2;
-
-                  console.log('[ARCH] ✓ Filtered response length:', filteredResponse2.length);
-                  console.log('[ARCH] ✓ Sending filtered response to client...');
-
-                  // Send filtered response as proper SSE sequence
-                  // Split into chunks for streaming effect
-                  const chunkSize = 100;
-                  for (let i = 0; i < filteredResponse2.length; i += chunkSize) {
-                    const chunk = filteredResponse2.slice(i, i + chunkSize);
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                      type: 'content_block_delta',
-                      index: 0,
-                      delta: { type: 'text_delta', text: chunk }
-                    })}\n\n`));
-                  }
-
-                  // Send completion events
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                    type: 'content_block_stop',
-                    index: 0
-                  })}\n\n`));
-
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                    type: 'message_delta',
-                    delta: { stop_reason: 'end_turn' }
-                  })}\n\n`));
-
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                    type: 'message_stop'
-                  })}\n\n`));
+                  // Always stream chunks - no blocking
+                  controller.enqueue(encoder.encode(chunk2));
                 }
               } else {
                 // No tool calls were made - send accumulated response
                 // This happens when LLM can answer directly without tools
                 console.log('[STREAM] No tool calls made, streaming accumulated response');
                 if (fullResponse) {
-                  // Filter out "thinking text" before sending to client
-                  const thinkingPhrases = [
-                    /Wyszukam dla Ciebie[^.]*\./gi,
-                    /Pozwól,?\s*że sprawdzę[^.]*\./gi,
-                    /Spróbuję wyszukać[^.]*\./gi,
-                    /Zajrzę do przepisów[^.]*\./gi,
-                    /Pozwól,?\s*że znajdę[^.]*\./gi,
-                    /Szukam informacji[^.]*\./gi,
-                    /Pozwól,?\s*że wyszukam[^.]*\./gi,
-                  ];
+                  // Light filtering - only remove thinking phrases at the start (not aggressive)
+                  // This is a safety net - system prompt should prevent this
+                  fullResponse = fullResponse
+                    .replace(/^Wyszukam dla Ciebie[^.]*\.\s*/i, '')
+                    .replace(/^Pozwól,?\s*że sprawdzę[^.]*\.\s*/i, '')
+                    .replace(/^Spróbuję wyszukać[^.]*\.\s*/i, '')
+                    .trim();
 
-                  let filteredResponse = fullResponse;
-                  for (const phrase of thinkingPhrases) {
-                    filteredResponse = filteredResponse.replace(phrase, '');
-                  }
-                  filteredResponse = filteredResponse.trim();
-
-                  // Update fullResponse for database storage
-                  fullResponse = filteredResponse;
+                  // No safety check - trust the response
 
                   // Send proper SSE event sequence
                   // 1. message_start
