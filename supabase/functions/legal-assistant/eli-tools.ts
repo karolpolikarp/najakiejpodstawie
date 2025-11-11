@@ -291,13 +291,35 @@ function validateArticleContent(data: ArticleResponse): { valid: boolean; reason
 
   // CRITICAL: Check if article is repealed (uchylony) BEFORE other validations
   // This allows us to handle repealed articles specially instead of showing generic errors
-  const repealedPatterns = [
-    /\(uchylon[yaąe]\)/i,           // (uchylony), (uchylona), (uchylone)
-    /^\s*uchylon[yaąe]\s*$/i,       // Just "uchylony" as the only text
-    /\buchylon[yaąe]\b/i,            // Word "uchylony" anywhere
-  ];
+  //
+  // IMPORTANT: Only mark as repealed if:
+  // 1. The ENTIRE text is just "(uchylony)" or similar (very short)
+  // 2. OR the text STARTS with "(uchylony)" in first 50 chars AND is short (< 100 chars)
+  //
+  // DO NOT mark as repealed if "uchylony" appears in the middle of a long article
+  // (e.g., "nie stosuje się art. X, który został uchylony...")
 
-  const isRepealed = repealedPatterns.some(pattern => pattern.test(text));
+  const isRepealed = (() => {
+    // Pattern 1: Entire text is just "(uchylony)" or "uchylony" (very short)
+    if (/^\s*\(?\s*uchylon[yaąe]\s*\)?\s*$/i.test(text)) {
+      return true;
+    }
+
+    // Pattern 2: Text starts with "(uchylony)" or "uchylony" AND is very short (< 100 chars)
+    // This catches cases like "uchylony art. X ustawy..." but not long articles
+    if (text.length < 100 && /^\s*\(?\s*uchylon[yaąe]\b/i.test(text)) {
+      return true;
+    }
+
+    // Pattern 3: Text is short (< 150 chars) and contains "(uchylony)" in parentheses
+    // This is the most common format for repealed articles
+    if (text.length < 150 && /\(uchylon[yaąe]\)/i.test(text)) {
+      return true;
+    }
+
+    // Otherwise: NOT repealed (even if "uchylony" appears somewhere in long text)
+    return false;
+  })();
 
   if (isRepealed) {
     eliLogger.debug(`Article marked as repealed: ${data.article.number}`);
