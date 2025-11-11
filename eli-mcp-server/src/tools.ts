@@ -717,8 +717,8 @@ export class ELITools {
           if (firstLine.match(/kodeks[au]? (wykroczeń|karny|cywilny|pracy)/i)) {
             score -= 500; // Explicit reference to another code
           }
-          if (capturedText.length < 100) {
-            score -= 200; // Too short to be a real article
+          if (capturedText.length < 50) {
+            score -= 200; // Too short to be a real article (lowered from 100 to 50 to allow short but valid articles)
           }
 
           // Positive signals - this looks like actual article content
