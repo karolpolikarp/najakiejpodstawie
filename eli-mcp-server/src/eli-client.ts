@@ -88,7 +88,6 @@ export class ELIClient {
     const timeSinceLastRequest = now - this.lastRequestTime;
     if (timeSinceLastRequest < this.minRequestInterval) {
       const delay = this.minRequestInterval - timeSinceLastRequest;
-      console.log(`[ELI] Rate limiting: waiting ${delay}ms`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
     this.lastRequestTime = Date.now();
@@ -152,8 +151,6 @@ export class ELIClient {
       }
     });
 
-    console.log(`[ELI] Searching: ${url.toString()}`);
-
     const response = await this.fetchWithRetry(url.toString(), {
       headers: {
         'Accept': 'application/json',
@@ -199,7 +196,6 @@ export class ELIClient {
     if (cached) return cached;
 
     const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}`;
-    console.log(`[ELI] Getting act: ${url}`);
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -245,7 +241,6 @@ export class ELIClient {
 
     const url =
       `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.html`;
-    console.log(`[ELI] Getting HTML: ${url}`);
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -291,7 +286,6 @@ export class ELIClient {
 
     const url =
       `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.pdf`;
-    console.log(`[ELI] Getting PDF: ${url}`);
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -332,7 +326,6 @@ export class ELIClient {
     position: number,
   ): Promise<any> {
     const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/struct`;
-    console.log(`[ELI] Getting structure: ${url}`);
 
     const response = await this.fetchWithRetry(url, {
       headers: {
