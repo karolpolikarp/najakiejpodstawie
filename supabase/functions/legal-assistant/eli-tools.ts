@@ -3,13 +3,15 @@
  * Helper functions for calling the ELI MCP server to fetch legal article content
  */
 
+import { withRetry, isRetryableError } from '../_shared/retry.ts';
+
 const ELI_MCP_URL = Deno.env.get('ELI_MCP_URL') || 'http://localhost:8080';
 const ELI_API_KEY = Deno.env.get('ELI_API_KEY') || 'dev-secret-key';
 
 // Configuration for MCP calls
 const MCP_TIMEOUT_MS = 10000; // 10 seconds
 const MCP_MAX_RETRIES = 3;
-const MCP_RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
+const MCP_BASE_DELAY_MS = 1000;
 // QW4: Moved MAX_ARTICLES to function parameters to support premium limits
 
 // Mapping of common legal code abbreviations
@@ -255,13 +257,6 @@ async function fetchWithTimeout(
 }
 
 /**
- * Helper function to wait/delay
- */
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
  * Validate article response content
  */
 function validateArticleContent(data: ArticleResponse): { valid: boolean; reason?: string } {
@@ -302,91 +297,77 @@ function validateArticleContent(data: ArticleResponse): { valid: boolean; reason
  */
 export async function fetchArticle(
   actCode: string,
-  articleNumber: string,
-  retryCount = 0
+  articleNumber: string
 ): Promise<ArticleResponse> {
   // REMOVED: Static check for supported acts
   // The MCP server now has dynamic search capabilities - it will handle all acts!
   // This allows the system to access ALL ~15,000 acts from ISAP, not just hardcoded ones.
 
-  try {
-    console.log(`[ELI] Fetching article (attempt ${retryCount + 1}/${MCP_MAX_RETRIES}): ${actCode} ${articleNumber}`);
+  console.log(`[ELI] Fetching article: ${actCode} ${articleNumber}`);
 
-    const response = await fetchWithTimeout(
-      `${ELI_MCP_URL}/tools/get_article`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${ELI_API_KEY}`,
-          'Content-Type': 'application/json',
+  return await withRetry(
+    async () => {
+      const response = await fetchWithTimeout(
+        `${ELI_MCP_URL}/tools/get_article`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${ELI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            actCode,
+            articleNumber,
+          }),
         },
-        body: JSON.stringify({
-          actCode,
-          articleNumber,
-        }),
+        MCP_TIMEOUT_MS
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[ELI] API error: ${response.status} ${errorText}`);
+
+        // Throw error to trigger retry for 5xx
+        if (response.status >= 500) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        return {
+          success: false,
+          error: `Błąd API: ${response.status}`,
+        };
+      }
+
+      const data = await response.json();
+
+      // Validate the response content
+      const validation = validateArticleContent(data);
+      if (!validation.valid) {
+        console.warn(`[ELI] Invalid article content: ${validation.reason}`);
+        throw new Error(`Invalid content: ${validation.reason}`);
+      }
+
+      console.log(`[ELI] Successfully fetched and validated article ${actCode} ${articleNumber}`);
+      return data;
+    },
+    {
+      maxRetries: MCP_MAX_RETRIES,
+      baseDelayMs: MCP_BASE_DELAY_MS,
+      shouldRetry: (error) => {
+        // Retry on network errors and server errors
+        return isRetryableError(error) || error.message.includes('Invalid content');
       },
-      MCP_TIMEOUT_MS
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[ELI] API error: ${response.status} ${errorText}`);
-
-      // Retry on 5xx errors (server errors)
-      if (response.status >= 500 && retryCount < MCP_MAX_RETRIES - 1) {
-        const delayMs = MCP_RETRY_DELAYS[retryCount];
-        console.log(`[ELI] Retrying after ${delayMs}ms due to server error...`);
-        await delay(delayMs);
-        return fetchArticle(actCode, articleNumber, retryCount + 1);
-      }
-
-      return {
-        success: false,
-        error: `Błąd API: ${response.status}`,
-      };
     }
-
-    const data = await response.json();
-
-    // Validate the response content
-    const validation = validateArticleContent(data);
-    if (!validation.valid) {
-      console.warn(`[ELI] Invalid article content: ${validation.reason}`);
-
-      // Retry on validation failure
-      if (retryCount < MCP_MAX_RETRIES - 1) {
-        const delayMs = MCP_RETRY_DELAYS[retryCount];
-        console.log(`[ELI] Retrying after ${delayMs}ms due to validation failure...`);
-        await delay(delayMs);
-        return fetchArticle(actCode, articleNumber, retryCount + 1);
-      }
-
-      return {
-        success: false,
-        error: `Nieprawidłowa odpowiedź: ${validation.reason}`,
-      };
-    }
-
-    console.log(`[ELI] Successfully fetched and validated article ${actCode} ${articleNumber}`);
-    return data;
-
-  } catch (error) {
+  ).catch((error) => {
+    // If all retries failed, return error response
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[ELI] Error fetching article (attempt ${retryCount + 1}):`, errorMessage);
-
-    // Retry on network errors
-    if (retryCount < MCP_MAX_RETRIES - 1) {
-      const delayMs = MCP_RETRY_DELAYS[retryCount];
-      console.log(`[ELI] Retrying after ${delayMs}ms due to error: ${errorMessage}`);
-      await delay(delayMs);
-      return fetchArticle(actCode, articleNumber, retryCount + 1);
-    }
+    console.error(`[ELI] Failed to fetch article after retries:`, errorMessage);
 
     return {
       success: false,
       error: errorMessage,
     };
-  }
+  });
 }
 
 /**

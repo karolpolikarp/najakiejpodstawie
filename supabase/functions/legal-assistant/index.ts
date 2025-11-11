@@ -692,7 +692,7 @@ ${message}`;
                 if (fullResponse) {
                   // Light filtering - only remove thinking phrases at the start (not aggressive)
                   // This is a safety net - system prompt should prevent this
-                  fullResponse = fullResponse
+                  const filteredResponse = fullResponse
                     .replace(/^Wyszukam dla Ciebie[^.]*\.\s*/i, '')
                     .replace(/^Pozwól,?\s*że sprawdzę[^.]*\.\s*/i, '')
                     .replace(/^Spróbuję wyszukać[^.]*\.\s*/i, '')
