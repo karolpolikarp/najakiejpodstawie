@@ -599,6 +599,7 @@ ${message}`;
 
                 // Reset fullResponse - we don't want to keep any text before tool calling
                 fullResponse = '';
+                console.log('[DB] Reset fullResponse before tool calling');
 
                 // Execute all tool calls
                 const toolResults = await executeToolCalls(toolUses);
@@ -656,7 +657,10 @@ ${message}`;
 
                 while (true) {
                   const { done: done2, value: value2 } = await reader2.read();
-                  if (done2) break;
+                  if (done2) {
+                    console.log('[DB] Second stream ended. fullResponse length:', fullResponse.length);
+                    break;
+                  }
 
                   const chunk2 = decoder.decode(value2, { stream: true });
                   buffer2 += chunk2;
@@ -675,6 +679,11 @@ ${message}`;
                             const deltaText2 = parsed2.delta.text;
                             fullResponse += deltaText2;
                             textBuffer2 += deltaText2;
+
+                            // Log first chunk to verify we're collecting from second stream
+                            if (fullResponse.length <= deltaText2.length) {
+                              console.log('[DB] First chunk from second stream:', deltaText2.substring(0, 50));
+                            }
 
                             // Detect thinking text for logging only - DON'T block streaming
                             if (!thinkingTextDetected2 && containsThinkingText(textBuffer2)) {
@@ -761,6 +770,8 @@ ${message}`;
                 const responseTime = Date.now() - startTime;
                 const userAgent = req.headers.get('user-agent') || 'unknown';
 
+                console.log('[DB] Saving to database. fullResponse length:', fullResponse.length, 'preview:', fullResponse.substring(0, 100));
+
                 await supabaseClient
                   .from('user_questions')
                   .insert({
@@ -774,7 +785,7 @@ ${message}`;
                     response_time_ms: responseTime,
                   });
 
-                console.log('Question and answer saved to database with message_id:', messageId);
+                console.log('[DB] Question and answer saved to database with message_id:', messageId);
               } catch (dbError) {
                 // Don't fail the request if DB save fails
                 console.error('Failed to save to database:', dbError);
