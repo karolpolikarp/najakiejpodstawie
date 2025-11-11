@@ -688,14 +688,15 @@ export class ELITools {
       const candidateMatches: Array<{ text: string; score: number; index: number }> = [];
 
       // Common patterns for Polish legal acts
+      // CRITICAL: All patterns MUST start with line beginning anchor to avoid matching in-text references
       const patterns = [
         // Pattern 1: "Art. 10." with dot and space (most reliable for main article text)
-        // Lookahead requires newline before next article to avoid matching in-text references like "art. 10 ustawy z dnia..."
-        new RegExp(`Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.\\s*\\d|$)`, 'gi'),
+        // Requires newline before "Art." to ensure we're matching article headers, not references
+        new RegExp(`(?:^|\\n)\\s*Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.\\s*\\d|$)`, 'gim'),
         // Pattern 2: "Art 10." without first dot
-        new RegExp(`Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.?\\s*\\d|$)`, 'gi'),
+        new RegExp(`(?:^|\\n)\\s*Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.?\\s*\\d|$)`, 'gim'),
         // Pattern 3: "Artykuł 10" (full word)
-        new RegExp(`Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*(?:Artykuł|Art\\.)\\s*\\d|$)`, 'gi'),
+        new RegExp(`(?:^|\\n)\\s*Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*(?:Artykuł|Art\\.)\\s*\\d|$)`, 'gim'),
       ];
 
       for (const pattern of patterns) {
@@ -709,6 +710,22 @@ export class ELITools {
 
           // Check if this looks like a REAL article (not just a reference)
           const firstLine = capturedText.substring(0, 200);
+
+          // CRITICAL: Verify this is an actual article header, not a reference
+          // Check what comes BEFORE the match in the original text
+          const textBefore = normalizedText.substring(Math.max(0, matchIndex - 100), matchIndex);
+
+          // DISQUALIFYING signals - immediately reject these matches
+          // If there's text on the same line before "Art. X", it's likely a reference, not an article header
+          const lastNewlineIndex = textBefore.lastIndexOf('\n');
+          const textOnSameLine = lastNewlineIndex >= 0
+            ? textBefore.substring(lastNewlineIndex + 1).trim()
+            : textBefore.trim();
+
+          if (textOnSameLine.length > 0) {
+            score -= 10000; // DISQUALIFY: Article number appears mid-line, not at line start
+            logger.debug(`Rejecting match - found text before article on same line: "${textOnSameLine.substring(0, 50)}"`);
+          }
 
           // STRONG negative signals - this is likely a reference, not the actual article
           if (firstLine.match(/ustawy z dnia \d{1,2} \w+ \d{4}/)) {
@@ -725,11 +742,7 @@ export class ELITools {
           if (capturedText.length > 300) score += 100;
           if (capturedText.length > 1000) score += 100;
 
-          // Check if article starts at beginning of line (good sign)
-          const textBefore = normalizedText.substring(Math.max(0, matchIndex - 50), matchIndex);
-          if (textBefore.match(/\n\s*$/)) {
-            score += 50; // Starts at beginning of line
-          }
+          // Note: "starts at beginning of line" check is now done above (textOnSameLine)
 
           // Contains paragraph markers (§) - indicates structured article
           if (capturedText.match(/§\s*\d+/)) {
@@ -775,8 +788,18 @@ export class ELITools {
           // Remove any trailing content from next article (only if on new line, to avoid removing in-text references)
           text = text.replace(/\n+\s*Art\.\s*\d+.*$/i, '');
 
+          // VALIDATION: Verify that the extracted text actually contains the requested article number
+          // This prevents returning wrong articles when the requested one doesn't exist
+          const articleHeaderPattern = new RegExp(`^\\s*Art(?:ykuł|\\.)?\\s*${this.escapeRegex(variant)}(?!\\d)`, 'i');
+          if (!articleHeaderPattern.test(text)) {
+            logger.debug(`Validation failed: Extracted text doesn't start with Art. ${variant}`);
+            logger.debug(`Extracted text starts with: ${text.substring(0, 100)}`);
+            // Don't return this match - continue searching
+            continue;
+          }
+
           if (text.length > 50) {
-            logger.debug(`Extracted article text: ${text.substring(0, 150)}...`);
+            logger.debug(`✓ Extracted article text: ${text.substring(0, 150)}...`);
             return text;
           }
         }
@@ -850,13 +873,41 @@ export class ELITools {
       }
     }
 
-    // Debug: Show context around each variant
-    logger.debug(`✗ Article not found with any variant`);
+    // Debug: Show context around each variant to help diagnose issues
+    logger.debug(`✗ Article ${articleNumber} not found with any variant`);
+
+    // Look for potential article numbering in the document to help diagnose
+    const articleNumbersInText = normalizedText.match(/(?:^|\n)\s*Art\.?\s*(\d+)/gim);
+    if (articleNumbersInText) {
+      const articleNumbers = articleNumbersInText
+        .map(m => m.match(/\d+/)?.[0])
+        .filter(Boolean)
+        .map(n => parseInt(n))
+        .filter((n, i, arr) => arr.indexOf(n) === i) // unique
+        .sort((a, b) => a - b);
+
+      logger.debug(`Articles found in document: ${articleNumbers.slice(0, 20).join(', ')}${articleNumbers.length > 20 ? '...' : ''}`);
+
+      // Check if requested article is out of range
+      const requestedNum = parseInt(articleNumber.replace(/[^\d]/g, ''));
+      if (!isNaN(requestedNum) && articleNumbers.length > 0) {
+        const minArticle = Math.min(...articleNumbers);
+        const maxArticle = Math.max(...articleNumbers);
+
+        if (requestedNum < minArticle || requestedNum > maxArticle) {
+          logger.debug(`Article ${requestedNum} is outside document range (${minArticle}-${maxArticle})`);
+        } else {
+          logger.debug(`Article ${requestedNum} is within document range but may not exist (possible gap in numbering)`);
+        }
+      }
+    }
+
+    // Still show contexts for debugging
     for (const variant of searchVariants) {
       const contextRegex = new RegExp(`.{0,200}\\b${this.escapeRegex(variant)}(?!\\d).{0,200}`, 'g');
       const contexts = normalizedText.match(contextRegex);
       if (contexts) {
-        logger.debug(`Found ${contexts.length} occurrences of variant "${variant}":`);
+        logger.debug(`Found ${contexts.length} occurrences of number "${variant}" in text (may be references):`);
         contexts.slice(0, 2).forEach((ctx, i) => {
           logger.debug(`  Context ${i + 1}: ...${ctx}...`);
         });
