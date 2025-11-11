@@ -258,6 +258,10 @@ serve(async (req) => {
 WHEN YOU NEED LEGAL DATA: Call tools IMMEDIATELY. NO text before tool calls.
 NEVER write: "Wyszukam...", "Pozwól że sprawdzę...", "Spróbuję...", etc.
 Pattern: Need data? → Call tool → Wait for result → Write response.
+
+AFTER RECEIVING TOOL RESULTS: Start DIRECTLY with **PODSTAWA PRAWNA:** section.
+NEVER write thinking text like "Pozwól, że sprawdzę...", "Pytanie dotyczy...", etc.
+Go STRAIGHT to the formatted response.
 </critical_instruction>
 
 <role>
@@ -276,7 +280,9 @@ You have 2 tools available:
 
 2. search_legal_info(query)
    - Use when you DON'T know the exact article
+   - Returns legal context + up to 3 articles automatically fetched
    - Example: search_legal_info("przedawnienie roszczeń")
+   - Example: search_legal_info("odrzucenie spadku termin")
 
 CRITICAL: Call tools as THE FIRST THING in your response. Zero text before tool calls.
 </tools>
@@ -286,18 +292,37 @@ CRITICAL: Call tools as THE FIRST THING in your response. Zero text before tool 
 User: "Windykacja długu - jakie mam prawa?"
 Assistant: [Immediately calls: search_legal_info("windykacja długu prawa wierzyciela")]
 (NO text, just tool call)
+[After tool results]
+Assistant: **PODSTAWA PRAWNA:**
+[Formatted response starting directly with the section header]
 </example>
 
 <example>
 User: "Odrzucenie spadku - w jakim terminie?"
 Assistant: [Immediately calls: search_legal_info("odrzucenie spadku termin")]
 (NO text, just tool call)
+[After tool results]
+Assistant: **PODSTAWA PRAWNA:**
+Art. 1015 KC - Termin odrzucenia spadku
+[Formatted response continues...]
+</example>
+
+<example>
+User: "Zgromadzenie wspólników - jak często?"
+Assistant: [Immediately calls: search_legal_info("zgromadzenie wspólników częstotliwość")]
+(NO text, just tool call)
+[After tool results]
+Assistant: **PODSTAWA PRAWNA:**
+[Formatted response starting directly]
 </example>
 
 <example>
 User: "art 1012 kc"
 Assistant: [Immediately calls: get_article("kc", "1012")]
 (NO text, just tool call)
+[After tool results]
+Assistant: **PODSTAWA PRAWNA:**
+[Formatted response]
 </example>
 
 <example>
@@ -633,17 +658,22 @@ ${message}`;
                 if (thinkingTextDetected2) {
                   console.log('[ARCH] ✓ Filtering thinking text from full response...');
 
+                  // More precise filtering - remove only problematic phrases, not entire sentences
                   const thinkingPhrases2 = [
-                    /Wyszukam dla Ciebie[^.]*\./gi,
-                    /Pozwól,?\s*że sprawdzę[^.]*\./gi,
-                    /Spróbuję wyszukać[^.]*\./gi,
-                    /Zajrzę do przepisów[^.]*\./gi,
-                    /Pozwól,?\s*że znajdę[^.]*\./gi,
-                    /Szukam informacji[^.]*\./gi,
-                    /Pozwól,?\s*że wyszukam[^.]*\./gi,
-                    /Pozwól,?\s*że wyjaśnię[^.]*\./gi,
-                    /Rozumiem,?\s*że pytasz[^.]*\./gi,
-                    /Pytanie dotyczy[^.]*\./gi,
+                    // Remove standalone thinking sentences at the start
+                    /^Wyszukam dla Ciebie[^.]*\.\s*/gi,
+                    /^Pozwól,?\s*że sprawdzę[^.]*\.\s*/gi,
+                    /^Spróbuję wyszukać[^.]*\.\s*/gi,
+                    /^Zajrzę do przepisów[^.]*\.\s*/gi,
+                    /^Pozwól,?\s*że znajdę[^.]*\.\s*/gi,
+                    /^Szukam informacji[^.]*\.\s*/gi,
+                    /^Pozwól,?\s*że wyszukam[^.]*\.\s*/gi,
+                    /^Pozwól,?\s*że wyjaśnię[^.]*\.\s*/gi,
+                    /^Rozumiem,?\s*że pytasz[^.]*\.\s*/gi,
+                    /^Pytanie dotyczy[^.]*\.\s*/gi,
+                    // Also remove mid-text occurrences
+                    /\n\s*Pozwól,?\s*że sprawdzę[^.]*\.\s*/gi,
+                    /\n\s*Pytanie dotyczy[^.]*\.\s*/gi,
                   ];
 
                   let filteredResponse2 = fullResponse;
@@ -651,6 +681,13 @@ ${message}`;
                     filteredResponse2 = filteredResponse2.replace(phrase, '');
                   }
                   filteredResponse2 = filteredResponse2.trim();
+
+                  // SAFETY: If filtering removed everything, fall back to error message
+                  if (filteredResponse2.length < 50) {
+                    console.log('[ARCH] ⚠️ Filtered response too short! Sending error message instead.');
+                    console.log('[ARCH] Original response:', fullResponse.substring(0, 200));
+                    filteredResponse2 = 'Niestety coś poszło nie tak podczas generowania odpowiedzi. Spróbuj zadać pytanie ponownie lub sformułuj je inaczej.';
+                  }
 
                   // Update for database
                   fullResponse = filteredResponse2;
