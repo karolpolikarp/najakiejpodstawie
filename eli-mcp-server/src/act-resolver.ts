@@ -410,8 +410,8 @@ export class ActResolver {
         title: actName,
         inForce: '1', // Only acts currently in force
         limit: 20,
-        sortBy: 'change',
-        sortDir: 'desc',
+        // NOTE: sortBy/sortDir removed - they cause 403 errors from Sejm API
+        // Ranking is done client-side in rankSearchResults() anyway
       };
 
       const results = await this.client.searchActs(searchParams);
