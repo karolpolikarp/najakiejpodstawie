@@ -376,12 +376,14 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   spadek: {
     name: "Prawo spadkowe",
-    keywords: ["spadek", "testament", "dziedziczenie", "zachowek", "spadkobierca"],
+    keywords: ["spadek", "testament", "dziedziczenie", "zachowek", "spadkobierca", "odrzucenie"],
     mcpArticles: [
       { actCode: 'kc', articleNumber: '922' },
       { actCode: 'kc', articleNumber: '924' },
       { actCode: 'kc', articleNumber: '931' },
       { actCode: 'kc', articleNumber: '1011' }, // zachowek
+      { actCode: 'kc', articleNumber: '1012' }, // odrzucenie dziedziczenia
+      { actCode: 'kc', articleNumber: '1015' }, // termin odrzucenia spadku
     ],
     mainActs: [
       "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
@@ -621,6 +623,35 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
       "Art. 96 - cofnięcie uprawnień"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20240001251"
+  },
+
+  /**
+   * WINDYKACJA DŁUGU (Debt Collection)
+   */
+  windykacja: {
+    name: "Windykacja długu i egzekucja",
+    keywords: ["windykacja", "dług", "długi", "wierzyciel", "dłużnik", "egzekucja", "należność", "spłata"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '118' },  // prawo do żądania spełnienia świadczenia
+      { actCode: 'kc', articleNumber: '481' },  // odsetki za opóźnienie
+      { actCode: 'kc', articleNumber: '455' },  // termin spełnienia świadczenia
+      { actCode: 'kpc', articleNumber: '776' }, // wszczęcie egzekucji
+    ],
+    mainActs: [
+      "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny",
+      "Ustawa z dnia 17 listopada 1964 r. - Kodeks postępowania cywilnego"
+    ],
+    mainArticles: [
+      "Art. 118 KC - prawo do żądania spełnienia świadczenia",
+      "Art. 481 KC - odsetki ustawowe za opóźnienie",
+      "Art. 455 KC - termin spełnienia świadczenia"
+    ],
+    relatedArticles: [
+      "Art. 776-1088 KPC - postępowanie egzekucyjne",
+      "Art. 117 KC - przedawnienie roszczeń",
+      "Art. 471 KC - odpowiedzialność za niewykonanie zobowiązania"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
   }
 };
 
