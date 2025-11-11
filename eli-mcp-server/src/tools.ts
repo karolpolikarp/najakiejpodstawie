@@ -520,7 +520,6 @@ export class ELITools {
     try {
       const pdf = await pdfjsLib.getDocument({
         data: new Uint8Array(pdfBuffer),
-        standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/standard_fonts/',
       }).promise;
       let fullText = '';
 
