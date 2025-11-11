@@ -607,24 +607,46 @@ export class ELITools {
       '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9'
     };
 
-    // Variant 1: Normalize to plain digits (e.g., "94³" -> "943")
+    // Check if the article number contains a superscript
+    const hasSuperscript = Object.keys(superscriptMap).some(s => articleNumber.includes(s));
+
+    // Variant 1: Normalize to plain digits (e.g., "94³" -> "943", "67³³" -> "6733")
     let normalizedArticleNumber = articleNumber;
     for (const [superscript, digit] of Object.entries(superscriptMap)) {
       normalizedArticleNumber = normalizedArticleNumber.replace(new RegExp(superscript, 'g'), digit);
     }
 
-    // Variant 2: Add spaces between base and superscript (e.g., "94³" -> "94 3")
+    // Variant 2: Add spaces between EACH superscript (e.g., "94³" -> "94 3", "67³³" -> "67 3 3")
     let spacedArticleNumber = articleNumber;
     for (const [superscript, digit] of Object.entries(superscriptMap)) {
       spacedArticleNumber = spacedArticleNumber.replace(new RegExp(superscript, 'g'), ` ${digit}`);
     }
 
+    // Variant 3: Base number + space + all superscripts as digits (e.g., "67³³" -> "67 33")
+    // This is the most common format for multi-digit superscripts in PDFs
+    let baseWithSpacedSuperscripts = '';
+    if (hasSuperscript) {
+      const baseNumberMatch = articleNumber.match(/^(\d+)/);
+      const baseNumber = baseNumberMatch ? baseNumberMatch[1] : '';
+      if (baseNumber) {
+        const superscriptPart = articleNumber.substring(baseNumber.length);
+        let superscriptsAsDigits = superscriptPart;
+        for (const [superscript, digit] of Object.entries(superscriptMap)) {
+          superscriptsAsDigits = superscriptsAsDigits.replace(new RegExp(superscript, 'g'), digit);
+        }
+        if (superscriptsAsDigits) {
+          baseWithSpacedSuperscripts = `${baseNumber} ${superscriptsAsDigits}`;
+        }
+      }
+    }
+
     // All variants to try
     const searchVariants = [
-      normalizedArticleNumber,  // "943" (most common)
-      articleNumber,            // "94³" (original with Unicode)
-      spacedArticleNumber,      // "94 3" (with space)
-    ].filter((v, i, arr) => arr.indexOf(v) === i); // Remove duplicates
+      normalizedArticleNumber,  // "6733" (all digits, most common for single superscript)
+      articleNumber,            // "67³³" (original with Unicode)
+      spacedArticleNumber,      // "67 3 3" (each superscript separate)
+      baseWithSpacedSuperscripts, // "67 33" (base + space + superscripts, common for multi-digit)
+    ].filter((v, i, arr) => v && arr.indexOf(v) === i); // Remove duplicates and empty strings
 
     console.log(`[ELI] Article number variants to search: ${searchVariants.map(v => `"${v}"`).join(', ')}`);
 
@@ -689,6 +711,73 @@ export class ELITools {
           if (text.length > 10) {
             console.log(`[ELI] Extracted article text: ${text.substring(0, 150)}...`);
             return text;
+          }
+        }
+      }
+    }
+
+    // If article with superscript not found, try searching for paragraph (§)
+    // Example: User asks for "1015¹" but it's actually "Art. 1015 § 1¹"
+    if (hasSuperscript) {
+      console.log(`[ELI] Article not found, trying to find as paragraph...`);
+
+      // Extract base article number (remove superscript)
+      const baseNumber = normalizedArticleNumber.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, '').match(/^\d+/)?.[0];
+
+      if (baseNumber) {
+        // Extract the superscript part (e.g., "1015¹" -> "1")
+        const superscriptPart = normalizedArticleNumber.replace(baseNumber, '');
+
+        console.log(`[ELI] Searching for Art. ${baseNumber} § ${superscriptPart}...`);
+
+        // Try to find the base article first
+        const baseArticlePattern = new RegExp(
+          `Art\\.?\\s*${this.escapeRegex(baseNumber)}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`,
+          'i'
+        );
+
+        const baseMatch = normalizedText.match(baseArticlePattern);
+        if (baseMatch) {
+          let articleText = baseMatch[1] || baseMatch[0];
+
+          // Now search for the specific paragraph within this article
+          // Generate paragraph variants: "§ 1¹", "§ 11", "§ 1 1"
+          const paragraphVariants = searchVariants.map(v => v.replace(baseNumber, '')).filter(Boolean);
+
+          console.log(`[ELI] Paragraph variants to search: ${paragraphVariants.map(v => `"§ ${v}"`).join(', ')}`);
+
+          for (const pVar of paragraphVariants) {
+            // Try different paragraph patterns
+            const paragraphPatterns = [
+              new RegExp(`§\\s*${this.escapeRegex(pVar)}(?!\\d)\\.`, 'i'),           // "§ 1¹."
+              new RegExp(`§\\s*${this.escapeRegex(pVar.trim())}(?!\\d)\\.`, 'i'),    // "§ 1¹." (trimmed)
+              new RegExp(`§\\s*${this.escapeRegex(pVar)}(?!\\d)\\s`, 'i'),           // "§ 1¹ "
+            ];
+
+            for (const pPattern of paragraphPatterns) {
+              if (pPattern.test(articleText)) {
+                console.log(`[ELI] ✓ Found paragraph § ${pVar} in Art. ${baseNumber}`);
+
+                // Clean up the article text
+                articleText = articleText.trim();
+                articleText = articleText.replace(/[ \t]+/g, ' ');
+                articleText = articleText.replace(/\n\s*\n\s*\n+/g, '\n\n');
+                articleText = this.cleanPolishText(articleText);
+
+                // Ensure we include the article header
+                if (!articleText.match(/^Art/i)) {
+                  articleText = `Art. ${baseNumber}. ${articleText}`;
+                }
+
+                // Remove text that looks like it's from the next article
+                articleText = articleText.replace(/\s+Art\.\s*\d+.*$/i, '');
+
+                console.log(`[ELI] Extracted article with paragraph: ${articleText.substring(0, 150)}...`);
+
+                // Add a note that this is a paragraph, not a separate article
+                return `Uwaga: Art. ${articleNumber} nie istnieje jako osobny artykuł. Poniżej znajduje się Art. ${baseNumber}, który zawiera § ${pVar}:\n\n${articleText}`;
+              }
+            }
           }
         }
       }
