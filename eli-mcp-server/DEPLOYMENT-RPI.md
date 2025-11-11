@@ -190,7 +190,7 @@ After=network.target
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/najakiejpodstawie/eli-mcp-server
-ExecStart=/home/pi/.deno/bin/deno run --allow-net --allow-env src/server.ts
+ExecStart=/home/pi/.deno/bin/deno run --allow-net --allow-env --allow-read=/tmp --allow-write=/tmp src/server.ts
 Restart=always
 RestartSec=10
 

@@ -1,7 +1,7 @@
 {
   "tasks": {
-    "start": "deno run --allow-net --allow-env src/server.ts",
-    "dev": "deno run --allow-net --allow-env --watch src/server.ts",
+    "start": "deno run --allow-net --allow-env --allow-read=/tmp --allow-write=/tmp src/server.ts",
+    "dev": "deno run --allow-net --allow-env --allow-read=/tmp --allow-write=/tmp --watch src/server.ts",
     "test": "deno run --allow-net src/test-eli.ts"
   },
   "compilerOptions": {
