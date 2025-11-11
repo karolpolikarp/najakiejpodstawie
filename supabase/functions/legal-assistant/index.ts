@@ -38,64 +38,47 @@ interface LegalContextResult {
 }
 
 /**
- * Detects if the question is about Polish law
- * Simple heuristic: contains legal keywords or asks about legal matters
+ * Detects if the question requires FORCED tool calling
+ * Only force tools for specific article requests, not general questions
+ * This allows the model to answer basic questions from its knowledge
  */
-function isLegalQuestion(message: string): boolean {
+function requiresForcedToolCalling(message: string): boolean {
   const lowerMessage = message.toLowerCase();
 
-  // Legal keywords
-  const legalKeywords = [
-    'prawo', 'przepis', 'ustawa', 'kodeks', 'artykuł', 'art', 'art.', 'paragraf',
-    'spółka', 'umowa', 'kontrakt', 'sąd', 'wyrok', 'pozew', 'powództwo',
-    'odpowiedzialność', 'odszkodowanie', 'kara', 'mandat', 'termin',
-    'windykacja', 'długi', 'kredyt', 'pożyczka', 'spadek', 'testament',
-    'rozwód', 'alimenty', 'opieka', 'pracownik', 'pracodawca', 'urlop',
-    'zwolnienie', 'wypowiedzenie', 'podatek', 'vat', 'zus', 'us',
-    'decyzja administracyjna', 'urząd', 'organ', 'postępowanie',
-    'odwołanie', 'skarga', 'wniosek', 'zgłoszenie', 'rejestr',
-    'kc', 'kk', 'kp', 'kpa', 'kpc', 'ksh', 'ordynacja', 'konstytucja',
-    'zaskarżyć', 'zaskarżenie', 'napaść', 'pobicie', 'odrzucenie'
+  // Pattern 1: Specific article requests - "art 10 kp", "artykuł 92a prd", "treść art 118 kc"
+  const specificArticlePatterns = [
+    /art(?:ykuł|ykul)?\.?\s*\d+[a-z]?\s+(?:kc|kp|kk|kpk|kpc|kro|kpa|prd|upk|uodip|kw|konstytucj)/i,
+    /(?:treść|tekst|brzmienie)\s+art/i,
+    /pokaż\s+(?:mi\s+)?art/i,
+    /znajdź\s+art/i,
   ];
 
-  // Legal question patterns
-  const legalPatterns = [
-    /czy (mogę|muszę|powinienem)/,
-    /jakie (prawa|obowiązki|przepisy)/,
-    /w jakim terminie/,
-    /jak (zaskarżyć|odwołać|zgłosić)/,
-    /co grozi/,
-    /czy jest legalne/,
-    /czy mogę (pozwać|odwołać)/,
-    /czym (różni|się różni)/
-  ];
-
-  // Check keywords
-  const matchedKeywords = legalKeywords.filter(keyword =>
-    lowerMessage.includes(keyword)
-  );
-
-  // Check patterns
-  const matchedPatterns = legalPatterns.filter(pattern =>
+  // Check if user asks for specific article
+  const asksForSpecificArticle = specificArticlePatterns.some(pattern =>
     pattern.test(lowerMessage)
   );
 
-  const isLegal = matchedKeywords.length > 0 || matchedPatterns.length > 0;
+  // Pattern 2: Questions that clearly need tool lookup
+  const needsToolPatterns = [
+    /(?:dokładna|aktualna|oficjalna)\s+treść/i,
+    /co mówi\s+(?:art|artykuł|przepis)/i,
+    /jak brzmi\s+(?:art|artykuł)/i,
+  ];
+
+  const needsToolLookup = needsToolPatterns.some(pattern =>
+    pattern.test(lowerMessage)
+  );
+
+  const shouldForce = asksForSpecificArticle || needsToolLookup;
 
   // Debug logging
-  if (isLegal) {
-    console.log('[ARCH] isLegalQuestion = TRUE');
-    if (matchedKeywords.length > 0) {
-      console.log(`[ARCH] - Matched keywords: ${matchedKeywords.join(', ')}`);
-    }
-    if (matchedPatterns.length > 0) {
-      console.log(`[ARCH] - Matched patterns: ${matchedPatterns.length} pattern(s)`);
-    }
+  if (shouldForce) {
+    console.log('[ARCH] requiresForcedToolCalling = TRUE - specific article request detected');
   } else {
-    console.log('[ARCH] isLegalQuestion = FALSE - no keywords or patterns matched');
+    console.log('[ARCH] requiresForcedToolCalling = FALSE - general question, allow model knowledge');
   }
 
-  return isLegal;
+  return shouldForce;
 }
 
 /**
@@ -262,21 +245,16 @@ FORBIDDEN phrases (you will NEVER use these):
 - "Pytanie dotyczy...", "Rozumiem, że pytasz...", "Pozwól, że wyjaśnię..."
 - ANY phrase indicating you're "about to search" or "checking something"
 
-✅ CORRECT PATTERN:
+✅ CORRECT PATTERN FOR TOOL CALLS:
 1. Need legal data? → Call tool IMMEDIATELY (zero text before)
 2. Get tool results → Write response STARTING with **PODSTAWA PRAWNA:**
 3. NO introductions, NO thinking text, NO explanations of what you're doing
 
-EXAMPLES OF CORRECT BEHAVIOR:
-User: "Windykacja długu - jakie mam prawa?"
-You: [calls search_legal_info("windykacja długu")] ← NO TEXT, JUST TOOL CALL
-[gets results]
-You: **PODSTAWA PRAWNA:** ← START HERE DIRECTLY
-
-User: "art 118 kc"
-You: [calls get_article("kc", "118")] ← NO TEXT, JUST TOOL CALL
-[gets results]
-You: **PODSTAWA PRAWNA:** ← START HERE DIRECTLY
+✅ CORRECT PATTERN FOR DIRECT ANSWERS (BASIC QUESTIONS):
+1. If you know the answer from your training → Answer DIRECTLY
+2. NO tool calls for basic, well-known facts
+3. Example: "Ile punktów karnych?" → Answer: "24 punkty (20 dla początkujących)"
+4. Example: "Kiedy przedawnienie?" → Answer: "Podstawowy termin to 6 lat (art. 118 KC)"
 </critical_instruction>
 
 <role>
@@ -285,7 +263,7 @@ You are a legal assistant for Polish law. You explain legal provisions in genera
 - DO explain laws in general context
 - If question is NOT about law → respond: "Odpowiadam tylko na pytania prawne."
 
-CRITICAL RULES FOR USING FETCHED ARTICLE CONTENT:
+CRITICAL RULES FOR WHEN TO USE TOOLS VS YOUR KNOWLEDGE:
 
 1. If you see the section "📜 AKTUALNE TREŚCI ARTYKUŁÓW" below with article content:
    - You MUST use the provided article text EXACTLY as written
@@ -294,18 +272,22 @@ CRITICAL RULES FOR USING FETCHED ARTICLE CONTENT:
    - Quote it word-for-word in the TREŚĆ PRZEPISU section
    - Go directly to answering - NO "thinking" text, NO "I will fetch..."
 
-2. If article content is NOT provided BUT you know the answer from your knowledge:
-   - Answer DIRECTLY with the information you have
-   - DO NOT say "Pobiorę dokładny tekst" or "Sprawdzę w bazie"
-   - DO NOT call tools unnecessarily
-   - Provide accurate general information immediately
-   - Example: "Art. 13 ustawy o dostępie do informacji publicznej - termin odpowiedzi to 14 dni"
-   - Include disclaimer to verify current text on ISAP if needed
+2. For BASIC, WELL-KNOWN legal questions (even if no article provided):
+   - Answer DIRECTLY from your knowledge
+   - DO NOT call tools for simple facts
+   - Examples:
+     * "Ile punktów karnych można mieć?" → Direct answer: "24 punkty (20 dla początkujących)"
+     * "Kiedy przedawnienie roszczenia?" → Direct answer: "6 lat (art. 118 KC)"
+     * "Ile urlopu się należy?" → Direct answer: "20 lub 26 dni (art. 154 KP)"
+   - Provide concise, accurate answer immediately
+   - Mention relevant article numbers if you know them
+   - Include disclaimer to verify on ISAP if needed
 
 3. Only call tools when:
-   - You don't know the answer at all
-   - User explicitly asks for precise article text ("pokaż dokładną treść art. 13")
-   - Answer requires exact current wording verification
+   - User explicitly asks for precise article text ("pokaż treść art. 92a", "art 118 kc")
+   - Question about obscure/specific provision you're uncertain about
+   - User wants exact current wording verification
+   - You don't know the answer from your training
 </role>
 
 <tools>
@@ -494,10 +476,10 @@ PYTANIE UŻYTKOWNIKA:
 ${message}`;
     }
 
-    // LAYER 2: Force tool calling for legal questions
-    // This prevents LLM from generating "thinking text" before tool calls
-    const forcedToolChoice = isLegalQuestion(message);
-    console.log(`[ARCH] Legal question detected: ${forcedToolChoice} - ${forcedToolChoice ? 'FORCING' : 'allowing'} tool_choice`);
+    // LAYER 2: Force tool calling ONLY for specific article requests
+    // General questions allow the model to use its knowledge
+    const forcedToolChoice = requiresForcedToolCalling(message);
+    console.log(`[ARCH] Forced tool calling: ${forcedToolChoice} - ${forcedToolChoice ? 'FORCING tool_choice' : 'allowing model knowledge'}`);
 
     // Tool Calling enabled: Add tools to API call
     console.log('[TOOL] Tool Calling enabled - LLM can dynamically fetch articles');
