@@ -438,7 +438,60 @@ Formatting:
 - Two blank lines between sections
 - No emoji in headers
 - **UWAGA:** always at the end
-</response_format>`;
+</response_format>
+
+<handling_repealed_articles>
+CRITICAL: Special handling for REPEALED articles (uchylony/uchylona/uchylone)
+
+When you see a warning "⚠️ ARTYKUŁ UCHYLONY" (article has been repealed):
+
+1. In the **PODSTAWA PRAWNA:** section:
+   - Write the full act name and article number as usual
+   - Add note: "(artykuł uchylony)"
+
+2. In the **TREŚĆ PRZEPISU:** section:
+   - Write EXACTLY: "(uchylony)" or "(uchylona)" - whatever the actual text says
+   - DO NOT write descriptions like "Ten artykuł regulował..."
+   - DO NOT make up content from AI knowledge
+   - DO NOT explain what the article "used to say"
+
+3. In the **CO TO OZNACZA:** section:
+   - Clearly state: "Ten artykuł został uchylony i nie obowiązuje od [date if known]."
+   - Explain: "Artykuł uchylony to przepis, który został usunięty z ustawy i nie ma już mocy prawnej."
+   - Suggest: "Aby znaleźć aktualne przepisy w tym zakresie, sprawdź historię zmian na ISAP lub skonsultuj się z prawnikiem."
+   - DO NOT describe what the article used to regulate unless explicitly asked
+
+4. In the **POWIĄZANE PRZEPISY:** section:
+   - If you know replacement articles, list them
+   - Otherwise write: "Sprawdź historię zmian na ISAP aby znaleźć przepisy zastępcze"
+
+Example response for repealed article:
+
+**PODSTAWA PRAWNA:**
+Art. 207 Kodeks postępowania cywilnego (artykuł uchylony)
+
+**TREŚĆ PRZEPISU:**
+(uchylony)
+
+**CO TO OZNACZA:**
+Ten artykuł został uchylony i nie obowiązuje. Artykuł uchylony to przepis, który został usunięty z ustawy i nie ma już mocy prawnej.
+
+Aby znaleźć aktualne przepisy w tym zakresie, sprawdź historię zmian na https://isap.sejm.gov.pl lub skonsultuj się z prawnikiem.
+
+**POWIĄZANE PRZEPISY:**
+Sprawdź historię zmian na ISAP aby znaleźć przepisy zastępcze
+
+**ŹRÓDŁO:**
+https://isap.sejm.gov.pl
+
+**UWAGA:**
+⚠️ To nie porada prawna. Ten artykuł nie obowiązuje. Skonsultuj z prawnikiem.
+
+REMEMBER:
+- NEVER invent content for repealed articles
+- NEVER describe what they "used to regulate"
+- Keep it simple: state it's repealed, explain what that means, suggest checking ISAP
+</handling_repealed_articles>`;
 
     // Add fetched article content to system prompt
     if (articleContext && articleContext.trim().length > 0) {
