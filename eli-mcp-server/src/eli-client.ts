@@ -159,11 +159,8 @@ export class ELIClient {
       }
     });
 
-<<<<<<< HEAD
     logger.debug(`Searching: ${url.toString()}`);
 
-=======
->>>>>>> origin/main
     const response = await this.fetchWithRetry(url.toString(), {
       headers: {
         'Accept': 'application/json',
@@ -209,10 +206,7 @@ export class ELIClient {
     if (cached) return cached;
 
     const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}`;
-<<<<<<< HEAD
     logger.debug(`Getting act: ${url}`);
-=======
->>>>>>> origin/main
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -258,10 +252,7 @@ export class ELIClient {
 
     const url =
       `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.html`;
-<<<<<<< HEAD
     logger.debug(`Getting HTML: ${url}`);
-=======
->>>>>>> origin/main
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -307,10 +298,7 @@ export class ELIClient {
 
     const url =
       `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/text.pdf`;
-<<<<<<< HEAD
     logger.debug(`Getting PDF: ${url}`);
-=======
->>>>>>> origin/main
 
     const response = await this.fetchWithRetry(url, {
       headers: {
@@ -351,10 +339,7 @@ export class ELIClient {
     position: number,
   ): Promise<any> {
     const url = `${ELI_API_BASE}/acts/${publisher}/${year}/${position}/struct`;
-<<<<<<< HEAD
     logger.debug(`Getting structure: ${url}`);
-=======
->>>>>>> origin/main
 
     const response = await this.fetchWithRetry(url, {
       headers: {

@@ -533,6 +533,7 @@ export class ELITools {
     try {
       const pdf = await pdfjsLib.getDocument({
         data: new Uint8Array(pdfBuffer),
+        verbosity: 0, // Suppress warnings about missing fonts
       }).promise;
       let fullText = '';
 
