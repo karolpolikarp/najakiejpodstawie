@@ -206,6 +206,7 @@ export class ELITools {
       let articleText: string | null = null;
 
       // Try to get PDF first (preferred for newer consolidated texts)
+      let pdfText: string | null = null;
       try {
         logger.debug(`Attempting to fetch PDF for ${actInfo.title}...`);
         const pdfBuffer = await this.client.getActPDF(
@@ -213,7 +214,7 @@ export class ELITools {
           actInfo.year,
           actInfo.position,
         );
-        const pdfText = await this.extractTextFromPDF(pdfBuffer);
+        pdfText = await this.extractTextFromPDF(pdfBuffer);
         articleText = this.extractArticleFromPDF(pdfText, articleNumber);
       } catch (pdfError) {
         logger.debug(`PDF extraction failed, falling back to HTML: ${pdfError.message}`);
@@ -230,6 +231,17 @@ export class ELITools {
         }
       }
 
+      // Check if article might be repealed if not found
+      let errorMessage = `Artykuł ${articleNumber} nie został znaleziony w tekście.`;
+      if (!articleText && pdfText) {
+        const isRepealed = this.checkIfArticleRepealed(pdfText, articleNumber);
+        if (isRepealed) {
+          errorMessage = `Artykuł ${articleNumber} został uchylony i nie obowiązuje.\n\nSprawdź historię zmian na https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU${actInfo.year}${String(actInfo.position).padStart(7, '0')} aby znaleźć przepisy, które mogły go zastąpić.`;
+        } else {
+          errorMessage = `Artykuł ${articleNumber} nie został znaleziony w tekście.\n\nMożliwe przyczyny:\n• Artykuł mógł zostać uchylony (sprawdź historię zmian)\n• Numer artykułu może być nieprawidłowy\n• Artykuł może być oznaczony w inny sposób (np. jako paragraf)\n\nSprawdź dokładny numer artykułu na https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU${actInfo.year}${String(actInfo.position).padStart(7, '0')}`;
+        }
+      }
+
       return {
         success: true,
         act: {
@@ -239,7 +251,7 @@ export class ELITools {
         },
         article: {
           number: articleNumber,
-          text: articleText || `Artykuł ${articleNumber} nie został znaleziony w tekście.`,
+          text: articleText || errorMessage,
         },
         isapLink: `https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU${actInfo.year}${String(actInfo.position).padStart(7, '0')}`,
       };
@@ -607,6 +619,32 @@ export class ELITools {
   }
 
   /**
+   * Check if article appears to be repealed (uchylony) in the PDF text
+   */
+  private checkIfArticleRepealed(pdfText: string, articleNumber: string): boolean {
+    // Normalize the text
+    const normalizedText = pdfText.replace(/[ \t]+/g, ' ');
+
+    // Search for patterns like:
+    // "Art. 18. (uchylony)"
+    // "Art. 18 uchylony"
+    // "Artykuł 18 (uchylony)"
+    const repealedPatterns = [
+      new RegExp(`Art\\.?\\s*${this.escapeRegex(articleNumber)}(?!\\d)[^\\n]{0,50}\\buchylon[yaąe]\\b`, 'i'),
+      new RegExp(`Artykuł\\s+${this.escapeRegex(articleNumber)}(?!\\d)[^\\n]{0,50}\\buchylon[yaąe]\\b`, 'i'),
+    ];
+
+    for (const pattern of repealedPatterns) {
+      if (pattern.test(normalizedText)) {
+        logger.debug(`Article ${articleNumber} appears to be repealed (uchylony)`);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Extract specific article from PDF text
    */
   private extractArticleFromPDF(pdfText: string, articleNumber: string): string | null {
@@ -851,15 +889,20 @@ export class ELITools {
     }
 
     // Debug: Show context around each variant
+    // IMPORTANT: Only show matches that look like actual article references,
+    // not random numbers in dates or other contexts
     logger.debug(`✗ Article not found with any variant`);
     for (const variant of searchVariants) {
-      const contextRegex = new RegExp(`.{0,200}\\b${this.escapeRegex(variant)}(?!\\d).{0,200}`, 'g');
+      // Require "Art." or "Artykuł" before the number to avoid false positives from dates
+      const contextRegex = new RegExp(`.{0,200}(?:Art\\.?|Artykuł)\\s*${this.escapeRegex(variant)}(?!\\d).{0,200}`, 'gi');
       const contexts = normalizedText.match(contextRegex);
       if (contexts) {
-        logger.debug(`Found ${contexts.length} occurrences of variant "${variant}":`);
+        logger.debug(`Found ${contexts.length} article references with variant "${variant}":`);
         contexts.slice(0, 2).forEach((ctx, i) => {
           logger.debug(`  Context ${i + 1}: ...${ctx}...`);
         });
+      } else {
+        logger.debug(`No article references found for variant "${variant}"`);
       }
     }
 
