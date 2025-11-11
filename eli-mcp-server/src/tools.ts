@@ -888,12 +888,39 @@ export class ELITools {
       }
     }
 
-    // Debug: Show context around each variant
-    // IMPORTANT: Only show matches that look like actual article references,
-    // not random numbers in dates or other contexts
-    logger.debug(`✗ Article not found with any variant`);
+    // Debug: Show context around each variant to help diagnose issues
+    logger.debug(`✗ Article ${articleNumber} not found with any variant`);
+
+    // Look for potential article numbering in the document to help diagnose
+    const articleNumbersInText = normalizedText.match(/(?:^|\n)\s*Art\.?\s*(\d+)/gim);
+    if (articleNumbersInText) {
+      const articleNumbers = articleNumbersInText
+        .map(m => m.match(/\d+/)?.[0])
+        .filter(Boolean)
+        .map(n => parseInt(n))
+        .filter((n, i, arr) => arr.indexOf(n) === i) // unique
+        .sort((a, b) => a - b);
+
+      logger.debug(`Articles found in document: ${articleNumbers.slice(0, 20).join(', ')}${articleNumbers.length > 20 ? '...' : ''}`);
+
+      // Check if requested article is out of range
+      const requestedNum = parseInt(articleNumber.replace(/[^\d]/g, ''));
+      if (!isNaN(requestedNum) && articleNumbers.length > 0) {
+        const minArticle = Math.min(...articleNumbers);
+        const maxArticle = Math.max(...articleNumbers);
+
+        if (requestedNum < minArticle || requestedNum > maxArticle) {
+          logger.debug(`Article ${requestedNum} is outside document range (${minArticle}-${maxArticle})`);
+        } else {
+          logger.debug(`Article ${requestedNum} is within document range but may not exist (possible gap in numbering)`);
+        }
+      }
+    }
+
+    // Still show contexts for debugging
+    // IMPORTANT: Require "Art." or "Artykuł" before the number to avoid false positives from dates
     for (const variant of searchVariants) {
-      // Require "Art." or "Artykuł" before the number to avoid false positives from dates
+      // Fixed regex: requires "Art." or "Artykuł" prefix to avoid matching dates like "18 lipca 2002"
       const contextRegex = new RegExp(`.{0,200}(?:Art\\.?|Artykuł)\\s*${this.escapeRegex(variant)}(?!\\d).{0,200}`, 'gi');
       const contexts = normalizedText.match(contextRegex);
       if (contexts) {
