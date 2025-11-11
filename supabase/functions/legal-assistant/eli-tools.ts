@@ -10,10 +10,11 @@ const ELI_MCP_URL = Deno.env.get('ELI_MCP_URL') || 'http://localhost:8080';
 const ELI_API_KEY = Deno.env.get('ELI_API_KEY') || 'dev-secret-key';
 
 // Configuration for MCP calls
-// QW6: Reduced timeout and retries to prevent long waits when MCP is unavailable
-// 3s timeout × 2 retries = max ~7s wait (instead of 10s × 3 = 30s+)
-const MCP_TIMEOUT_MS = 3000; // 3 seconds (reduced from 10s)
-const MCP_MAX_RETRIES = 2; // 2 retries (reduced from 3)
+// QW6 REVERTED: Increased timeout to handle large PDF processing (e.g., VAT law with 912k chars)
+// Real-world testing shows PDF extraction can take 4-5 seconds for large acts
+// 15s timeout × 3 retries = max ~50s wait (with exponential backoff)
+const MCP_TIMEOUT_MS = 15000; // 15 seconds (increased from 3s to handle large PDFs)
+const MCP_MAX_RETRIES = 3; // 3 retries (increased from 2 for better reliability)
 const MCP_BASE_DELAY_MS = 1000;
 // QW4: Moved MAX_ARTICLES to function parameters to support premium limits
 
