@@ -10,11 +10,15 @@ const ELI_MCP_URL = Deno.env.get('ELI_MCP_URL') || 'http://localhost:8080';
 const ELI_API_KEY = Deno.env.get('ELI_API_KEY') || 'dev-secret-key';
 
 // Configuration for MCP calls
-// QW6 REVERTED: Increased timeout to handle large PDF processing (e.g., VAT law with 912k chars)
-// Real-world testing shows PDF extraction can take 4-5 seconds for large acts
-// 15s timeout × 3 retries = max ~50s wait (with exponential backoff)
-const MCP_TIMEOUT_MS = 15000; // 15 seconds (increased from 3s to handle large PDFs)
-const MCP_MAX_RETRIES = 3; // 3 retries (increased from 2 for better reliability)
+// QW7: Adaptive timeout strategy - fast for most cases, longer for retries
+// - First attempt: 6s (covers 90% of acts)
+// - Retry 1: 10s (medium-sized PDFs)
+// - Retry 2: 15s (large PDFs like VAT law with 912k chars)
+// This prevents long waits before response streaming starts, while still handling large acts
+const MCP_TIMEOUT_FIRST = 6000;  // 6 seconds for first attempt
+const MCP_TIMEOUT_RETRY = 10000; // 10 seconds for retry 1
+const MCP_TIMEOUT_FINAL = 15000; // 15 seconds for final retry
+const MCP_MAX_RETRIES = 3;
 const MCP_BASE_DELAY_MS = 1000;
 // QW4: Moved MAX_ARTICLES to function parameters to support premium limits
 
@@ -311,7 +315,7 @@ function validateArticleContent(data: ArticleResponse): { valid: boolean; reason
 }
 
 /**
- * Fetch article content from ELI MCP server with retry logic
+ * Fetch article content from ELI MCP server with retry logic and adaptive timeout
  */
 export async function fetchArticle(
   actCode: string,
@@ -323,8 +327,17 @@ export async function fetchArticle(
 
   eliLogger.debug(`Fetching article: ${actCode} ${articleNumber}`);
 
+  let attemptNumber = 0;
+
   return await withRetry(
     async () => {
+      // QW7: Adaptive timeout based on attempt number
+      const timeoutMs = attemptNumber === 0 ? MCP_TIMEOUT_FIRST
+                      : attemptNumber === 1 ? MCP_TIMEOUT_RETRY
+                      : MCP_TIMEOUT_FINAL;
+
+      eliLogger.debug(`Attempt ${attemptNumber + 1}: Using timeout ${timeoutMs}ms`);
+
       const response = await fetchWithTimeout(
         `${ELI_MCP_URL}/tools/get_article`,
         {
@@ -338,7 +351,7 @@ export async function fetchArticle(
             articleNumber,
           }),
         },
-        MCP_TIMEOUT_MS
+        timeoutMs
       );
 
       if (!response.ok) {
@@ -374,6 +387,9 @@ export async function fetchArticle(
       shouldRetry: (error) => {
         // Retry on network errors and server errors
         return isRetryableError(error) || error.message.includes('Invalid content');
+      },
+      onRetry: (attempt) => {
+        attemptNumber = attempt;
       },
     }
   ).catch((error) => {
