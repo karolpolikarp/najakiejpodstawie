@@ -45,6 +45,7 @@ export interface ArticleResponse {
   };
   isapLink?: string;
   error?: string;
+  isRepealed?: boolean;  // Flag indicating the article has been repealed (uchylony)
 }
 
 // REMOVED: Static list of supported acts
@@ -276,7 +277,7 @@ async function fetchWithTimeout(
 /**
  * Validate article response content
  */
-function validateArticleContent(data: ArticleResponse): { valid: boolean; reason?: string } {
+function validateArticleContent(data: ArticleResponse): { valid: boolean; reason?: string; isRepealed?: boolean } {
   if (!data.success) {
     return { valid: false, reason: 'API returned success=false' };
   }
@@ -286,6 +287,25 @@ function validateArticleContent(data: ArticleResponse): { valid: boolean; reason
   }
 
   const text = data.article.text.trim();
+
+  // CRITICAL: Check if article is repealed (uchylony) BEFORE other validations
+  // This allows us to handle repealed articles specially instead of showing generic errors
+  const repealedPatterns = [
+    /\(uchylon[yaąe]\)/i,           // (uchylony), (uchylona), (uchylone)
+    /^\s*uchylon[yaąe]\s*$/i,       // Just "uchylony" as the only text
+    /\buchylon[yaąe]\b/i,            // Word "uchylony" anywhere
+  ];
+
+  const isRepealed = repealedPatterns.some(pattern => pattern.test(text));
+
+  if (isRepealed) {
+    eliLogger.debug(`Article marked as repealed: ${data.article.number}`);
+    return {
+      valid: false,
+      reason: 'Article has been repealed (uchylony)',
+      isRepealed: true
+    };
+  }
 
   // Check minimum length (should be at least 20 characters for a valid article)
   // QW2: Reduced from 50 to 20 chars to allow shorter valid articles
@@ -360,6 +380,20 @@ export async function fetchArticle(
       // Validate the response content
       const validation = validateArticleContent(data);
       if (!validation.valid) {
+        // Special handling for repealed articles - don't retry, return immediately with flag
+        if (validation.isRepealed) {
+          eliLogger.warn(`Article is repealed: ${actCode} ${articleNumber}`);
+          return {
+            success: false,
+            error: validation.reason || 'Article has been repealed',
+            isRepealed: true,
+            act: data.act,
+            article: data.article,
+            isapLink: data.isapLink,
+          };
+        }
+
+        // For other validation errors, throw to trigger retry
         eliLogger.warn(`Invalid article content: ${validation.reason}`);
         throw new Error(`Invalid content: ${validation.reason}`);
       }
@@ -523,13 +557,35 @@ export async function enrichWithArticles(
   const warnings: string[] = [];
 
   if (failureCount > 0) {
-    // Separate unsupported acts from other failures
+    // PRIORITY 1: Separate repealed articles (most critical to communicate)
+    const repealedArticles = articles.filter(a => !a.success && a.isRepealed);
+
+    // PRIORITY 2: Separate unsupported acts from other failures
     const unsupportedArticles = articles.filter(
-      a => !a.success && a.error?.includes('nie jest obecnie wspierana')
+      a => !a.success && !a.isRepealed && a.error?.includes('nie jest obecnie wspierana')
     );
+
+    // PRIORITY 3: Other failures
     const otherFailedArticles = articles.filter(
-      a => !a.success && !a.error?.includes('nie jest obecnie wspierana')
+      a => !a.success && !a.isRepealed && !a.error?.includes('nie jest obecnie wspierana')
     );
+
+    // Warning for repealed articles - HIGHEST PRIORITY
+    if (repealedArticles.length > 0) {
+      const repealedRefs = limitedReferences
+        .filter((_, i) => {
+          const article = articles[i];
+          return !article.success && article.isRepealed;
+        })
+        .map(ref => `${ref.actCode.toUpperCase()} art. ${ref.articleNumber}`)
+        .join(', ');
+
+      warnings.push(
+        `⚠️ **ARTYKUŁ UCHYLONY**: ${repealedRefs}\n\n` +
+        `${repealedArticles.length === 1 ? 'Ten artykuł został uchylony' : 'Te artykuły zostały uchylone'} i nie ${repealedArticles.length === 1 ? 'obowiązuje' : 'obowiązują'}. ` +
+        `Sprawdź historię zmian na https://isap.sejm.gov.pl aby znaleźć przepisy, które mogły go zastąpić.`
+      );
+    }
 
     // Warning for unsupported acts
     if (unsupportedArticles.length > 0) {
