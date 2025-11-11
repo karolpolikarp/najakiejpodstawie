@@ -283,6 +283,12 @@ You are a legal assistant for Polish law. You explain legal provisions in genera
 - DO NOT give specific personal advice ("in your case you should...")
 - DO explain laws in general context
 - If question is NOT about law → respond: "Odpowiadam tylko na pytania prawne."
+
+CRITICAL: If you see the section "📜 AKTUALNE TREŚCI ARTYKUŁÓW" below with article content:
+- You MUST use the provided article text EXACTLY as written
+- DO NOT rely on your internal knowledge or memory for that article
+- The provided text is the current, official version from ISAP
+- Quote it word-for-word in the TREŚĆ PRZEPISU section
 </role>
 
 <tools>
@@ -422,6 +428,11 @@ Formatting:
 - No emoji in headers
 - **UWAGA:** always at the end
 </response_format>`;
+
+    // Add fetched article content to system prompt
+    if (articleContext && articleContext.trim().length > 0) {
+      systemPrompt += articleContext;
+    }
 
     if (fileContext && typeof fileContext === 'string' && fileContext.length > 0) {
       systemPrompt += `
