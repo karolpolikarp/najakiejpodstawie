@@ -10,8 +10,10 @@ const ELI_MCP_URL = Deno.env.get('ELI_MCP_URL') || 'http://localhost:8080';
 const ELI_API_KEY = Deno.env.get('ELI_API_KEY') || 'dev-secret-key';
 
 // Configuration for MCP calls
-const MCP_TIMEOUT_MS = 10000; // 10 seconds
-const MCP_MAX_RETRIES = 3;
+// QW6: Reduced timeout and retries to prevent long waits when MCP is unavailable
+// 3s timeout × 2 retries = max ~7s wait (instead of 10s × 3 = 30s+)
+const MCP_TIMEOUT_MS = 3000; // 3 seconds (reduced from 10s)
+const MCP_MAX_RETRIES = 2; // 2 retries (reduced from 3)
 const MCP_BASE_DELAY_MS = 1000;
 // QW4: Moved MAX_ARTICLES to function parameters to support premium limits
 
