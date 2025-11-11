@@ -53,7 +53,8 @@ function isLegalQuestion(message: string): boolean {
     'zwolnienie', 'wypowiedzenie', 'podatek', 'vat', 'zus', 'us',
     'decyzja administracyjna', 'urząd', 'organ', 'postępowanie',
     'odwołanie', 'skarga', 'wniosek', 'zgłoszenie', 'rejestr',
-    'kc', 'kk', 'kp', 'kpa', 'kpc', 'ksh', 'ordynacja', 'konstytucja'
+    'kc', 'kk', 'kp', 'kpa', 'kpc', 'ksh', 'ordynacja', 'konstytucja',
+    'zaskarżyć', 'zaskarżenie', 'napaść', 'pobicie', 'odrzucenie'
   ];
 
   // Legal question patterns
@@ -64,20 +65,36 @@ function isLegalQuestion(message: string): boolean {
     /jak (zaskarżyć|odwołać|zgłosić)/,
     /co grozi/,
     /czy jest legalne/,
-    /czy mogę (pozwać|odwołać)/
+    /czy mogę (pozwać|odwołać)/,
+    /czym (różni|się różni)/
   ];
 
   // Check keywords
-  const hasLegalKeyword = legalKeywords.some(keyword =>
+  const matchedKeywords = legalKeywords.filter(keyword =>
     lowerMessage.includes(keyword)
   );
 
   // Check patterns
-  const matchesLegalPattern = legalPatterns.some(pattern =>
+  const matchedPatterns = legalPatterns.filter(pattern =>
     pattern.test(lowerMessage)
   );
 
-  return hasLegalKeyword || matchesLegalPattern;
+  const isLegal = matchedKeywords.length > 0 || matchedPatterns.length > 0;
+
+  // Debug logging
+  if (isLegal) {
+    console.log('[ARCH] isLegalQuestion = TRUE');
+    if (matchedKeywords.length > 0) {
+      console.log(`[ARCH] - Matched keywords: ${matchedKeywords.join(', ')}`);
+    }
+    if (matchedPatterns.length > 0) {
+      console.log(`[ARCH] - Matched patterns: ${matchedPatterns.length} pattern(s)`);
+    }
+  } else {
+    console.log('[ARCH] isLegalQuestion = FALSE - no keywords or patterns matched');
+  }
+
+  return isLegal;
 }
 
 /**
@@ -441,6 +458,32 @@ ${message}`;
     let currentToolInputJson = '';
     let hasSeenToolUse = false; // Track if we've seen any tool_use blocks
 
+    // LAYER 3+: Real-time thinking text filter
+    // Buffer to accumulate text before sending to client
+    let textBuffer = '';
+    const thinkingPhrases = [
+      'Wyszukam dla Ciebie',
+      'Pozwól, że sprawdzę',
+      'Pozwól że sprawdzę',
+      'Spróbuję wyszukać',
+      'Zajrzę do przepisów',
+      'Pozwól, że znajdę',
+      'Pozwól że znajdę',
+      'Szukam informacji',
+      'Pozwól, że wyszukam',
+      'Pozwól że wyszukam',
+      'Pozwól, że wyjaśnię',
+      'Pozwól że wyjaśnię',
+      'Rozumiem, że pytasz',
+      'Pytanie dotyczy'
+    ];
+
+    // Helper: Check if text contains thinking phrases
+    const containsThinkingText = (text: string): boolean => {
+      const lower = text.toLowerCase();
+      return thinkingPhrases.some(phrase => lower.includes(phrase.toLowerCase()));
+    };
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -709,11 +752,18 @@ ${message}`;
                     }
 
                     // Normal text delta
-                    // IMPORTANT: Do NOT stream first response - only accumulate it
-                    // We only stream the final response after tool calling is complete
+                    // CRITICAL: Do NOT stream ANYTHING before tool calls
+                    // Accumulate but check for thinking text
                     if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                      fullResponse += parsed.delta.text;
-                      // NOTE: We do NOT stream here - streaming happens only in second response
+                      const deltaText = parsed.delta.text;
+                      fullResponse += deltaText;
+
+                      // LAYER 3++: Real-time detection - log if thinking text appears
+                      if (containsThinkingText(deltaText)) {
+                        console.log('[ARCH] ⚠️  Detected thinking text in stream:', deltaText.substring(0, 50));
+                      }
+
+                      // DO NOT STREAM - we wait for tool calling or end of response
                     }
                   } catch (e) {
                     // Ignore parse errors
