@@ -350,9 +350,18 @@ export class ActResolver {
           score += 30;
         }
 
-      // 4. Status "jednolity" = consolidated text (preferred)
-      if (act.status?.toLowerCase().includes('jednolity')) {
-        score += 50;
+      // 4. Status preference - CRITICAL: Differentiate between act types
+      const statusLower = act.status?.toLowerCase() || '';
+      if (statusLower.includes('posiada tekst jednolity')) {
+        // This is the CURRENT consolidated text we want!
+        score += 100;
+      } else if (statusLower.includes('objęty tekstem jednolitym')) {
+        // This is an AMENDING act (ustawa zmieniająca) - we don't want it
+        // It doesn't contain the full text, only changes
+        score -= 30;
+      } else if (statusLower.includes('jednolity')) {
+        // Generic "jednolity" - give small bonus
+        score += 20;
       }
 
       // 5. Type "jednolity"

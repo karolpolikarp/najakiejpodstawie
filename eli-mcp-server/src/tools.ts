@@ -121,6 +121,12 @@ export class ELITools {
     'minimalne wynagrodzenie': { publisher: 'DU', year: 2023, position: 1667, title: 'Ustawa o minimalnym wynagrodzeniu za pracę' },
     'minimalna płaca': { publisher: 'DU', year: 2023, position: 1667, title: 'Ustawa o minimalnym wynagrodzeniu za pracę' },
 
+    // ==================== PRAWO ADMINISTRACYJNE I DOSTĘP DO INFORMACJI (4) ====================
+    'dostęp do informacji publicznej': { publisher: 'DU', year: 2022, position: 902, title: 'Ustawa o dostępie do informacji publicznej' },
+    'ustawa o dostępie do informacji publicznej': { publisher: 'DU', year: 2022, position: 902, title: 'Ustawa o dostępie do informacji publicznej' },
+    'informacja publiczna': { publisher: 'DU', year: 2022, position: 902, title: 'Ustawa o dostępie do informacji publicznej' },
+    'uodip': { publisher: 'DU', year: 2022, position: 902, title: 'Ustawa o dostępie do informacji publicznej' },
+
     // ==================== INNE WAŻNE (6) ====================
     'prawo telekomunikacyjne': { publisher: 'DU', year: 2023, position: 1800, title: 'Prawo telekomunikacyjne' },
     'prawo prasowe': { publisher: 'DU', year: 2023, position: 838, title: 'Prawo prasowe' },
