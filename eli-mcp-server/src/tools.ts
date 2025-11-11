@@ -201,7 +201,6 @@ export class ELITools {
 
       // Try to get PDF first (preferred for newer consolidated texts)
       try {
-        console.log(`[ELI] Attempting to fetch PDF for ${actInfo.title}...`);
         const pdfBuffer = await this.client.getActPDF(
           actInfo.publisher,
           actInfo.year,
@@ -210,8 +209,6 @@ export class ELITools {
         const pdfText = await this.extractTextFromPDF(pdfBuffer);
         articleText = this.extractArticleFromPDF(pdfText, articleNumber);
       } catch (pdfError) {
-        console.log(`[ELI] PDF extraction failed, falling back to HTML: ${pdfError.message}`);
-
         // Fallback to HTML if PDF fails
         try {
           const html = await this.client.getActHTML(
@@ -263,29 +260,21 @@ export class ELITools {
     const { articleNumber, actCode } = params;
     const actCodeLower = actCode.toLowerCase().trim();
 
-    console.log(`[ELI] getArticle: "${actCode}" art ${articleNumber}`);
-
     // LEVEL 1: Check hardcoded mapping (fast path - 16 popular acts)
     const hardcodedActInfo = this.ACT_CODES[actCodeLower];
     if (hardcodedActInfo) {
-      console.log(`[ELI] ✓ Found in hardcoded map: ${hardcodedActInfo.title}`);
       return this.fetchArticleFromAct(hardcodedActInfo, articleNumber);
     }
 
     // LEVEL 2: Use ActResolver (dynamic search + cache)
-    console.log(`[ELI] Not in hardcoded map, trying dynamic resolution...`);
-
     try {
       const resolved = await this.actResolver.resolveAct(actCode);
 
       if (resolved) {
-        console.log(`[ELI] ✓ Dynamically resolved: ${resolved.title} (source: ${resolved.source})`);
         return this.fetchArticleFromAct(resolved, articleNumber);
       }
 
       // LEVEL 3: Not found - suggest similar acts
-      console.log(`[ELI] ✗ Could not resolve act: "${actCode}"`);
-
       const similarActs = await this.actResolver.findSimilarActs(actCode, 5);
 
       let errorMessage = `Nie znaleziono ustawy: "${actCode}".`;
@@ -305,7 +294,7 @@ export class ELITools {
         error: errorMessage,
       };
     } catch (error) {
-      console.error(`[ELI] Error in dynamic resolution: ${error.message}`);
+      console.error(`[ELI] Error: ${error.message}`);
       return {
         success: false,
         error: `Błąd podczas wyszukiwania ustawy: ${error.message}`,
@@ -656,68 +645,108 @@ export class ELITools {
       baseWithSpacedSuperscripts, // "67 33" (base + space + superscripts, common for multi-digit)
     ].filter((v, i, arr) => v && arr.indexOf(v) === i); // Remove duplicates and empty strings
 
-    console.log(`[ELI] Article number variants to search: ${searchVariants.map(v => `"${v}"`).join(', ')}`);
-
     // Normalize the text - remove excessive whitespace but keep structure
     let normalizedText = pdfText.replace(/[ \t]+/g, ' ');
 
     // Fix common PDF extraction errors BEFORE searching for articles
     // Problem: PDF extraction sometimes breaks "Art." into "A rt.", "Ar t.", "Art ." etc.
-    // This prevents pattern matching from working
-    const beforeNormalization = normalizedText;
-    normalizedText = normalizedText.replace(/A\s+rt\s*\.\s*/gi, 'Art. ');  // "A rt." -> "Art. "
-    normalizedText = normalizedText.replace(/Ar\s+t\s*\.\s*/gi, 'Art. ');  // "Ar t." -> "Art. "
-    normalizedText = normalizedText.replace(/Art\s+\.\s*/gi, 'Art. ');     // "Art ." -> "Art. "
-
-    // Debug: show if normalization made any changes
-    if (beforeNormalization !== normalizedText) {
-      console.log(`[ELI] ✓ Fixed PDF extraction errors in article markers`);
-    }
+    normalizedText = normalizedText.replace(/A\s+rt\s*\.\s*/gi, 'Art. ');
+    normalizedText = normalizedText.replace(/Ar\s+t\s*\.\s*/gi, 'Art. ');
+    normalizedText = normalizedText.replace(/Art\s+\.\s*/gi, 'Art. ');
 
     // Try each variant until we find a match
     for (const variant of searchVariants) {
-      console.log(`[ELI] Trying variant "${variant}" in PDF text (${normalizedText.length} chars)`);
+      // Find ALL matches for this variant
+      const candidateMatches: Array<{ text: string; score: number; index: number }> = [];
 
       // Common patterns for Polish legal acts
-      // CRITICAL: Use (?!\d) negative lookahead to prevent matching "10" in "100", "101", etc.
-      // NOTE: Increased limit to 50000 chars to handle long articles (especially transitional provisions)
-      // NOTE: Removed lazy quantifier (?) to make regex greedy - captures full article until next Art.
       const patterns = [
-        // Pattern 1: "Art. 10." or "Art.10." with optional spaces (requires dot after number)
-        new RegExp(`Art\\.?\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
-        // Pattern 2: "Artykuł 10" (full word) with word boundary
-        new RegExp(`Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)[\\s\\S]{10,50000}(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
-        // Pattern 3: More lenient - just "Art" followed by number
-        new RegExp(`Art\\s*\\.?\\s*${this.escapeRegex(variant)}(?!\\d)\\s*\\.?\\s+([\\s\\S]{10,50000})(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
-        // Pattern 4: Try with paragraph marker §
-        new RegExp(`Art\\.?\\s*${this.escapeRegex(variant)}(?!\\d)\\.?\\s*§?\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+        // Pattern 1: "Art. 10." with dot and space (most reliable for main article text)
+        new RegExp(`Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\s*Art\\.\\s*\\d|$)`, 'gi'),
+        // Pattern 2: "Art 10." without first dot
+        new RegExp(`Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'gi'),
+        // Pattern 3: "Artykuł 10" (full word)
+        new RegExp(`Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\s*(?:Artykuł|Art\\.)\\s*\\d|$)`, 'gi'),
       ];
 
-      for (let i = 0; i < patterns.length; i++) {
-        const pattern = patterns[i];
-        const match = normalizedText.match(pattern);
-        if (match) {
-          console.log(`[ELI] ✓ Found article using variant "${variant}" with pattern ${i + 1}`);
-          let text = match[1] || match[0];
-          text = text.trim();
+      for (const pattern of patterns) {
+        let match: RegExpExecArray | null;
+        while ((match = pattern.exec(normalizedText)) !== null) {
+          const capturedText = match[1] || match[0];
+          const matchIndex = match.index;
 
-          // Clean up extra whitespace while preserving paragraph structure
+          // Calculate quality score for this match
+          let score = 0;
+
+          // Check if this looks like a REAL article (not just a reference)
+          const firstLine = capturedText.substring(0, 200);
+
+          // STRONG negative signals - this is likely a reference, not the actual article
+          if (firstLine.match(/ustawy z dnia \d{1,2} \w+ \d{4}/)) {
+            score -= 1000; // References to other acts
+          }
+          if (firstLine.match(/kodeks[au]? (wykroczeń|karny|cywilny|pracy)/i)) {
+            score -= 500; // Explicit reference to another code
+          }
+          if (capturedText.length < 100) {
+            score -= 200; // Too short to be a real article
+          }
+
+          // Positive signals - this looks like actual article content
+          if (capturedText.length > 300) score += 100;
+          if (capturedText.length > 1000) score += 100;
+
+          // Check if article starts at beginning of line (good sign)
+          const textBefore = normalizedText.substring(Math.max(0, matchIndex - 50), matchIndex);
+          if (textBefore.match(/\n\s*$/)) {
+            score += 50; // Starts at beginning of line
+          }
+
+          // Contains paragraph markers (§) - indicates structured article
+          if (capturedText.match(/§\s*\d+/)) {
+            score += 50;
+          }
+
+          // Contains numbered points (1., 2., 3.) - good sign
+          if (capturedText.match(/\n\s*\d+\.\s+/)) {
+            score += 30;
+          }
+
+          candidateMatches.push({
+            text: capturedText.trim(),
+            score,
+            index: matchIndex
+          });
+        }
+      }
+
+      // If we found candidates, pick the best one
+      if (candidateMatches.length > 0) {
+        // Sort by score (highest first)
+        candidateMatches.sort((a, b) => b.score - a.score);
+
+        const best = candidateMatches[0];
+
+        // Only accept if score is positive (good match)
+        if (best.score > 0) {
+          let text = best.text;
+
+          // Clean up extra whitespace
           text = text.replace(/[ \t]+/g, ' ');
-          text = text.replace(/\n\s*\n\s*\n+/g, '\n\n'); // Max 2 newlines
+          text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
 
-          // Apply Polish text cleaning to the article
+          // Apply Polish text cleaning
           text = this.cleanPolishText(text);
 
-          // Ensure we include the article header if not already there
+          // Ensure article header
           if (!text.match(/^Art/i)) {
             text = `Art. ${articleNumber}. ${text}`;
           }
 
-          // Remove text that looks like it's from the next article
+          // Remove any trailing content from next article
           text = text.replace(/\s+Art\.\s*\d+.*$/i, '');
 
-          if (text.length > 10) {
-            console.log(`[ELI] Extracted article text: ${text.substring(0, 150)}...`);
+          if (text.length > 50) {
             return text;
           }
         }
