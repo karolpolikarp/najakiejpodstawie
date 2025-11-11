@@ -15,7 +15,7 @@ import { Header } from '@/components/Header';
 import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CONSTANTS } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,22 +26,37 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-const PREMIUM_PASSWORD = 'power';
-const PREMIUM_KEY = 'premium_unlocked';
+import { useChatAPI } from '@/hooks/useChatAPI';
+import { usePremium } from '@/hooks/usePremium';
+import { useFeedback } from '@/hooks/useFeedback';
 
 const Index = () => {
-  const { messages, isLoading, addMessage, updateMessageContent, removeMessage, clearMessages, setLoading, attachedFile, setAttachedFile, setMessageFeedback } = useChatStore();
+  // Store hooks
+  const { messages, isLoading, removeMessage, clearMessages, attachedFile, setAttachedFile } = useChatStore();
+
+  // Custom hooks
+  const { sendMessage } = useChatAPI();
+  const {
+    usePremiumModel,
+    isPremiumUnlocked,
+    showPremiumDialog,
+    premiumPassword,
+    setPremiumPassword,
+    handlePremiumToggle,
+    handlePremiumPassword,
+    closePremiumDialog,
+  } = usePremium();
+  const { submitFeedback } = useFeedback();
+
+  // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesStartRef = useRef<HTMLDivElement>(null);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const shouldAutoScrollRef = useRef(true);
+
+  // Local state
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [usePremiumModel, setUsePremiumModel] = useState(false);
-  const [showPremiumDialog, setShowPremiumDialog] = useState(false);
-  const [premiumPassword, setPremiumPassword] = useState('');
-  const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
-  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const shouldAutoScrollRef = useRef(true); // Śledzi czy powinniśmy auto-scrollować
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -49,42 +64,6 @@ const Index = () => {
 
   const scrollToTop = () => {
     messagesStartRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Sprawdź czy premium jest odblokowany przy starcie
-  useEffect(() => {
-    const unlocked = localStorage.getItem(PREMIUM_KEY) === 'true';
-    setIsPremiumUnlocked(unlocked);
-  }, []);
-
-  // Handler dla zmiany checkboxa premium
-  const handlePremiumToggle = (checked: boolean) => {
-    if (checked) {
-      // Jeśli zaznaczamy i nie mamy odblokowanego - pokaż dialog
-      if (!isPremiumUnlocked) {
-        setShowPremiumDialog(true);
-        return;
-      }
-      setUsePremiumModel(true);
-    } else {
-      setUsePremiumModel(false);
-    }
-  };
-
-  // Handler dla wprowadzenia hasła premium
-  const handlePremiumPassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (premiumPassword === PREMIUM_PASSWORD) {
-      localStorage.setItem(PREMIUM_KEY, 'true');
-      setIsPremiumUnlocked(true);
-      setUsePremiumModel(true);
-      setShowPremiumDialog(false);
-      setPremiumPassword('');
-      toast.success('Tryb Premium odblokowany!');
-    } else {
-      toast.error('Nieprawidłowe hasło');
-      setPremiumPassword('');
-    }
   };
 
   // Sprawdź czy użytkownik jest blisko dołu strony
@@ -153,300 +132,23 @@ const Index = () => {
   }, [attachedFile, messages, isLoading, setAttachedFile]);
 
   const handleRetry = (content: string) => {
-    // Ponów wysłanie pytania
-    handleSendMessage(content);
+    // Retry sending question
+    sendMessage(content, usePremiumModel);
   };
 
   const handleRemoveMessage = (messageId: string) => {
-    // Usuń wiadomość błędu oraz poprzedzające ją pytanie użytkownika
+    // Remove error message and preceding user question
     const messageIndex = messages.findIndex((msg) => msg.id === messageId);
     if (messageIndex > 0 && messages[messageIndex - 1].role === 'user') {
-      // Usuń poprzednie pytanie użytkownika
+      // Remove previous user question
       removeMessage(messages[messageIndex - 1].id);
     }
-    // Usuń wiadomość AI
+    // Remove AI message
     removeMessage(messageId);
   };
 
-  const handleFeedback = async (messageId: string, feedbackType: 'positive' | 'negative' | null, retryCount = 0) => {
-    // Update local state immediately for better UX
-    setMessageFeedback(messageId, feedbackType);
-
-    // Send feedback to backend (updates user_questions table)
-    console.log('=== FEEDBACK DEBUG ===');
-    console.log('messageId:', messageId);
-    console.log('feedbackType:', feedbackType);
-    console.log('retryCount:', retryCount);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('submit-feedback', {
-        body: {
-          messageId,
-          feedbackType,
-        },
-      });
-
-      if (error) {
-        console.error('Error submitting feedback:', error);
-        console.error('Error details:', error);
-        toast.error('Nie udało się zapisać feedbacku');
-      } else {
-        console.log('Feedback response:', data);
-
-        // Check if the response indicates the question is still being saved
-        if (data?.pending === true && retryCount < 3) {
-          const delay = 2000 * (retryCount + 1); // 2s, 4s, 6s
-          console.log(`Question not yet saved, retrying in ${delay}ms...`);
-
-          setTimeout(() => {
-            handleFeedback(messageId, feedbackType, retryCount + 1);
-          }, delay);
-        } else if (data?.pending === true) {
-          console.warn('Question still not saved after 3 retries');
-          toast.info('Feedback zostanie zapisany wkrótce');
-        } else {
-          console.log('Feedback saved successfully:', data);
-        }
-      }
-    } catch (error) {
-      console.error('Error submitting feedback:', error);
-      toast.error('Błąd podczas zapisywania feedbacku');
-    }
-  };
-
-  const handleSendMessage = async (content: string, retryCount = 0) => {
-    // Only add user message on first attempt
-    if (retryCount === 0) {
-      addMessage({ role: 'user', content });
-      setLoading(true);
-    }
-
-    // DEBUG LOGS
-    console.log('=== SENDING MESSAGE DEBUG ===');
-    console.log('Message:', content);
-    console.log('AttachedFile exists:', !!attachedFile);
-    console.log('AttachedFile name:', attachedFile?.name);
-    console.log('AttachedFile content length:', attachedFile?.content?.length || 0);
-    if (attachedFile?.content) {
-      console.log('AttachedFile content preview (first 200 chars):', attachedFile.content.substring(0, 200));
-    }
-
-    // Create a temporary message ID for streaming updates
-    const tempMessageId = crypto.randomUUID();
-    let streamedContent = '';
-
-    try {
-      // Get Supabase URL and auth token
-      const { data: { session } } = await supabase.auth.getSession();
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      // Debug logs
-      console.log('=== AUTH DEBUG ===');
-      console.log('Supabase URL:', supabaseUrl);
-      console.log('Has anonKey:', !!anonKey);
-      console.log('Has session:', !!session);
-      console.log('Session access token:', session?.access_token ? 'exists' : 'none');
-
-      // Make a direct fetch call to support streaming
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'apikey': anonKey,
-      };
-
-      // If user is authenticated, use their token for Authorization
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      } else {
-        // Otherwise use anon key for Authorization too
-        headers['Authorization'] = `Bearer ${anonKey}`;
-      }
-
-      // Get or create session ID
-      let sessionId = localStorage.getItem('session_id');
-      if (!sessionId) {
-        sessionId = crypto.randomUUID();
-        localStorage.setItem('session_id', sessionId);
-      }
-
-      console.log('=== SENDING TO BACKEND ===');
-      console.log('tempMessageId:', tempMessageId);
-      console.log('sessionId:', sessionId);
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/legal-assistant`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          message: content,
-          fileContext: attachedFile?.content || null,
-          sessionId: sessionId,
-          messageId: tempMessageId,
-          usePremiumModel: usePremiumModel,
-        }),
-      });
-
-      if (!response.ok) {
-        let errorData: { error?: string; details?: string } = {};
-
-        try {
-          errorData = await response.json();
-        } catch (e) {
-          console.error('Failed to parse error response:', e);
-        }
-
-        const errorMessage = errorData.error || `HTTP error ${response.status}`;
-
-        // Log detailed error for debugging
-        console.error('API Error Details:', {
-          status: response.status,
-          message: errorMessage,
-          details: errorData.details,
-        });
-
-        // Rate limit error - retry with exponential backoff
-        if (response.status === 429 && retryCount < CONSTANTS.API.MAX_RETRIES) {
-          const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
-          toast.info(`Zbyt wiele zapytań. Ponawiam za ${delay / 1000}s...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return handleSendMessage(content, retryCount + 1);
-        }
-
-        // Bad request - show specific error message
-        if (response.status === 400) {
-          toast.error(errorMessage);
-          throw new Error(errorMessage);
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      // Check if response is streaming (text/event-stream) or regular JSON
-      const contentType = response.headers.get('content-type');
-      console.log('Response content-type:', contentType);
-
-      if (contentType?.includes('text/event-stream')) {
-        // Handle streaming response
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-
-        if (!reader) {
-          throw new Error('Response body is not readable');
-        }
-
-        // Add an empty assistant message that we'll update
-        // Use tempMessageId so it matches the messageId saved in the database
-        addMessage({ role: 'assistant', content: '', id: tempMessageId });
-
-        // Use tempMessageId directly since we passed it to addMessage
-        const assistantMessageId = tempMessageId;
-
-        let buffer = '';
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-              console.log('Stream ended. Total content length:', streamedContent.length);
-              break;
-            }
-
-            // Decode chunk
-            const chunk = decoder.decode(value, { stream: true });
-            buffer += chunk;
-
-            // Process complete SSE messages
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || ''; // Keep incomplete line in buffer
-
-            for (const line of lines) {
-              if (!line.trim()) continue; // Skip empty lines
-
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6); // Remove 'data: ' prefix
-
-                // Skip [DONE] marker
-                if (data === '[DONE]') continue;
-
-                try {
-                  const parsed = JSON.parse(data);
-                  console.log('Parsed SSE event:', parsed.type);
-
-                  // Anthropic streaming format
-                  if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                    streamedContent += parsed.delta.text;
-                    updateMessageContent(assistantMessageId, streamedContent);
-                  } else if (parsed.type === 'content_block_start') {
-                    console.log('Content block started');
-                  } else if (parsed.type === 'message_start') {
-                    console.log('Message started');
-                  }
-                } catch (e) {
-                  // Ignore JSON parse errors for malformed chunks
-                  console.warn('Failed to parse SSE data:', data, e);
-                }
-              }
-            }
-          }
-        } catch (streamError) {
-          console.error('Stream reading error:', streamError);
-          throw streamError;
-        }
-
-        // If no content was streamed, throw an error
-        if (!streamedContent) {
-          console.error('No content was streamed!');
-          throw new Error('Brak odpowiedzi');
-        }
-
-      } else {
-        // Handle regular JSON response (fallback)
-        console.log('Using fallback JSON response');
-        const data = await response.json();
-
-        if (data?.message) {
-          addMessage({ role: 'assistant', content: data.message, id: tempMessageId });
-        } else {
-          throw new Error('Brak odpowiedzi');
-        }
-      }
-
-    } catch (error: any) {
-      console.error('Error calling legal assistant:', error);
-      const errorMessage = error.message?.toLowerCase() || '';
-
-      // Specific error messages based on error type
-      if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
-        toast.error('Przekroczono limit zapytań. Spróbuj za chwilę.');
-      } else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('failed to fetch')) {
-        // Retry on network error
-        if (retryCount < CONSTANTS.API.MAX_RETRIES) {
-          const delay = CONSTANTS.API.RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
-          toast.info(`Błąd połączenia. Ponawiam za ${delay / 1000}s...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return handleSendMessage(content, retryCount + 1);
-        }
-        toast.error('Błąd połączenia. Sprawdź połączenie z internetem.');
-      } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
-        toast.error('Błąd autoryzacji. Skontaktuj się z administratorem.');
-      } else if (errorMessage.includes('400') || errorMessage.includes('bad request')) {
-        // Already shown via toast in the error handling above
-        toast.error(error.message || 'Nieprawidłowe zapytanie');
-      } else if (errorMessage.includes('500') || errorMessage.includes('internal server')) {
-        toast.error('Błąd serwera. Spróbuj ponownie za chwilę.');
-      } else if (errorMessage.includes('timeout')) {
-        toast.error('Przekroczono limit czasu. Spróbuj ponownie.');
-      } else {
-        toast.error('Nie udało się przetworzyć pytania');
-      }
-
-      addMessage({
-        role: 'assistant',
-        content: 'Niestety coś poszło nie tak. Spróbuj zadać pytanie ponownie lub sformułuj je inaczej.',
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleSendMessage = (content: string) => {
+    sendMessage(content, usePremiumModel);
   };
 
   const handleClearChat = () => {
@@ -490,7 +192,7 @@ const Index = () => {
           window.location.href = '/';
         }, 1000);
       } catch (error) {
-        console.error('Error deleting local data:', error);
+        logger.error('Error deleting local data:', error);
         toast.error('Wystąpił błąd podczas usuwania danych');
       }
     }
@@ -603,7 +305,7 @@ const Index = () => {
                       feedback={message.feedback}
                       onRetry={handleRetry}
                       onRemove={handleRemoveMessage}
-                      onFeedback={handleFeedback}
+                      onFeedback={submitFeedback}
                       onSendMessage={handleSendMessage}
                     />
                   );
@@ -729,7 +431,7 @@ const Index = () => {
       </AlertDialog>
 
       {/* Premium Password Dialog */}
-      <AlertDialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog}>
+      <AlertDialog open={showPremiumDialog} onOpenChange={closePremiumDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -742,7 +444,10 @@ const Index = () => {
               Sonnet 4.5 jest wolniejszy ale bardziej dokładny i szczegółowy.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <form onSubmit={handlePremiumPassword}>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handlePremiumPassword(premiumPassword);
+          }}>
             <div className="py-4">
               <Input
                 type="password"
@@ -754,7 +459,7 @@ const Index = () => {
               />
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setPremiumPassword('')}>
+              <AlertDialogCancel onClick={closePremiumDialog}>
                 Anuluj
               </AlertDialogCancel>
               <Button type="submit">
