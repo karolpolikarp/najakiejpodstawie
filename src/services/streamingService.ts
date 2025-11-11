@@ -141,6 +141,32 @@ export class StreamingService {
   }
 
   /**
+   * Simulate streaming for non-SSE responses by chunking the content
+   */
+  private async simulateStreaming(
+    content: string,
+    callbacks: StreamCallbacks
+  ): Promise<void> {
+    const chunkSize = 15; // characters per chunk
+    const delayMs = 20; // milliseconds between chunks
+
+    callbacks.onMessageStart();
+
+    let streamedContent = '';
+    for (let i = 0; i < content.length; i += chunkSize) {
+      streamedContent += content.slice(i, i + chunkSize);
+      callbacks.onContentDelta(streamedContent);
+
+      // Add small delay to simulate streaming
+      if (i + chunkSize < content.length) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+
+    callbacks.onMessageComplete(streamedContent);
+  }
+
+  /**
    * Process SSE stream
    */
   private async processStream(
@@ -150,14 +176,12 @@ export class StreamingService {
     const contentType = response.headers.get('content-type');
 
     if (!contentType?.includes('text/event-stream')) {
-      // Fallback: regular JSON response
-      logger.info('Using fallback JSON response');
+      // Fallback: regular JSON response with simulated streaming
+      logger.info('Using fallback JSON response with simulated streaming');
       const data = await response.json();
 
       if (data?.message) {
-        callbacks.onMessageStart();
-        callbacks.onContentDelta(data.message);
-        callbacks.onMessageComplete(data.message);
+        await this.simulateStreaming(data.message, callbacks);
       } else {
         throw new Error('Brak odpowiedzi');
       }

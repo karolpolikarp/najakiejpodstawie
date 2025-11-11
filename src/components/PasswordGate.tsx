@@ -75,7 +75,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
                   placeholder="Wprowadź hasło..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="text-center text-lg"
+                  className="text-lg"
                   autoFocus
                 />
               </div>
