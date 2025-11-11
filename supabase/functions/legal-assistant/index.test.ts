@@ -11,7 +11,7 @@ function detectLegalContext(message: string): string {
 
   // Słowa kluczowe dla różnych tematów prawnych
   const topicKeywords: Record<string, string[]> = {
-    'urlop': ['urlop', 'wakacje', 'urlop wypoczynkowy', 'urlop na żądanie', 'dni wolne', 'wyjazd'],
+    'urlop': ['urlop', 'wakacje', 'urlop wypoczynkowy', 'urlop na żądanie', 'dni wolne', 'wyjazd', 'macierzyński', 'urlop macierzyński', 'rodzicielski', 'urlop rodzicielski', 'wychowawczy', 'urlop wychowawczy'],
     'wynagrodzenie': ['wynagrodzenie', 'pensja', 'wypłata', 'płaca', 'zarobki', 'minimalna krajowa', 'wynagrodzenie minimalne'],
     'wypowiedzenie_umowy_pracy': ['wypowiedzenie umowy', 'zwolnienie z pracy', 'rozwiązanie umowy o pracę', 'okres wypowiedzenia'],
     'zwrot_towaru_online': ['zwrot towaru', 'odstąpienie od umowy', 'sklep internetowy', 'zakupy online', '14 dni', 'zwrot pieniędzy'],
@@ -61,6 +61,14 @@ Deno.test("detectLegalContext - wykrywa temat urlopu", () => {
   const result = detectLegalContext("Ile dni urlopu mi się należy?");
   assertStringIncludes(result, "Urlop wypoczynkowy");
   assertStringIncludes(result, "Art. 152");
+  assertStringIncludes(result, "Kodeks pracy");
+});
+
+Deno.test("detectLegalContext - wykrywa urlop macierzyński i rodzicielski", () => {
+  const result = detectLegalContext("Urlop macierzyński i rodzicielski - ile tygodni?");
+  assertStringIncludes(result, "Urlop wypoczynkowy");
+  assertStringIncludes(result, "Art. 180");
+  assertStringIncludes(result, "Art. 1821a");
   assertStringIncludes(result, "Kodeks pracy");
 });
 

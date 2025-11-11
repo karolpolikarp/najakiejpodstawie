@@ -34,7 +34,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   urlop: {
     name: "Urlop wypoczynkowy",
-    keywords: ["urlop", "urlopy", "wakacje", "urlop wypoczynkowy", "dni wolne", "urlop na żądanie"],
+    keywords: ["urlop", "urlopy", "wakacje", "urlop wypoczynkowy", "dni wolne", "urlop na żądanie", "macierzyński", "urlop macierzyński", "rodzicielski", "urlop rodzicielski", "wychowawczy", "urlop wychowawczy"],
     mcpArticles: [
       { actCode: 'kp', articleNumber: '152' },  // definicja urlopu
       { actCode: 'kp', articleNumber: '153' },  // nabywanie prawa
@@ -44,6 +44,8 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
       { actCode: 'kp', articleNumber: '167' },  // urlop na żądanie
       { actCode: 'kp', articleNumber: '1671' }, // urlop wychowawczy
       { actCode: 'kp', articleNumber: '174' },  // urlop macierzyński
+      { actCode: 'kp', articleNumber: '180' },  // wymiar urlopu macierzyńskiego
+      { actCode: 'kp', articleNumber: '1821a' }, // urlop rodzicielski
     ],
     mainActs: [
       "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
@@ -62,7 +64,9 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
       "Art. 163 - plan urlopów",
       "Art. 167 - udzielanie urlopu (w tym urlop na żądanie)",
       "Art. 1671 - urlop wychowawczy",
-      "Art. 174 - urlop macierzyński"
+      "Art. 174 - urlop macierzyński",
+      "Art. 180 - wymiar urlopu macierzyńskiego (20-37 tygodni)",
+      "Art. 1821a - urlop rodzicielski (32-41 tygodni)"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
   },
