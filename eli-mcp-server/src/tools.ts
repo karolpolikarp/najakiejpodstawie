@@ -218,7 +218,6 @@ export class ELITools {
         articleText = this.extractArticleFromPDF(pdfText, articleNumber);
       } catch (pdfError) {
         logger.debug(`PDF extraction failed, falling back to HTML: ${pdfError.message}`);
-
         // Fallback to HTML if PDF fails
         try {
           const html = await this.client.getActHTML(
@@ -684,46 +683,97 @@ export class ELITools {
     // Try each variant until we find a match
     for (const variant of searchVariants) {
       logger.debug(`Trying variant "${variant}" in PDF text (${normalizedText.length} chars)`);
+      // Find ALL matches for this variant
+      const candidateMatches: Array<{ text: string; score: number; index: number }> = [];
 
       // Common patterns for Polish legal acts
-      // CRITICAL: Use (?!\d) negative lookahead to prevent matching "10" in "100", "101", etc.
-      // NOTE: Increased limit to 50000 chars to handle long articles (especially transitional provisions)
-      // NOTE: Removed lazy quantifier (?) to make regex greedy - captures full article until next Art.
       const patterns = [
-        // Pattern 1: "Art. 10." or "Art.10." with optional spaces (requires dot after number)
-        new RegExp(`Art\\.?\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
-        // Pattern 2: "Artykuł 10" (full word) with word boundary
-        new RegExp(`Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)[\\s\\S]{10,50000}(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
-        // Pattern 3: More lenient - just "Art" followed by number
-        new RegExp(`Art\\s*\\.?\\s*${this.escapeRegex(variant)}(?!\\d)\\s*\\.?\\s+([\\s\\S]{10,50000})(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
-        // Pattern 4: Try with paragraph marker §
-        new RegExp(`Art\\.?\\s*${this.escapeRegex(variant)}(?!\\d)\\.?\\s*§?\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+        // Pattern 1: "Art. 10." with dot and space (most reliable for main article text)
+        new RegExp(`Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\s*Art\\.\\s*\\d|$)`, 'gi'),
+        // Pattern 2: "Art 10." without first dot
+        new RegExp(`Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'gi'),
+        // Pattern 3: "Artykuł 10" (full word)
+        new RegExp(`Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\s*(?:Artykuł|Art\\.)\\s*\\d|$)`, 'gi'),
       ];
 
-      for (let i = 0; i < patterns.length; i++) {
-        const pattern = patterns[i];
-        const match = normalizedText.match(pattern);
-        if (match) {
-          logger.debug(`✓ Found article using variant "${variant}" with pattern ${i + 1}`);
-          let text = match[1] || match[0];
-          text = text.trim();
+      for (const pattern of patterns) {
+        let match: RegExpExecArray | null;
+        while ((match = pattern.exec(normalizedText)) !== null) {
+          const capturedText = match[1] || match[0];
+          const matchIndex = match.index;
 
-          // Clean up extra whitespace while preserving paragraph structure
+          // Calculate quality score for this match
+          let score = 0;
+
+          // Check if this looks like a REAL article (not just a reference)
+          const firstLine = capturedText.substring(0, 200);
+
+          // STRONG negative signals - this is likely a reference, not the actual article
+          if (firstLine.match(/ustawy z dnia \d{1,2} \w+ \d{4}/)) {
+            score -= 1000; // References to other acts
+          }
+          if (firstLine.match(/kodeks[au]? (wykroczeń|karny|cywilny|pracy)/i)) {
+            score -= 500; // Explicit reference to another code
+          }
+          if (capturedText.length < 100) {
+            score -= 200; // Too short to be a real article
+          }
+
+          // Positive signals - this looks like actual article content
+          if (capturedText.length > 300) score += 100;
+          if (capturedText.length > 1000) score += 100;
+
+          // Check if article starts at beginning of line (good sign)
+          const textBefore = normalizedText.substring(Math.max(0, matchIndex - 50), matchIndex);
+          if (textBefore.match(/\n\s*$/)) {
+            score += 50; // Starts at beginning of line
+          }
+
+          // Contains paragraph markers (§) - indicates structured article
+          if (capturedText.match(/§\s*\d+/)) {
+            score += 50;
+          }
+
+          // Contains numbered points (1., 2., 3.) - good sign
+          if (capturedText.match(/\n\s*\d+\.\s+/)) {
+            score += 30;
+          }
+
+          candidateMatches.push({
+            text: capturedText.trim(),
+            score,
+            index: matchIndex
+          });
+        }
+      }
+
+      // If we found candidates, pick the best one
+      if (candidateMatches.length > 0) {
+        // Sort by score (highest first)
+        candidateMatches.sort((a, b) => b.score - a.score);
+
+        const best = candidateMatches[0];
+
+        // Only accept if score is positive (good match)
+        if (best.score > 0) {
+          let text = best.text;
+
+          // Clean up extra whitespace
           text = text.replace(/[ \t]+/g, ' ');
-          text = text.replace(/\n\s*\n\s*\n+/g, '\n\n'); // Max 2 newlines
+          text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
 
-          // Apply Polish text cleaning to the article
+          // Apply Polish text cleaning
           text = this.cleanPolishText(text);
 
-          // Ensure we include the article header if not already there
+          // Ensure article header
           if (!text.match(/^Art/i)) {
             text = `Art. ${articleNumber}. ${text}`;
           }
 
-          // Remove text that looks like it's from the next article
+          // Remove any trailing content from next article
           text = text.replace(/\s+Art\.\s*\d+.*$/i, '');
 
-          if (text.length > 10) {
+          if (text.length > 50) {
             logger.debug(`Extracted article text: ${text.substring(0, 150)}...`);
             return text;
           }
