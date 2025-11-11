@@ -49,10 +49,23 @@ const isLikelyArticleNumber = (text: string, numberMatch: string): boolean => {
 export const detectPII = (text: string): { detected: boolean; reasons: string[] } => {
   const reasons: string[] = [];
 
-  // PESEL (11 cyfr) - only if not part of article reference
+  // Telefon z +48 (sprawdzaj PRZED PESEL, żeby uniknąć false positive)
+  // Pattern: +48 followed by optional space and 9 digits
+  if (/\+48\s*\d{9}\b/.test(text)) {
+    reasons.push('Numer telefonu');
+  }
+
+  // PESEL (11 cyfr) - only if not part of article reference or +48 phone
   const peselMatches = text.match(/\b\d{11}\b/g);
   if (peselMatches) {
-    const hasPesel = peselMatches.some(match => !isLikelyArticleNumber(text, match));
+    const hasPesel = peselMatches.some(match => {
+      // Skip if this is part of +48 phone number (48 + 9 digits)
+      const index = text.indexOf(match);
+      if (index > 0 && text.substring(index - 3, index) === '+48') {
+        return false;
+      }
+      return !isLikelyArticleNumber(text, match);
+    });
     if (hasPesel) {
       reasons.push('PESEL (11 cyfr)');
     }
@@ -68,12 +81,13 @@ export const detectPII = (text: string): { detected: boolean; reasons: string[] 
     reasons.push('Adres email');
   }
 
-  // Telefon (9 cyfr lub format z +48) - only if not part of article reference
+  // Telefon (9 cyfr standalone) - only if not part of article reference
+  // Skip if already detected +48 format above
   const phonePattern = /\b\d{9}\b/g;
   const phoneMatches = text.match(phonePattern);
-  if (phoneMatches) {
+  if (phoneMatches && !reasons.includes('Numer telefonu')) {
     const hasPhone = phoneMatches.some(match => !isLikelyArticleNumber(text, match));
-    if (hasPhone || /\+48\s*\d{9}/.test(text)) {
+    if (hasPhone) {
       reasons.push('Numer telefonu');
     }
   }
