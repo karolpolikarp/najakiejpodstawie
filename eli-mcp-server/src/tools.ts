@@ -589,6 +589,21 @@ export class ELITools {
    * Extract specific article from PDF text
    */
   private extractArticleFromPDF(pdfText: string, articleNumber: string): string | null {
+    // Normalize article number: Convert superscript numbers to plain digits
+    // Examples: "67³" -> "673", "1015¹" -> "10151", "943²" -> "9432"
+    const superscriptMap: Record<string, string> = {
+      '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4',
+      '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9'
+    };
+
+    let normalizedArticleNumber = articleNumber;
+    for (const [superscript, digit] of Object.entries(superscriptMap)) {
+      normalizedArticleNumber = normalizedArticleNumber.replace(new RegExp(superscript, 'g'), digit);
+    }
+
+    const articleNumberForSearch = normalizedArticleNumber;
+    console.log(`[ELI] Normalized article number: "${articleNumber}" -> "${articleNumberForSearch}"`);
+
     // Normalize the text - remove excessive whitespace but keep structure
     let normalizedText = pdfText.replace(/[ \t]+/g, ' ');
 
@@ -605,22 +620,24 @@ export class ELITools {
       console.log(`[ELI] ✓ Fixed PDF extraction errors in article markers`);
     }
 
-    console.log(`[ELI] Looking for article ${articleNumber} in PDF text (${normalizedText.length} chars)`);
+    console.log(`[ELI] Looking for article ${articleNumberForSearch} in PDF text (${normalizedText.length} chars)`);
 
     // Try to find article in PDF text
     // Common patterns for Polish legal acts
     // CRITICAL: Use (?!\d) negative lookahead to prevent matching "10" in "100", "101", etc.
     // NOTE: Increased limit to 50000 chars to handle long articles (especially transitional provisions)
     // NOTE: Removed lazy quantifier (?) to make regex greedy - captures full article until next Art.
+    // NOTE: Using normalized article number (e.g., "673" for "67³", "10151" for "1015¹")
+    //       because PDFs don't preserve superscript formatting in extracted text
     const patterns = [
       // Pattern 1: "Art. 10." or "Art.10." with optional spaces (requires dot after number)
-      new RegExp(`Art\\.?\\s*${articleNumber}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+      new RegExp(`Art\\.?\\s*${articleNumberForSearch}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
       // Pattern 2: "Artykuł 10" (full word) with word boundary
-      new RegExp(`Artykuł\\s+${articleNumber}(?!\\d)[\\s\\S]{10,50000}(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
+      new RegExp(`Artykuł\\s+${articleNumberForSearch}(?!\\d)[\\s\\S]{10,50000}(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
       // Pattern 3: More lenient - just "Art" followed by number
-      new RegExp(`Art\\s*\\.?\\s*${articleNumber}(?!\\d)\\s*\\.?\\s+([\\s\\S]{10,50000})(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
+      new RegExp(`Art\\s*\\.?\\s*${articleNumberForSearch}(?!\\d)\\s*\\.?\\s+([\\s\\S]{10,50000})(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
       // Pattern 4: Try with paragraph marker §
-      new RegExp(`Art\\.?\\s*${articleNumber}(?!\\d)\\.?\\s*§?\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+      new RegExp(`Art\\.?\\s*${articleNumberForSearch}(?!\\d)\\.?\\s*§?\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
     ];
 
     for (let i = 0; i < patterns.length; i++) {
@@ -655,15 +672,15 @@ export class ELITools {
 
     // Debug: Show context around the article number
     // Use negative lookahead to match ONLY the exact article number (not "10" in "100")
-    const contextRegex = new RegExp(`.{0,200}\\b${articleNumber}(?!\\d).{0,200}`, 'g');
+    const contextRegex = new RegExp(`.{0,200}\\b${articleNumberForSearch}(?!\\d).{0,200}`, 'g');
     const contexts = normalizedText.match(contextRegex);
     if (contexts) {
-      console.log(`[ELI] Found ${contexts.length} occurrences of "${articleNumber}" in PDF:`);
+      console.log(`[ELI] Found ${contexts.length} occurrences of "${articleNumberForSearch}" in PDF:`);
       contexts.slice(0, 3).forEach((ctx, i) => {
         console.log(`[ELI] Context ${i + 1}: ...${ctx}...`);
       });
     } else {
-      console.log(`[ELI] Article number "${articleNumber}" not found in PDF at all`);
+      console.log(`[ELI] Article number "${articleNumberForSearch}" not found in PDF at all`);
     }
 
     return null;
