@@ -370,8 +370,9 @@ export class ELITools {
     // Common patterns: <art nr="533">, Art. 533., artykuł 533
     const patterns = [
       new RegExp(`<art[^>]*nr="${articleNumber}"[^>]*>([\\s\\S]*?)</art>`, 'i'),
-      new RegExp(`Art\\.\\s*${articleNumber}\\.([\\s\\S]{0,2000}?)(?=Art\\.|$)`, 'i'),
-      new RegExp(`Artykuł\\s*${articleNumber}\\.([\\s\\S]{0,2000}?)(?=Artykuł|$)`, 'i'),
+      // Require newline before next article to avoid matching in-text references
+      new RegExp(`Art\\.\\s*${articleNumber}\\.([\\s\\S]{0,2000}?)(?=\\n+\\s*Art\\.|$)`, 'i'),
+      new RegExp(`Artykuł\\s*${articleNumber}\\.([\\s\\S]{0,2000}?)(?=\\n+\\s*Artykuł|$)`, 'i'),
     ];
 
     for (const pattern of patterns) {
@@ -688,11 +689,12 @@ export class ELITools {
       // Common patterns for Polish legal acts
       const patterns = [
         // Pattern 1: "Art. 10." with dot and space (most reliable for main article text)
-        new RegExp(`Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\s*Art\\.\\s*\\d|$)`, 'gi'),
+        // Lookahead requires newline before next article to avoid matching in-text references like "art. 10 ustawy z dnia..."
+        new RegExp(`Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.\\s*\\d|$)`, 'gi'),
         // Pattern 2: "Art 10." without first dot
-        new RegExp(`Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\s*Art\\.?\\s*\\d|$)`, 'gi'),
+        new RegExp(`Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.?\\s*\\d|$)`, 'gi'),
         // Pattern 3: "Artykuł 10" (full word)
-        new RegExp(`Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\s*(?:Artykuł|Art\\.)\\s*\\d|$)`, 'gi'),
+        new RegExp(`Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*(?:Artykuł|Art\\.)\\s*\\d|$)`, 'gi'),
       ];
 
       for (const pattern of patterns) {
@@ -769,8 +771,8 @@ export class ELITools {
             text = `Art. ${articleNumber}. ${text}`;
           }
 
-          // Remove any trailing content from next article
-          text = text.replace(/\s+Art\.\s*\d+.*$/i, '');
+          // Remove any trailing content from next article (only if on new line, to avoid removing in-text references)
+          text = text.replace(/\n+\s*Art\.\s*\d+.*$/i, '');
 
           if (text.length > 50) {
             logger.debug(`Extracted article text: ${text.substring(0, 150)}...`);
@@ -796,7 +798,7 @@ export class ELITools {
 
         // Try to find the base article first
         const baseArticlePattern = new RegExp(
-          `Art\\.?\\s*${this.escapeRegex(baseNumber)}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`,
+          `Art\\.?\\s*${this.escapeRegex(baseNumber)}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\n+\\s*Art\\.?\\s*\\d|$)`,
           'i'
         );
 
@@ -833,8 +835,8 @@ export class ELITools {
                   articleText = `Art. ${baseNumber}. ${articleText}`;
                 }
 
-                // Remove text that looks like it's from the next article
-                articleText = articleText.replace(/\s+Art\.\s*\d+.*$/i, '');
+                // Remove text that looks like it's from the next article (only if on new line)
+                articleText = articleText.replace(/\n+\s*Art\.\s*\d+.*$/i, '');
 
                 logger.debug(`Extracted article with paragraph: ${articleText.substring(0, 150)}...`);
 
