@@ -27,10 +27,105 @@ export interface StreamCallbacks {
 export class StreamingService {
   private supabaseUrl: string;
   private anonKey: string;
+  private cacheEnabled: boolean;
 
   constructor() {
     this.supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     this.anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    // Enable cache by default, can be disabled via env variable
+    this.cacheEnabled = import.meta.env.VITE_ENABLE_SEMANTIC_CACHE !== 'false';
+  }
+
+  /**
+   * Check semantic cache for similar questions
+   */
+  private async checkSemanticCache(
+    question: string,
+    hasFileContext: boolean
+  ): Promise<{ found: boolean; cached?: any }> {
+    if (!this.cacheEnabled) {
+      logger.debug('Semantic cache disabled');
+      return { found: false };
+    }
+
+    // Don't use cache for questions with file context (they're too specific)
+    if (hasFileContext) {
+      logger.debug('Skipping cache check for question with file context');
+      return { found: false };
+    }
+
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(
+        `${this.supabaseUrl}/functions/v1/semantic-cache?action=check`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            question,
+            similarityThreshold: 0.85, // 85% similarity required
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        logger.warn('Cache check failed:', response.status);
+        return { found: false };
+      }
+
+      const result = await response.json();
+      if (result.found) {
+        logger.info('Cache hit! Similarity:', result.cached.similarity.toFixed(3));
+      } else {
+        logger.debug('Cache miss - no similar question found');
+      }
+
+      return result;
+    } catch (error) {
+      logger.warn('Cache check error (continuing without cache):', error);
+      return { found: false };
+    }
+  }
+
+  /**
+   * Save response to semantic cache
+   */
+  private async saveToSemanticCache(
+    question: string,
+    answer: string,
+    modelUsed: string,
+    hasFileContext: boolean,
+    sessionId: string
+  ): Promise<void> {
+    if (!this.cacheEnabled || hasFileContext) {
+      return;
+    }
+
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(
+        `${this.supabaseUrl}/functions/v1/semantic-cache?action=save`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            question,
+            answer,
+            modelUsed,
+            hasFileContext,
+            sessionId,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        logger.debug('Response saved to cache successfully');
+      } else {
+        logger.warn('Failed to save to cache:', response.status);
+      }
+    } catch (error) {
+      logger.warn('Cache save error (non-critical):', error);
+    }
   }
 
   /**
@@ -49,6 +144,22 @@ export class StreamingService {
       messageId,
       usePremiumModel,
     });
+
+    // Check semantic cache first
+    const cacheResult = await this.checkSemanticCache(message, !!fileContext);
+
+    if (cacheResult.found) {
+      // Use cached response
+      const cachedAnswer = cacheResult.cached.answer;
+      const cacheNotice = `🔄 *Odpowiedź z cache (podobieństwo: ${(cacheResult.cached.similarity * 100).toFixed(1)}%)*\n\n`;
+
+      callbacks.onMessageStart();
+      callbacks.onContentDelta(cacheNotice + cachedAnswer);
+      callbacks.onMessageComplete(cacheNotice + cachedAnswer);
+
+      logger.info('Served cached response, skipping API call');
+      return;
+    }
 
     // Get auth headers
     const headers = await this.getAuthHeaders();
@@ -86,7 +197,21 @@ export class StreamingService {
         }
 
         // Process streaming response
-        await this.processStream(response, callbacks);
+        const fullResponse = await this.processStream(response, callbacks);
+
+        // Save response to semantic cache (async, non-blocking)
+        const modelUsed = usePremiumModel
+          ? 'claude-sonnet-4-20250514'
+          : 'claude-haiku-4-5-20251001';
+        this.saveToSemanticCache(
+          message,
+          fullResponse,
+          modelUsed,
+          !!fileContext,
+          sessionId
+        ).catch((error) => {
+          logger.warn('Failed to save to cache (non-critical):', error);
+        });
       },
       {
         maxRetries: CONSTANTS.API.MAX_RETRIES,
@@ -146,7 +271,7 @@ export class StreamingService {
   private async processStream(
     response: Response,
     callbacks: StreamCallbacks
-  ): Promise<void> {
+  ): Promise<string> {
     const contentType = response.headers.get('content-type');
 
     if (!contentType?.includes('text/event-stream')) {
@@ -158,11 +283,10 @@ export class StreamingService {
         callbacks.onMessageStart();
         callbacks.onContentDelta(data.message);
         callbacks.onMessageComplete(data.message);
+        return data.message;
       } else {
         throw new Error('Brak odpowiedzi');
       }
-
-      return;
     }
 
     // SSE streaming
@@ -232,5 +356,7 @@ export class StreamingService {
       logger.error('Stream reading error:', streamError);
       throw streamError;
     }
+
+    return streamedContent;
   }
 }
