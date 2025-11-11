@@ -738,6 +738,35 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19600300168"
   },
 
+  dostep_do_informacji_publicznej: {
+    name: "Dostęp do informacji publicznej",
+    keywords: ["dostęp do informacji", "informacja publiczna", "wniosek o informację", "informacji publicznej", "udostępnienie informacji", "wniosek o udostępnienie"],
+    mcpArticles: [
+      { actCode: 'ustawa o dostępie do informacji publicznej', articleNumber: '13' },  // termin odpowiedzi (14 dni)
+      { actCode: 'ustawa o dostępie do informacji publicznej', articleNumber: '10' },  // forma wniosku
+      { actCode: 'ustawa o dostępie do informacji publicznej', articleNumber: '14' },  // odmowa udostępnienia
+      { actCode: 'ustawa o dostępie do informacji publicznej', articleNumber: '16' },  // skarga do sądu administracyjnego
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 września 2001 r. o dostępie do informacji publicznej"
+    ],
+    mainArticles: [
+      "Art. 13 - termin odpowiedzi na wniosek (bez zbędnej zwłoki, nie później niż w terminie 14 dni)",
+      "Art. 10 - forma wniosku o udostępnienie informacji",
+      "Art. 14 - odmowa udostępnienia informacji",
+      "Art. 16 - skarga do sądu administracyjnego"
+    ],
+    relatedArticles: [
+      "Art. 1 - przedmiot ustawy",
+      "Art. 2 - zasady udostępniania informacji",
+      "Art. 3 - prawo dostępu do informacji publicznej",
+      "Art. 4 - informacja publiczna - definicja",
+      "Art. 5 - podmioty zobowiązane",
+      "Art. 15 - wniosek o ponowne rozpatrzenie sprawy"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20011121198"
+  },
+
   /**
    * PODATEK DOCHODOWY (Income Tax)
    */
