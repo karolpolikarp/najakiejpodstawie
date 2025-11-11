@@ -65,6 +65,7 @@ const ACT_SYNONYMS: Record<string, string> = {
   'kodeksu postępowania karnego': 'kodeks postępowania karnego',
   'kodeksu postepowania karnego': 'kodeks postępowania karnego',
   'kodeksu postępowania cywilnego': 'kodeks postępowania cywilnego',
+  'kodeksu wyborczego': 'kodeks wyborczy',
   'kodeksu postepowania cywilnego': 'kodeks postępowania cywilnego',
   'kodeksu karnego skarbowego': 'kodeks karny skarbowy',
   'kodeksu spółek handlowych': 'kodeks spółek handlowych',
@@ -127,6 +128,9 @@ const ACT_SYNONYMS: Record<string, string> = {
   'rodo polska': 'ochrona danych osobowych',
   'dane osobowe': 'ochrona danych osobowych',
   'ochrona danych': 'ochrona danych osobowych',
+  'dostęp do informacji publicznej': 'o dostępie do informacji publicznej',
+  'informacja publiczna': 'o dostępie do informacji publicznej',
+  'dostępie do informacji': 'o dostępie do informacji publicznej',
 
   // ==================== PRAWO KOMUNIKACYJNE ====================
   'ruchu drogowego': 'ruchu drogowym',
