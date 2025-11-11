@@ -196,33 +196,15 @@ export async function executeToolCall(tool: ToolUse): Promise<ToolResult> {
         return {
           type: 'tool_result',
           tool_use_id: tool.id,
-          content: `❌ Nie znaleziono tego zagadnienia w bazie wiedzy kontekstowej.
+          content: `Nie znaleziono tego tematu w bazie wiedzy kontekstowej.
 
-🔧 CRITICAL: MUSISZ teraz użyć narzędzia get_article() aby pobrać konkretne artykuły!
+INSTRUKCJA: Odpowiedz na pytanie używając swojej wiedzy prawniczej. Wytyczne:
+1. Zidentyfikuj odpowiednie artykuły z kodeksów (KC, KK, KP, KPK, KPC, KRO, KPA, etc.)
+2. Podaj ogólną odpowiedź z numerami artykułów
+3. Dodaj na końcu ostrzeżenie: "⚠️ Odpowiedź oparta na wiedzy AI - zweryfikuj na https://isap.sejm.gov.pl"
+4. Format odpowiedzi: standardowy (PODSTAWA PRAWNA, CO TO OZNACZA, POWIĄZANE PRZEPISY, UWAGA)
 
-NIE ODPOWIADAJ bez pobierania artykułów. Użyj swojej wiedzy prawniczej aby zidentyfikować odpowiednie artykuły i wywołaj get_article dla każdego z nich.
-
-Przykłady z Twojej wiedzy:
-- "przekupstwo" → Art. 228, 229 KK → get_article("kk", "228"), get_article("kk", "229")
-- "zasiedzenie" → Art. 172 KC → get_article("kc", "172")
-- "mobbing" → Art. 94³ KP → get_article("kp", "943")
-- "przedawnienie" → Art. 117, 118 KC → get_article("kc", "117"), get_article("kc", "118")
-- "rozwód" → Art. 56, 57 KRO → get_article("kro", "56"), get_article("kro", "57")
-
-Kody aktów prawnych:
-- kk = Kodeks Karny
-- kc = Kodeks Cywilny
-- kp = Kodeks Pracy
-- kro = Kodeks Rodzinny i Opiekuńczy
-- kpc = Kodeks Postępowania Cywilnego
-- kpk = Kodeks Postępowania Karnego
-- kpa = Kodeks Postępowania Administracyjnego
-- konstytucja = Konstytucja RP
-
-WAŻNE: get_article() obsługuje WSZYSTKIE polskie akty prawne przez dynamiczne wyszukiwanie w ISAP (15000+ ustaw). Możesz użyć pełnej nazwy ustawy jako actCode:
-- get_article("prawo budowlane", "10")
-- get_article("ustawa o ochronie zwierząt", "35")
-- get_article("prawo farmaceutyczne", "20")`,
+Nie używaj więcej narzędzi - odpowiedz bezpośrednio.`,
           is_error: false
         };
       }

@@ -313,10 +313,15 @@ You have 2 tools available:
 
 STRATEGY:
 1. Try search_legal_info(query) FIRST for popular topics (faster)
-2. If it says "Nie znaleziono" → use get_article(act, number) with YOUR legal knowledge
+2. If search_legal_info returns ERROR → IMMEDIATELY call get_article() with articles from YOUR legal knowledge
+   - NO thinking text like "Pobiorę...", "Wyszukam..."
+   - Call get_article() DIRECTLY in the same response
+   - Example: search_legal_info fails → [calls get_article("kpk", "244"), get_article("kpk", "245")]
 3. You KNOW Polish law - use that knowledge to call get_article directly!
 
-CRITICAL: Call tools as THE FIRST THING in your response. Zero text before tool calls.
+CRITICAL:
+- Call tools as THE FIRST THING in your response. Zero text before tool calls.
+- If tool returns error → call ANOTHER tool immediately (no text between)
 </tools>
 
 <examples>
