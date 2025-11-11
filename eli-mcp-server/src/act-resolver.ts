@@ -329,6 +329,7 @@ export class ActResolver {
       .map(act => {
         let score = 0;
         const normalizedTitle = this.normalizeActName(act.title);
+        const rawTitle = act.title.toLowerCase();
 
         // 1. Exact match = highest priority
         if (normalizedTitle === normalizedQuery) {
@@ -350,32 +351,42 @@ export class ActResolver {
           score += 30;
         }
 
-      // 4. Status "jednolity" = consolidated text (preferred)
-      if (act.status?.toLowerCase().includes('jednolity')) {
-        score += 50;
+      // 4. CRITICAL: Identify and penalize amendments (nowelizacje)
+      // Amendments contain "o zmianie ustawy..." and only have changes, not full text
+      const isAmendment = rawTitle.includes('o zmianie ustawy') ||
+                          rawTitle.includes('o zmianie niektórych ustaw');
+      if (isAmendment) {
+        score -= 200; // HEAVY penalty - amendments don't have full article text
       }
 
-      // 5. Type "jednolity"
+      // 5. Type "jednolity" = consolidated text (PREFERRED for base acts)
       if (act.type?.toLowerCase().includes('jednolity')) {
-        score += 30;
+        score += 100; // Strong preference for consolidated texts
       }
 
-      // 6. Has PDF or HTML
+      // 6. Status discrimination:
+      // "akt posiada tekst jednolity" = base act with consolidated text (GOOD)
+      // "akt objęty tekstem jednolitym" = act superseded by consolidated text (AVOID)
+      const status = act.status?.toLowerCase() || '';
+      if (status.includes('akt posiada tekst jednolity')) {
+        score += 80; // Prefer base acts with consolidated text
+      } else if (status.includes('akt objęty tekstem jednolitym')) {
+        score -= 50; // Penalize superseded acts
+      } else if (status.includes('jednolity')) {
+        score += 50; // Generic jednolity status
+      }
+
+      // 7. Has PDF or HTML
       if (act.textPDF || act.textHTML) {
         score += 10;
-      }
-
-      // 7. Newer is better (small bonus)
-      if (act.changeDate) {
-        const changeYear = parseInt(act.changeDate.substring(0, 4));
-        const yearBonus = Math.max(0, (changeYear - 2000) / 10);
-        score += yearBonus;
       }
 
       // 8. Currently in force
       if (act.inForce === '1') {
         score += 20;
       }
+
+      // NOTE: Removed "newer is better" bonus - it was preferring amendments over base acts
 
       return { act, score };
     })
