@@ -713,7 +713,14 @@ export class ELITools {
 
           // CRITICAL: Verify this is an actual article header, not a reference
           // Check what comes BEFORE the match in the original text
-          const textBefore = normalizedText.substring(Math.max(0, matchIndex - 100), matchIndex);
+          // Note: match[0] may start with \n due to (?:^|\n) pattern, so we need to account for that
+          const matchText = match[0];
+          const startsWithNewline = matchText.startsWith('\n');
+
+          // Adjust matchIndex to point to the actual "Art." text, not the preceding newline
+          const adjustedMatchIndex = startsWithNewline ? matchIndex + 1 : matchIndex;
+
+          const textBefore = normalizedText.substring(Math.max(0, adjustedMatchIndex - 100), adjustedMatchIndex);
 
           // DISQUALIFYING signals - immediately reject these matches
           // If there's text on the same line before "Art. X", it's likely a reference, not an article header
