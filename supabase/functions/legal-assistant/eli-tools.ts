@@ -62,33 +62,38 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
   const lowerMessage = message.toLowerCase();
   const references: ArticleRequest[] = [];
 
-  // Pattern 1: "art 10 kp", "art. 10 kp", "artykuł 10 kp"
-  // Extended to include PZP, OP, PB and other codes
+  // Pattern 1: "art 10 kp", "art. 10 kp", "artykuł 10 kp", "art 27 upk", "art 13 uodip"
+  // Extended to include all popular act codes
   // QW1: Added support for ustęp/paragraf: "art 152 § 1 kp", "art. 152 ust. 1 kp"
-  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)(?:\s*(?:§|ust\.|par\.)\s*\d+)?\s+(kc|kp|kk|kpk|kpc|pzp|ksh|kks|op|pb|k\.?\s?c\.?|k\.?\s?p\.?|k\.?\s?k\.?|k\.?\s?p\.?\s?k\.?|k\.?\s?p\.?\s?c\.?|k\.?\s?s\.?\s?h\.?|k\.?\s?k\.?\s?s\.?)/gi;
+  const pattern1 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)(?:\s*(?:§|ust\.|par\.)\s*\d+)?\s+(kc|kp|kk|kpk|kpc|kro|kpa|pzp|ksh|kks|op|pb|upk|prd|uodip|k\.?\s?c\.?|k\.?\s?p\.?|k\.?\s?k\.?|k\.?\s?p\.?\s?k\.?|k\.?\s?p\.?\s?c\.?|k\.?\s?r\.?\s?o\.?|k\.?\s?p\.?\s?a\.?|k\.?\s?s\.?\s?h\.?|k\.?\s?k\.?\s?s\.?)/gi;
   let match;
   while ((match = pattern1.exec(message)) !== null) {
     const articleNumber = match[1];
-    const codeAbbr = match[2].toLowerCase().replace(/\./g, '');
+    const codeAbbr = match[2].toLowerCase().replace(/\./g, '').replace(/\s/g, '');
 
-    // Map abbreviation to standard code
+    // Map abbreviation to standard code (remove duplicate checks)
     let actCode = codeAbbr;
-    if (codeAbbr === 'kc' || codeAbbr === 'kc') actCode = 'kc';
-    else if (codeAbbr === 'kp' || codeAbbr === 'kp') actCode = 'kp';
-    else if (codeAbbr === 'kk' || codeAbbr === 'kk') actCode = 'kk';
-    else if (codeAbbr === 'kpk' || codeAbbr === 'kpk') actCode = 'kpk';
-    else if (codeAbbr === 'kpc' || codeAbbr === 'kpc') actCode = 'kpc';
+    if (codeAbbr === 'kc') actCode = 'kc';
+    else if (codeAbbr === 'kp') actCode = 'kp';
+    else if (codeAbbr === 'kk') actCode = 'kk';
+    else if (codeAbbr === 'kpk') actCode = 'kpk';
+    else if (codeAbbr === 'kpc') actCode = 'kpc';
+    else if (codeAbbr === 'kro') actCode = 'kro';
+    else if (codeAbbr === 'kpa') actCode = 'kpa';
     else if (codeAbbr === 'pzp') actCode = 'pzp';
     else if (codeAbbr === 'ksh') actCode = 'ksh';
     else if (codeAbbr === 'kks') actCode = 'kks';
     else if (codeAbbr === 'op') actCode = 'op';
     else if (codeAbbr === 'pb') actCode = 'pb';
+    else if (codeAbbr === 'upk') actCode = 'upk';
+    else if (codeAbbr === 'prd') actCode = 'prd';
+    else if (codeAbbr === 'uodip') actCode = 'uodip';
 
     references.push({ actCode, articleNumber });
   }
 
   // Pattern 2: "art 10 kodeks pracy", "artykuł 533 kodeksu cywilnego", "art 69 kodeksu postępowania cywilnego"
-  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym|karny skarbowy|karnego skarbowego|spółek handlowych|spolek handlowych|postępowania\s+(?:cywilnego|karnego)|postepowania\s+(?:cywilnego|karnego))/gi;
+  const pattern2 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:kodeks|kodeksu|kodeksie)\s+(pracy|cywilny|cywilnego|cywilnym|karny|karnego|karnym|karny skarbowy|karnego skarbowego|karny wykonawczy|karnego wykonawczego|spółek handlowych|spolek handlowych|rodzinny i opiekuńczy|rodzinnego i opiekuńczego|postępowania\s+(?:cywilnego|karnego|administracyjnego)|postepowania\s+(?:cywilnego|karnego|administracyjnego))/gi;
   while ((match = pattern2.exec(message)) !== null) {
     const articleNumber = match[1];
     const codeName = match[2].toLowerCase();
@@ -97,8 +102,11 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     if (codeName.startsWith('prac')) actCode = 'kp';
     else if (codeName.includes('postępowania cywilnego') || codeName.includes('postepowania cywilnego')) actCode = 'kpc';
     else if (codeName.includes('postępowania karnego') || codeName.includes('postepowania karnego')) actCode = 'kpk';
+    else if (codeName.includes('postępowania administracyjnego') || codeName.includes('postepowania administracyjnego')) actCode = 'kpa';
+    else if (codeName.includes('rodzinny') || codeName.includes('rodzinnego')) actCode = 'kro';
     else if (codeName.startsWith('cywil')) actCode = 'kc';
     else if (codeName.startsWith('karny skarbowy') || codeName.startsWith('karnego skarbowego')) actCode = 'kks';
+    else if (codeName.startsWith('karny wykonawczy') || codeName.startsWith('karnego wykonawczego')) actCode = 'kkw';
     else if (codeName.startsWith('kar')) actCode = 'kk';
     else if (codeName.startsWith('spółek') || codeName.startsWith('spolek')) actCode = 'ksh';
 
@@ -114,8 +122,8 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     references.push({ actCode: 'konstytucja', articleNumber });
   }
 
-  // Pattern 4: "art 10 pzp", "art 15 ordynacji podatkowej", "art 20 prawa budowlanego"
-  const pattern4 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:pzp|(?:praw[ao]|ustawy)\s+(?:zamówień publicznych|zamowien publicznych|budowlane|budowlanego)|ordynacj[iae] podatkow[aje]|praw konsumenta)/gi;
+  // Pattern 4: "art 10 pzp", "art 15 ordynacji podatkowej", "art 20 prawa budowlanego", "art 27 upk"
+  const pattern4 = /art(?:ykuł|ykul)?\.?\s*(\d+[a-z]?)\s+(?:pzp|prd|upk|uodip|kpa|kro|(?:praw[ao]|ustawy)\s+(?:zamówień publicznych|zamowien publicznych|budowlane|budowlanego|o ruchu drogowym|konsumenta|o dostępie do informacji publicznej)|ordynacj[iae] podatkow[aje]|kodeks(?:ie|u)?\s+(?:postępowania administracyjnego|rodzinny i opiekuńczy|rodzinnego i opiekuńczego))/gi;
   while ((match = pattern4.exec(message)) !== null) {
     const articleNumber = match[1];
     const fullMatch = match[0].toLowerCase();
@@ -124,7 +132,11 @@ export function detectArticleReferences(message: string): ArticleRequest[] {
     if (fullMatch.includes('zamówień') || fullMatch.includes('zamowien') || fullMatch.includes('pzp')) actCode = 'pzp';
     else if (fullMatch.includes('ordynacj')) actCode = 'op';
     else if (fullMatch.includes('budowlan')) actCode = 'pb';
-    else if (fullMatch.includes('konsumenta')) actCode = 'prawa konsumenta';
+    else if (fullMatch.includes('konsumenta') || fullMatch.includes('upk')) actCode = 'upk';
+    else if (fullMatch.includes('ruchu drogowym') || fullMatch.includes('prd')) actCode = 'prd';
+    else if (fullMatch.includes('postępowania administracyjnego') || fullMatch.includes('kpa')) actCode = 'kpa';
+    else if (fullMatch.includes('rodzinny') || fullMatch.includes('kro')) actCode = 'kro';
+    else if (fullMatch.includes('dostępie do informacji') || fullMatch.includes('uodip')) actCode = 'uodip';
 
     if (actCode) {
       references.push({ actCode, articleNumber });
