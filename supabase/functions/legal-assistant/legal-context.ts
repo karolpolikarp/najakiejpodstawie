@@ -34,29 +34,34 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   urlop: {
     name: "Urlop wypoczynkowy",
-    keywords: ["urlop", "urlopy", "wakacje", "urlop wypoczynkowy", "dni wolne"],
+    keywords: ["urlop", "urlopy", "wakacje", "urlop wypoczynkowy", "dni wolne", "urlop na żądanie"],
     mcpArticles: [
-      { actCode: 'kp', articleNumber: '152' },
-      { actCode: 'kp', articleNumber: '153' },
-      { actCode: 'kp', articleNumber: '154' },
-      { actCode: 'kp', articleNumber: '155' },
-      { actCode: 'kp', articleNumber: '163' }, // urlop na żądanie
+      { actCode: 'kp', articleNumber: '152' },  // definicja urlopu
+      { actCode: 'kp', articleNumber: '153' },  // nabywanie prawa
+      { actCode: 'kp', articleNumber: '154' },  // wymiar urlopu
+      { actCode: 'kp', articleNumber: '155' },  // okresy do wymiaru
+      { actCode: 'kp', articleNumber: '163' },  // plan urlopów
+      { actCode: 'kp', articleNumber: '167' },  // urlop na żądanie
+      { actCode: 'kp', articleNumber: '1671' }, // urlop wychowawczy
+      { actCode: 'kp', articleNumber: '174' },  // urlop macierzyński
     ],
     mainActs: [
       "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
     ],
     mainArticles: [
       "Art. 152 - definicja urlopu wypoczynkowego",
-      "Art. 153 - wymiar urlopu wypoczynkowego (20 dni lub 26 dni)",
-      "Art. 154 - nabywanie prawa do urlopu",
-      "Art. 155 - udzielanie urlopu w roku kalendarzowym",
-      "Art. 163 - urlop na żądanie (4 dni w roku)"
+      "Art. 153 - nabywanie prawa do urlopu",
+      "Art. 154 - wymiar urlopu wypoczynkowego (20 dni lub 26 dni)",
+      "Art. 155 - okresy do wymiaru urlopu",
+      "Art. 167 § 2 - urlop na żądanie (4 dni w roku)"
     ],
     relatedArticles: [
       "Art. 156 - przeniesienie urlopu na następny rok",
       "Art. 161 - ekwiwalent pieniężny za niewykorzystany urlop",
       "Art. 162 - odwołanie z urlopu",
-      "Art. 1671-16712 - urlop wychowawczy",
+      "Art. 163 - plan urlopów",
+      "Art. 167 - udzielanie urlopu (w tym urlop na żądanie)",
+      "Art. 1671 - urlop wychowawczy",
       "Art. 174 - urlop macierzyński"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
@@ -378,12 +383,19 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
     name: "Prawo spadkowe",
     keywords: ["spadek", "testament", "dziedziczenie", "zachowek", "spadkobierca", "odrzucenie"],
     mcpArticles: [
-      { actCode: 'kc', articleNumber: '922' },
-      { actCode: 'kc', articleNumber: '924' },
-      { actCode: 'kc', articleNumber: '931' },
+      { actCode: 'kc', articleNumber: '922' },  // otwarcie spadku
+      { actCode: 'kc', articleNumber: '924' },  // formy dziedziczenia
+      { actCode: 'kc', articleNumber: '931' },  // dziedziczenie ustawowe - pierwsza kolejność
+      { actCode: 'kc', articleNumber: '932' },  // dziedziczenie ustawowe - druga kolejność
+      { actCode: 'kc', articleNumber: '934' },  // dziedziczenie ustawowe - dziadkowie
       { actCode: 'kc', articleNumber: '1011' }, // zachowek
-      { actCode: 'kc', articleNumber: '1012' }, // odrzucenie dziedziczenia
-      { actCode: 'kc', articleNumber: '1015' }, // termin odrzucenia spadku
+      { actCode: 'kc', articleNumber: '1012' }, // formy przyjęcia spadku
+      { actCode: 'kc', articleNumber: '1015' }, // termin do złożenia oświadczenia
+      { actCode: 'kc', articleNumber: '1018' }, // forma i nieodwołalność oświadczenia
+      { actCode: 'kc', articleNumber: '1020' }, // skutki odrzucenia spadku
+      { actCode: 'kc', articleNumber: '1025' }, // stwierdzenie nabycia spadku
+      { actCode: 'kc', articleNumber: '888' },  // testament
+      { actCode: 'kc', articleNumber: '1031' }, // odpowiedzialność za długi spadkowe
     ],
     mainActs: [
       "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
@@ -391,14 +403,19 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
     mainArticles: [
       "Art. 922 KC - otwarcie spadku",
       "Art. 924 KC - formy dziedziczenia (testament, ustawa)",
-      "Art. 931 KC - dziedziczenie ustawowe"
+      "Art. 931 KC - dziedziczenie ustawowe",
+      "Art. 1012 KC - formy przyjęcia spadku",
+      "Art. 1015 KC - termin do złożenia oświadczenia"
     ],
     relatedArticles: [
+      "Art. 932 KC - dziedziczenie ustawowe - druga kolejność",
+      "Art. 934 KC - dziedziczenie przez dziadków",
       "Art. 1011 KC - zachowek",
-      "Art. 1015 KC - wysokość zachowku",
+      "Art. 1018 KC - forma i nieodwołalność oświadczenia",
+      "Art. 1020 KC - skutki odrzucenia spadku",
       "Art. 1025 KC - stwierdzenie nabycia spadku",
-      "Art. 1012 KC - odrzucenie dziedziczenia",
       "Art. 888 KC - testament",
+      "Art. 1031 KC - odpowiedzialność za długi spadkowe",
       "Art. 1035 KC - dział spadku"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
@@ -491,18 +508,21 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
     name: "Mobbing w miejscu pracy",
     keywords: ["mobbing", "molestowanie", "nękanie w pracy", "przemoc psychiczna"],
     mcpArticles: [
-      { actCode: 'kp', articleNumber: '943' },
+      { actCode: 'kp', articleNumber: '94³' },  // Art. 94³ (z indeksem górnym) - mobbing
+      { actCode: 'kp', articleNumber: '11' },   // równe traktowanie
+      { actCode: 'kp', articleNumber: '94' },   // obowiązki pracodawcy
+      { actCode: 'kp', articleNumber: '183a' }, // dyskryminacja
     ],
     mainActs: [
       "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
     ],
     mainArticles: [
-      "Art. 943 - definicja mobbingu i ochrona przed mobbingiem"
+      "Art. 94³ KP - definicja mobbingu i ochrona przed mobbingiem",
+      "Art. 11 KP - równe traktowanie w zatrudnieniu",
+      "Art. 94 KP - obowiązki pracodawcy (przeciwdziałanie mobbingowi)"
     ],
     relatedArticles: [
-      "Art. 11 - równe traktowanie w zatrudnieniu",
-      "Art. 94 - obowiązki pracodawcy (przeciwdziałanie mobbingowi)",
-      "Art. 183a-183e - dyskryminacja w zatrudnieniu",
+      "Art. 183a-183e KP - dyskryminacja w zatrudnieniu",
       "Art. 300 KC - odszkodowanie za krzywdę"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
@@ -630,26 +650,34 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   windykacja: {
     name: "Windykacja długu i egzekucja",
-    keywords: ["windykacja", "dług", "długi", "wierzyciel", "dłużnik", "egzekucja", "należność", "spłata"],
+    keywords: ["windykacja", "dług", "długi", "wierzyciel", "dłużnik", "egzekucja", "należność", "spłata", "przedawnienie"],
     mcpArticles: [
-      { actCode: 'kc', articleNumber: '118' },  // prawo do żądania spełnienia świadczenia
-      { actCode: 'kc', articleNumber: '481' },  // odsetki za opóźnienie
+      { actCode: 'kc', articleNumber: '117' },  // przedawnienie roszczeń - ogólne
+      { actCode: 'kc', articleNumber: '118' },  // przedawnienie - 6 lat (podstawa)
       { actCode: 'kc', articleNumber: '455' },  // termin spełnienia świadczenia
+      { actCode: 'kc', articleNumber: '471' },  // odpowiedzialność za niewykonanie zobowiązania
+      { actCode: 'kc', articleNumber: '476' },  // odpowiedzialność za pomocnika
+      { actCode: 'kc', articleNumber: '481' },  // odsetki za opóźnienie
       { actCode: 'kpc', articleNumber: '776' }, // wszczęcie egzekucji
+      { actCode: 'kpc', articleNumber: '805' }, // egzekucja z ruchomości
     ],
     mainActs: [
       "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny",
       "Ustawa z dnia 17 listopada 1964 r. - Kodeks postępowania cywilnego"
     ],
     mainArticles: [
-      "Art. 118 KC - prawo do żądania spełnienia świadczenia",
-      "Art. 481 KC - odsetki ustawowe za opóźnienie",
-      "Art. 455 KC - termin spełnienia świadczenia"
+      "Art. 117 KC - ogólne zasady przedawnienia",
+      "Art. 118 KC - przedawnienie 6-letnie i 3-letnie",
+      "Art. 455 KC - termin spełnienia świadczenia",
+      "Art. 471 KC - odpowiedzialność za niewykonanie zobowiązania",
+      "Art. 481 KC - odsetki ustawowe za opóźnienie"
     ],
     relatedArticles: [
+      "Art. 117-125 KC - przepisy o przedawnieniu",
+      "Art. 476 KC - odpowiedzialność za pomocnika",
+      "Art. 487 KC - obowiązek naprawienia szkody",
       "Art. 776-1088 KPC - postępowanie egzekucyjne",
-      "Art. 117 KC - przedawnienie roszczeń",
-      "Art. 471 KC - odpowiedzialność za niewykonanie zobowiązania"
+      "Art. 805 KPC - egzekucja z ruchomości"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
   },
@@ -708,6 +736,33 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
       "Art. 61 KPA - uzasadnienie decyzji"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19600300168"
+  },
+
+  /**
+   * PODATEK DOCHODOWY (Income Tax)
+   */
+  pit: {
+    name: "Podatek dochodowy od osób fizycznych (PIT)",
+    keywords: ["pit", "podatek dochodowy", "zeznanie podatkowe", "zeznanie roczne", "termin złożenia", "deklaracja podatkowa", "rozliczenie pit"],
+    mcpArticles: [
+      { actCode: 'pit', articleNumber: '45' },   // obowiązek złożenia zeznania
+      { actCode: 'op', articleNumber: '70' },    // terminy załatwiania spraw
+    ],
+    mainActs: [
+      "Ustawa z dnia 26 lipca 1991 r. o podatku dochodowym od osób fizycznych",
+      "Ustawa z dnia 29 sierpnia 1997 r. - Ordynacja podatkowa"
+    ],
+    mainArticles: [
+      "Art. 45 ustawy o PIT - obowiązek złożenia zeznania podatkowego (termin: do 30 kwietnia)",
+      "Art. 70 Ordynacji podatkowej - terminy załatwiania spraw podatkowych"
+    ],
+    relatedArticles: [
+      "Art. 44 ustawy o PIT - obliczanie podatku",
+      "Art. 46 ustawy o PIT - uproszczone zeznanie podatkowe",
+      "Art. 47 ustawy o PIT - wpłata podatku",
+      "Art. 73 Ordynacji podatkowej - skutki niedotrzymania terminu"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20240000226"
   },
 
   /**

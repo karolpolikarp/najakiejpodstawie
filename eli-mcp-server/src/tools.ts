@@ -586,9 +586,49 @@ export class ELITools {
   }
 
   /**
+   * Escape special regex characters in a string
+   */
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
    * Extract specific article from PDF text
    */
   private extractArticleFromPDF(pdfText: string, articleNumber: string): string | null {
+    // Generate all possible variants of article number to search for
+    // PDFs may encode superscripts in different ways:
+    // 1. "94³" - Unicode superscript (original)
+    // 2. "943" - Plain digits (most common in extracted text)
+    // 3. "94 3" - With space
+    // 4. "94³" with different Unicode representation
+
+    const superscriptMap: Record<string, string> = {
+      '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4',
+      '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9'
+    };
+
+    // Variant 1: Normalize to plain digits (e.g., "94³" -> "943")
+    let normalizedArticleNumber = articleNumber;
+    for (const [superscript, digit] of Object.entries(superscriptMap)) {
+      normalizedArticleNumber = normalizedArticleNumber.replace(new RegExp(superscript, 'g'), digit);
+    }
+
+    // Variant 2: Add spaces between base and superscript (e.g., "94³" -> "94 3")
+    let spacedArticleNumber = articleNumber;
+    for (const [superscript, digit] of Object.entries(superscriptMap)) {
+      spacedArticleNumber = spacedArticleNumber.replace(new RegExp(superscript, 'g'), ` ${digit}`);
+    }
+
+    // All variants to try
+    const searchVariants = [
+      normalizedArticleNumber,  // "943" (most common)
+      articleNumber,            // "94³" (original with Unicode)
+      spacedArticleNumber,      // "94 3" (with space)
+    ].filter((v, i, arr) => arr.indexOf(v) === i); // Remove duplicates
+
+    console.log(`[ELI] Article number variants to search: ${searchVariants.map(v => `"${v}"`).join(', ')}`);
+
     // Normalize the text - remove excessive whitespace but keep structure
     let normalizedText = pdfText.replace(/[ \t]+/g, ' ');
 
@@ -605,65 +645,67 @@ export class ELITools {
       console.log(`[ELI] ✓ Fixed PDF extraction errors in article markers`);
     }
 
-    console.log(`[ELI] Looking for article ${articleNumber} in PDF text (${normalizedText.length} chars)`);
+    // Try each variant until we find a match
+    for (const variant of searchVariants) {
+      console.log(`[ELI] Trying variant "${variant}" in PDF text (${normalizedText.length} chars)`);
 
-    // Try to find article in PDF text
-    // Common patterns for Polish legal acts
-    // CRITICAL: Use (?!\d) negative lookahead to prevent matching "10" in "100", "101", etc.
-    // NOTE: Increased limit to 50000 chars to handle long articles (especially transitional provisions)
-    // NOTE: Removed lazy quantifier (?) to make regex greedy - captures full article until next Art.
-    const patterns = [
-      // Pattern 1: "Art. 10." or "Art.10." with optional spaces (requires dot after number)
-      new RegExp(`Art\\.?\\s*${articleNumber}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
-      // Pattern 2: "Artykuł 10" (full word) with word boundary
-      new RegExp(`Artykuł\\s+${articleNumber}(?!\\d)[\\s\\S]{10,50000}(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
-      // Pattern 3: More lenient - just "Art" followed by number
-      new RegExp(`Art\\s*\\.?\\s*${articleNumber}(?!\\d)\\s*\\.?\\s+([\\s\\S]{10,50000})(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
-      // Pattern 4: Try with paragraph marker §
-      new RegExp(`Art\\.?\\s*${articleNumber}(?!\\d)\\.?\\s*§?\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
-    ];
+      // Common patterns for Polish legal acts
+      // CRITICAL: Use (?!\d) negative lookahead to prevent matching "10" in "100", "101", etc.
+      // NOTE: Increased limit to 50000 chars to handle long articles (especially transitional provisions)
+      // NOTE: Removed lazy quantifier (?) to make regex greedy - captures full article until next Art.
+      const patterns = [
+        // Pattern 1: "Art. 10." or "Art.10." with optional spaces (requires dot after number)
+        new RegExp(`Art\\.?\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+        // Pattern 2: "Artykuł 10" (full word) with word boundary
+        new RegExp(`Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)[\\s\\S]{10,50000}(?=\\s*Artykuł\\s+\\d|$)`, 'i'),
+        // Pattern 3: More lenient - just "Art" followed by number
+        new RegExp(`Art\\s*\\.?\\s*${this.escapeRegex(variant)}(?!\\d)\\s*\\.?\\s+([\\s\\S]{10,50000})(?=\\s*Art\\s*\\.?\\s*\\d|$)`, 'i'),
+        // Pattern 4: Try with paragraph marker §
+        new RegExp(`Art\\.?\\s*${this.escapeRegex(variant)}(?!\\d)\\.?\\s*§?\\s*([\\s\\S]{10,50000})(?=\\s*Art\\.?\\s*\\d|$)`, 'i'),
+      ];
 
-    for (let i = 0; i < patterns.length; i++) {
-      const pattern = patterns[i];
-      const match = normalizedText.match(pattern);
-      if (match) {
-        console.log(`[ELI] Found article using pattern ${i + 1}`);
-        let text = match[1] || match[0];
-        text = text.trim();
+      for (let i = 0; i < patterns.length; i++) {
+        const pattern = patterns[i];
+        const match = normalizedText.match(pattern);
+        if (match) {
+          console.log(`[ELI] ✓ Found article using variant "${variant}" with pattern ${i + 1}`);
+          let text = match[1] || match[0];
+          text = text.trim();
 
-        // Clean up extra whitespace while preserving paragraph structure
-        text = text.replace(/[ \t]+/g, ' ');
-        text = text.replace(/\n\s*\n\s*\n+/g, '\n\n'); // Max 2 newlines
+          // Clean up extra whitespace while preserving paragraph structure
+          text = text.replace(/[ \t]+/g, ' ');
+          text = text.replace(/\n\s*\n\s*\n+/g, '\n\n'); // Max 2 newlines
 
-        // Apply Polish text cleaning to the article
-        text = this.cleanPolishText(text);
+          // Apply Polish text cleaning to the article
+          text = this.cleanPolishText(text);
 
-        // Ensure we include the article header if not already there
-        if (!text.match(/^Art/i)) {
-          text = `Art. ${articleNumber}. ${text}`;
-        }
+          // Ensure we include the article header if not already there
+          if (!text.match(/^Art/i)) {
+            text = `Art. ${articleNumber}. ${text}`;
+          }
 
-        // Remove text that looks like it's from the next article
-        text = text.replace(/\s+Art\.\s*\d+.*$/i, '');
+          // Remove text that looks like it's from the next article
+          text = text.replace(/\s+Art\.\s*\d+.*$/i, '');
 
-        if (text.length > 10) {
-          console.log(`[ELI] Extracted article text: ${text.substring(0, 150)}...`);
-          return text;
+          if (text.length > 10) {
+            console.log(`[ELI] Extracted article text: ${text.substring(0, 150)}...`);
+            return text;
+          }
         }
       }
     }
 
-    // Debug: Show context around the article number
-    // Use negative lookahead to match ONLY the exact article number (not "10" in "100")
-    const contextRegex = new RegExp(`.{0,200}\\b${articleNumber}(?!\\d).{0,200}`, 'g');
-    const contexts = normalizedText.match(contextRegex);
-    if (contexts) {
-      console.log(`[ELI] Found ${contexts.length} occurrences of "${articleNumber}" in PDF:`);
-      contexts.slice(0, 3).forEach((ctx, i) => {
-        console.log(`[ELI] Context ${i + 1}: ...${ctx}...`);
-      });
-    } else {
-      console.log(`[ELI] Article number "${articleNumber}" not found in PDF at all`);
+    // Debug: Show context around each variant
+    console.log(`[ELI] ✗ Article not found with any variant`);
+    for (const variant of searchVariants) {
+      const contextRegex = new RegExp(`.{0,200}\\b${this.escapeRegex(variant)}(?!\\d).{0,200}`, 'g');
+      const contexts = normalizedText.match(contextRegex);
+      if (contexts) {
+        console.log(`[ELI] Found ${contexts.length} occurrences of variant "${variant}":`);
+        contexts.slice(0, 2).forEach((ctx, i) => {
+          console.log(`[ELI]   Context ${i + 1}: ...${ctx}...`);
+        });
+      }
     }
 
     return null;
