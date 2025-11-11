@@ -37,6 +37,50 @@ interface LegalContextResult {
 }
 
 /**
+ * Detects if the question is about Polish law
+ * Simple heuristic: contains legal keywords or asks about legal matters
+ */
+function isLegalQuestion(message: string): boolean {
+  const lowerMessage = message.toLowerCase();
+
+  // Legal keywords
+  const legalKeywords = [
+    'prawo', 'przepis', 'ustawa', 'kodeks', 'artykuł', 'art', 'art.', 'paragraf',
+    'spółka', 'umowa', 'kontrakt', 'sąd', 'wyrok', 'pozew', 'powództwo',
+    'odpowiedzialność', 'odszkodowanie', 'kara', 'mandat', 'termin',
+    'windykacja', 'długi', 'kredyt', 'pożyczka', 'spadek', 'testament',
+    'rozwód', 'alimenty', 'opieka', 'pracownik', 'pracodawca', 'urlop',
+    'zwolnienie', 'wypowiedzenie', 'podatek', 'vat', 'zus', 'us',
+    'decyzja administracyjna', 'urząd', 'organ', 'postępowanie',
+    'odwołanie', 'skarga', 'wniosek', 'zgłoszenie', 'rejestr',
+    'kc', 'kk', 'kp', 'kpa', 'kpc', 'ksh', 'ordynacja', 'konstytucja'
+  ];
+
+  // Legal question patterns
+  const legalPatterns = [
+    /czy (mogę|muszę|powinienem)/,
+    /jakie (prawa|obowiązki|przepisy)/,
+    /w jakim terminie/,
+    /jak (zaskarżyć|odwołać|zgłosić)/,
+    /co grozi/,
+    /czy jest legalne/,
+    /czy mogę (pozwać|odwołać)/
+  ];
+
+  // Check keywords
+  const hasLegalKeyword = legalKeywords.some(keyword =>
+    lowerMessage.includes(keyword)
+  );
+
+  // Check patterns
+  const matchesLegalPattern = legalPatterns.some(pattern =>
+    pattern.test(lowerMessage)
+  );
+
+  return hasLegalKeyword || matchesLegalPattern;
+}
+
+/**
  * Wykrywa temat prawny na podstawie pytania użytkownika
  * Zwraca kontekst tekstowy + artykuły do automatycznego pobrania z MCP
  */
@@ -320,8 +364,32 @@ PYTANIE UŻYTKOWNIKA:
 ${message}`;
     }
 
+    // LAYER 2: Force tool calling for legal questions
+    // This prevents LLM from generating "thinking text" before tool calls
+    const forcedToolChoice = isLegalQuestion(message);
+    console.log(`[ARCH] Legal question detected: ${forcedToolChoice} - ${forcedToolChoice ? 'FORCING' : 'allowing'} tool_choice`);
+
     // Tool Calling enabled: Add tools to API call
     console.log('[TOOL] Tool Calling enabled - LLM can dynamically fetch articles');
+
+    // Build API request body with conditional tool_choice
+    const apiRequestBody: any = {
+      model: selectedModel,
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }],
+      temperature: 0.0,
+      tools: LEGAL_TOOLS,
+      stream: true
+    };
+
+    // CRITICAL: Force tool calling for legal questions
+    // This eliminates "Pozwól, że sprawdzę..." thinking text at source
+    if (forcedToolChoice) {
+      apiRequestBody.tool_choice = { type: "any" };
+      console.log('[ARCH] ✓ Forced tool_choice: { type: "any" } - LLM MUST use tools');
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -329,15 +397,7 @@ ${message}`;
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        model: selectedModel,
-        max_tokens: 4096,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }],
-        temperature: 0.0,
-        tools: LEGAL_TOOLS,
-        stream: true
-      })
+      body: JSON.stringify(apiRequestBody)
     });
 
     if (!response.ok) {
@@ -393,7 +453,35 @@ ${message}`;
               // Check if LLM wants to use tools
               if (toolUses.length > 0) {
                 console.log(`[TOOL] LLM requested ${toolUses.length} tool call(s)`);
-                // Reset fullResponse - we don't want to keep the "thinking text" before tool calling
+
+                // LAYER 3: Filter thinking text before tool calling (defense-in-depth)
+                // This catches cases where tool_choice didn't prevent thinking text
+                if (fullResponse) {
+                  const thinkingPhrases = [
+                    /Wyszukam dla Ciebie[^.]*\./gi,
+                    /Pozwól,?\s*że sprawdzę[^.]*\./gi,
+                    /Spróbuję wyszukać[^.]*\./gi,
+                    /Zajrzę do przepisów[^.]*\./gi,
+                    /Pozwól,?\s*że znajdę[^.]*\./gi,
+                    /Szukam informacji[^.]*\./gi,
+                    /Pozwól,?\s*że wyszukam[^.]*\./gi,
+                    /Pozwól,?\s*że wyjaśnię[^.]*\./gi,
+                  ];
+
+                  let filtered = fullResponse;
+                  for (const phrase of thinkingPhrases) {
+                    filtered = filtered.replace(phrase, '');
+                  }
+                  filtered = filtered.trim();
+
+                  if (filtered !== fullResponse) {
+                    console.log('[ARCH] ✓ LAYER 3: Filtered thinking text before tool calling');
+                    console.log(`[ARCH] Original: "${fullResponse.substring(0, 100)}..."`);
+                    console.log(`[ARCH] Filtered: "${filtered.substring(0, 100)}..."`);
+                  }
+                }
+
+                // Reset fullResponse - we don't want to keep any text before tool calling
                 fullResponse = '';
 
                 // Execute all tool calls
