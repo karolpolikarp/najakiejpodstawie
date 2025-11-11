@@ -16,7 +16,7 @@ export class ELITools {
   // IMPORTANT: Always use consolidated texts (teksty jednolite) for current law
   // Updated: November 2025 - Expanded to TOP 50+ acts
   private ACT_CODES: Record<string, { publisher: string; year: number; position: number; title: string }> = {
-    // ==================== KODEKSY (11) ====================
+    // ==================== KODEKSY (12) ====================
     'kc': { publisher: 'DU', year: 2025, position: 1071, title: 'Kodeks cywilny' },
     'kodeks cywilny': { publisher: 'DU', year: 2025, position: 1071, title: 'Kodeks cywilny' },
     'kp': { publisher: 'DU', year: 2025, position: 277, title: 'Kodeks pracy' },
@@ -37,6 +37,7 @@ export class ELITools {
     'kodeks postępowania administracyjnego': { publisher: 'DU', year: 2024, position: 572, title: 'Kodeks postępowania administracyjnego' },
     'kkw': { publisher: 'DU', year: 2024, position: 1547, title: 'Kodeks karny wykonawczy' },
     'kodeks karny wykonawczy': { publisher: 'DU', year: 2024, position: 1547, title: 'Kodeks karny wykonawczy' },
+    'kodeks wyborczy': { publisher: 'DU', year: 2023, position: 2408, title: 'Kodeks wyborczy' },
 
     // ==================== KONSTYTUCJA ====================
     'konstytucja': { publisher: 'DU', year: 1997, position: 483, title: 'Konstytucja Rzeczypospolitej Polskiej' },
@@ -81,7 +82,7 @@ export class ELITools {
     'samorząd powiatowy': { publisher: 'DU', year: 2022, position: 1526, title: 'Ustawa o samorządzie powiatowym' },
     'samorząd województwa': { publisher: 'DU', year: 2024, position: 1723, title: 'Ustawa o samorządzie województwa' },
 
-    // ==================== PRAWO CYWILNE I OBRÓT (6) ====================
+    // ==================== PRAWO CYWILNE I OBRÓT (8) ====================
     'pzp': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
     'prawo zamówień publicznych': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
     'prawo zamowien publicznych': { publisher: 'DU', year: 2024, position: 1320, title: 'Prawo zamówień publicznych' },
@@ -91,6 +92,8 @@ export class ELITools {
     'prawo o notariacie': { publisher: 'DU', year: 2024, position: 561, title: 'Prawo o notariacie' },
     'rodo polska': { publisher: 'DU', year: 2019, position: 1781, title: 'Ustawa o ochronie danych osobowych' },
     'ochrona danych osobowych': { publisher: 'DU', year: 2019, position: 1781, title: 'Ustawa o ochronie danych osobowych' },
+    'dostęp do informacji publicznej': { publisher: 'DU', year: 2022, position: 902, title: 'Ustawa o dostępie do informacji publicznej' },
+    'o dostępie do informacji publicznej': { publisher: 'DU', year: 2022, position: 902, title: 'Ustawa o dostępie do informacji publicznej' },
 
     // ==================== PRAWO KOMUNIKACYJNE (6) ====================
     'prd': { publisher: 'DU', year: 2024, position: 1251, title: 'Prawo o ruchu drogowym' },
@@ -154,8 +157,7 @@ export class ELITools {
       keyword: params.keyword,
       inForce: params.inForce ? '1' : undefined,
       limit: params.limit || 10,
-      sortBy: 'change',
-      sortDir: 'desc',
+      // NOTE: sortBy/sortDir removed - they cause 403 errors from Sejm API
     };
 
     const result = await this.client.searchActs(searchParams);
