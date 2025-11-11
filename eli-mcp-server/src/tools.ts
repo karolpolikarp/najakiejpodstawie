@@ -93,8 +93,6 @@ export class ELITools {
     'prawo o notariacie': { publisher: 'DU', year: 2024, position: 561, title: 'Prawo o notariacie' },
     'rodo polska': { publisher: 'DU', year: 2019, position: 1781, title: 'Ustawa o ochronie danych osobowych' },
     'ochrona danych osobowych': { publisher: 'DU', year: 2019, position: 1781, title: 'Ustawa o ochronie danych osobowych' },
-    'dostęp do informacji publicznej': { publisher: 'DU', year: 2022, position: 902, title: 'Ustawa o dostępie do informacji publicznej' },
-    'o dostępie do informacji publicznej': { publisher: 'DU', year: 2022, position: 902, title: 'Ustawa o dostępie do informacji publicznej' },
 
     // ==================== PRAWO KOMUNIKACYJNE (6) ====================
     'prd': { publisher: 'DU', year: 2024, position: 1251, title: 'Prawo o ruchu drogowym' },

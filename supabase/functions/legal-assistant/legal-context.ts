@@ -204,8 +204,8 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
     name: "Alimenty",
     keywords: ["alimenty", "alimentacja", "obowiązek alimentacyjny", "dziecko"],
     mcpArticles: [
-      { actCode: 'kc', articleNumber: '133' }, // Kodeks rodzinny to też 'kc' w kontekście
-      { actCode: 'kc', articleNumber: '135' },
+      { actCode: 'kro', articleNumber: '133' }, // Kodeks rodzinny i opiekuńczy
+      { actCode: 'kro', articleNumber: '135' },
     ],
     mainActs: [
       "Ustawa z dnia 25 lutego 1964 r. - Kodeks rodzinny i opiekuńczy"
@@ -742,10 +742,10 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
     name: "Dostęp do informacji publicznej",
     keywords: ["dostęp do informacji", "informacja publiczna", "wniosek o informację", "informacji publicznej", "udostępnienie informacji", "wniosek o udostępnienie"],
     mcpArticles: [
-      { actCode: 'ustawa o dostępie do informacji publicznej', articleNumber: '13' },  // termin odpowiedzi (14 dni)
-      { actCode: 'ustawa o dostępie do informacji publicznej', articleNumber: '10' },  // forma wniosku
-      { actCode: 'ustawa o dostępie do informacji publicznej', articleNumber: '14' },  // odmowa udostępnienia
-      { actCode: 'ustawa o dostępie do informacji publicznej', articleNumber: '16' },  // skarga do sądu administracyjnego
+      { actCode: 'uodip', articleNumber: '13' },  // termin odpowiedzi (14 dni)
+      { actCode: 'uodip', articleNumber: '10' },  // forma wniosku
+      { actCode: 'uodip', articleNumber: '14' },  // odmowa udostępnienia
+      { actCode: 'uodip', articleNumber: '16' },  // skarga do sądu administracyjnego
     ],
     mainActs: [
       "Ustawa z dnia 6 września 2001 r. o dostępie do informacji publicznej"
