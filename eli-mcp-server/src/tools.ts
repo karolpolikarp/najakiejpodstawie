@@ -726,15 +726,17 @@ export class ELITools {
       const candidateMatches: Array<{ text: string; score: number; index: number }> = [];
 
       // Common patterns for Polish legal acts
-      // CRITICAL: All patterns MUST start with line beginning anchor to avoid matching in-text references
+      // NOTE: Patterns are now more flexible - they don't strictly require line start
+      // to handle PDFs with unusual formatting (e.g., "Rozdział 3 Art. 15")
+      // Scoring logic (below) will filter out false matches
       const patterns = [
         // Pattern 1: "Art. 10." with dot and space (most reliable for main article text)
-        // Requires newline before "Art." to ensure we're matching article headers, not references
-        new RegExp(`(?:^|\\n)\\s*Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.\\s*\\d|$)`, 'gim'),
+        // Prefers newline before "Art." but doesn't strictly require it (thanks to scoring)
+        new RegExp(`(?:^|\\n|\\s{2,})\\s*Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.\\s*\\d|$)`, 'gim'),
         // Pattern 2: "Art 10." without first dot
-        new RegExp(`(?:^|\\n)\\s*Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.?\\s*\\d|$)`, 'gim'),
+        new RegExp(`(?:^|\\n|\\s{2,})\\s*Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.?\\s*\\d|$)`, 'gim'),
         // Pattern 3: "Artykuł 10" (full word)
-        new RegExp(`(?:^|\\n)\\s*Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*(?:Artykuł|Art\\.)\\s*\\d|$)`, 'gim'),
+        new RegExp(`(?:^|\\n|\\s{2,})\\s*Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*(?:Artykuł|Art\\.)\\s*\\d|$)`, 'gim'),
       ];
 
       for (const pattern of patterns) {
@@ -760,16 +762,25 @@ export class ELITools {
 
           const textBefore = normalizedText.substring(Math.max(0, adjustedMatchIndex - 100), adjustedMatchIndex);
 
-          // DISQUALIFYING signals - immediately reject these matches
-          // If there's text on the same line before "Art. X", it's likely a reference, not an article header
+          // Check for text before article on same line
+          // This is a negative signal but not automatically disqualifying
+          // (to handle PDFs with unusual formatting like "Rozdział 3 Art. 15")
           const lastNewlineIndex = textBefore.lastIndexOf('\n');
           const textOnSameLine = lastNewlineIndex >= 0
             ? textBefore.substring(lastNewlineIndex + 1).trim()
             : textBefore.trim();
 
           if (textOnSameLine.length > 0) {
-            score -= 10000; // DISQUALIFY: Article number appears mid-line, not at line start
-            logger.debug(`Rejecting match - found text before article on same line: "${textOnSameLine.substring(0, 50)}"`);
+            // Only penalize heavily if it looks like an in-text reference (not a section/chapter number)
+            const looksLikeReference = /(?:zgodnie z|w myśl|na podstawie|stosuje się|por\.|zob\.|patrz)/i.test(textOnSameLine);
+            if (looksLikeReference) {
+              score -= 10000; // DISQUALIFY: Definitely an in-text reference
+              logger.debug(`Rejecting match - found reference phrase before article: "${textOnSameLine.substring(0, 50)}"`);
+            } else {
+              // Moderate penalty - might be chapter/section number or PDF formatting artifact
+              score -= 100;
+              logger.debug(`Penalizing match - found text before article on same line: "${textOnSameLine.substring(0, 50)}"`);
+            }
           }
 
           // STRONG negative signals - this is likely a reference, not the actual article
