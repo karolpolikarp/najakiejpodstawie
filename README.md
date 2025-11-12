@@ -29,6 +29,14 @@ Zamiast godzinami przeszukiwać akty prawne, wystarczy zadać pytanie - a aplika
 
 ## ✨ Kluczowe funkcje
 
+### 🚀 Nowe w wersji MVP
+
+**Response Caching** - Inteligentna pamięć podręczna (7 dni) znacząco przyspiesza odpowiedzi na popularne pytania i redukuje koszty operacyjne.
+
+**OCR Support** - Automatyczne rozpoznawanie tekstu ze skanów, zdjęć i dokumentów PDF. Obsługa języka polskiego i angielskiego.
+
+---
+
 ### Szybkie odpowiedzi
 Zamiast godzin researchu - odpowiedź w 5-10 sekund.
 
