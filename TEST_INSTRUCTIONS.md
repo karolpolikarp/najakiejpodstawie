@@ -1,8 +1,8 @@
 # 🧪 MVP Testing Instructions
 
-## QUICK START (Raspberry Pi)
+## ⚡ SUPER QUICK START (Raspberry Pi)
 
-### 1. Przygotowanie środowiska
+### Jedna komenda - wszystko automatycznie!
 
 ```bash
 cd /home/user/najakiejpodstawie
@@ -11,25 +11,36 @@ cd /home/user/najakiejpodstawie
 export SUPABASE_URL="https://your-project.supabase.co"
 export SUPABASE_ANON_KEY="your-anon-key-here"
 
-# Make script executable
-chmod +x test-runner.sh
+# Run ALL tests automatically
+./run-all-tests.sh
 
-# Run tests
-./test-runner.sh
+# ☕ Czekaj ~5-10 minut...
+
+# Na końcu skopiuj cały output i wyślij do Claude!
 ```
 
-### 2. Uruchomienie testów
+**TO WSZYSTKO!** Zero interakcji, zero ręcznego zbierania logów.
 
-```bash
-# OPTION A: Full test suite (wszystkie 30 pytań)
-./test-runner.sh
+### 2. Co robi skrypt automatycznie?
 
-# OPTION B: Manual testing przez UI
-# 1. Otwórz https://jakieprawo.pl/czat
-# 2. Zadaj pytania z test-scenarios.md
-# 3. Sprawdź czy odpowiedzi są poprawne
-# 4. Zbierz logi z Supabase (patrz sekcja 3)
-```
+**run-all-tests.sh** wykonuje:
+
+1. ✅ 27 testów API (5 kategorii)
+2. ✅ Measure response times
+3. ✅ Track cache hits/misses
+4. ✅ Count successes/failures
+5. ✅ Generate detailed report
+6. ✅ Calculate MVP readiness
+7. ✅ Format output for Claude
+
+**Output zawiera:**
+- Summary (passed/failed, cache stats)
+- Category breakdown (A-E)
+- Failed tests details
+- MVP readiness decision
+- Full detailed report (ready to copy)
+
+**Czas wykonania:** ~5-10 minut (zależy od API)
 
 ---
 
