@@ -38,6 +38,69 @@ interface LegalContextResult {
 }
 
 /**
+ * Response caching utilities
+ * Saves API costs by reusing answers for duplicate questions
+ */
+
+/**
+ * Normalize question for consistent hashing
+ * - Lowercase, trim, collapse whitespace
+ * - Remove punctuation except letters, numbers, spaces
+ */
+function normalizeQuestion(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')  // Collapse multiple spaces
+    .replace(/[^\p{L}\p{N}\s]/gu, '');  // Remove punctuation, keep letters/numbers/spaces
+}
+
+/**
+ * Hash question using SHA-256 for cache lookup
+ */
+async function hashQuestion(text: string): Promise<string> {
+  const normalized = normalizeQuestion(text);
+  const encoder = new TextEncoder();
+  const data = encoder.encode(normalized);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Check cache for previous answer to identical question
+ * Returns cached answer if found and fresh (< 7 days old), null otherwise
+ */
+async function getCachedResponse(
+  supabaseClient: any,
+  questionHash: string
+): Promise<string | null> {
+  try {
+    const { data, error } = await supabaseClient
+      .from('user_questions')
+      .select('answer, created_at')
+      .eq('question_hash', questionHash)
+      .eq('has_file_context', false)  // Only cache questions without files
+      .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())  // Last 7 days
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !data) {
+      console.log('[CACHE] Miss - no cached answer found');
+      return null;
+    }
+
+    console.log('[CACHE] Hit - returning cached answer from', data.created_at);
+    return data.answer;
+
+  } catch (error) {
+    console.error('[CACHE] Error checking cache:', error);
+    return null;
+  }
+}
+
+/**
  * Detects if the question requires FORCED tool calling
  * Only force tools for specific article requests, not general questions
  * This allows the model to answer basic questions from its knowledge
@@ -229,6 +292,86 @@ serve(async (req) => {
     }
 
     console.log('Rate limit check passed. Remaining requests:', rateLimitResult.remaining);
+
+    // RESPONSE CACHING: Check if we have a cached answer (only for questions without file context)
+    // This saves API costs for duplicate questions
+    let questionHash: string | null = null;
+    let cachedAnswer: string | null = null;
+
+    if (!fileContext) {
+      questionHash = await hashQuestion(message);
+      console.log(`[CACHE] Question hash: ${questionHash.substring(0, 16)}...`);
+
+      cachedAnswer = await getCachedResponse(supabaseClient, questionHash);
+
+      if (cachedAnswer) {
+        console.log('[CACHE] ✓ Cache HIT - returning cached answer, skipping AI call');
+
+        // Stream the cached answer to simulate real-time response
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          start(controller) {
+            try {
+              // Send SSE events in correct order
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'message_start',
+                message: { role: 'assistant' }
+              })}\n\n`));
+
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'content_block_start',
+                index: 0,
+                content_block: { type: 'text', text: '' }
+              })}\n\n`));
+
+              // Stream cached answer in chunks
+              const chunkSize = 100;
+              for (let i = 0; i < cachedAnswer.length; i += chunkSize) {
+                const chunk = cachedAnswer.slice(i, i + chunkSize);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  type: 'content_block_delta',
+                  index: 0,
+                  delta: { type: 'text_delta', text: chunk }
+                })}\n\n`));
+              }
+
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'content_block_stop',
+                index: 0
+              })}\n\n`));
+
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'message_delta',
+                delta: { stop_reason: 'end_turn' }
+              })}\n\n`));
+
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'message_stop'
+              })}\n\n`));
+
+              controller.close();
+            } catch (error) {
+              console.error('[CACHE] Error streaming cached response:', error);
+              controller.error(error);
+            }
+          }
+        });
+
+        return new Response(stream, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Cache-Status': 'HIT'  // Debug header
+          }
+        });
+      } else {
+        console.log('[CACHE] ✗ Cache MISS - proceeding with AI call');
+      }
+    } else {
+      console.log('[CACHE] Skipping cache (file context present)');
+    }
 
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_API_KEY) {
@@ -872,6 +1015,7 @@ ${message}`;
                     message_id: messageId || null,
                     question: message,
                     answer: fullResponse,
+                    question_hash: questionHash,  // For response caching
                     has_file_context: !!fileContext,
                     file_name: fileContext ? 'document.pdf/docx' : null,
                     session_id: sessionId || null,

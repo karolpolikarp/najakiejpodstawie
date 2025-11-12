@@ -7,6 +7,7 @@ import { CONSTANTS } from '@/lib/constants';
 import { logger } from '@/lib/logger';
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
+import Tesseract from 'tesseract.js';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,75 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
   import.meta.url
 ).toString();
+
+/**
+ * OCR helper function using Tesseract.js
+ * Recognizes text from images (scanned PDFs, photos)
+ */
+async function performOCR(imageData: string | Blob, filename: string): Promise<string> {
+  logger.debug('🔍 Starting OCR on:', filename);
+
+  try {
+    const result = await Tesseract.recognize(
+      imageData,
+      'pol+eng', // Polish + English languages
+      {
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            logger.debug(`OCR progress: ${Math.round(m.progress * 100)}%`);
+          }
+        }
+      }
+    );
+
+    logger.debug('✓ OCR complete! Text length:', result.data.text.length);
+    return result.data.text;
+  } catch (error) {
+    logger.error('❌ OCR error:', error);
+    throw new Error('Nie udało się rozpoznać tekstu z obrazu');
+  }
+}
+
+/**
+ * OCR helper for PDF pages (renders page to canvas, then OCR)
+ */
+async function performPDFOCR(pdf: pdfjsLib.PDFDocumentProxy): Promise<string> {
+  logger.debug('🔍 Starting OCR on PDF pages...');
+  const textParts: string[] = [];
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    logger.debug(`📄 OCR page ${i}/${pdf.numPages}...`);
+    const page = await pdf.getPage(i);
+
+    // Render page to canvas
+    const viewport = page.getViewport({ scale: 2.0 }); // Higher scale = better OCR
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    if (!context) {
+      throw new Error('Failed to get canvas context');
+    }
+
+    await page.render({ canvasContext: context, viewport }).promise;
+
+    // Convert canvas to blob
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((b) => {
+        if (b) resolve(b);
+        else reject(new Error('Failed to convert canvas to blob'));
+      });
+    });
+
+    // Perform OCR on this page
+    const pageText = await performOCR(blob, `page-${i}.png`);
+    textParts.push(pageText);
+    logger.debug(`✓ Page ${i} OCR complete, chars:`, pageText.length);
+  }
+
+  return textParts.join('\n\n');
+}
 
 interface FileUploadProps {
   onFileLoad: (content: string, filename: string) => void;
@@ -44,7 +114,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
     // Check file type
     const allowedTypes = CONSTANTS.FILE_UPLOAD.ALLOWED_TYPES as readonly string[];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Wspierane formaty: TXT, PDF, DOC, DOCX');
+      toast.error('Wspierane formaty: TXT, PDF, DOC, DOCX, JPG, PNG');
       return;
     }
 
@@ -103,9 +173,37 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
 
           content = textParts.join('\n\n');
           logger.debug('✓ PDF parsing complete! Total chars:', content.length);
+
+          // If PDF has very little text, it might be a scanned document → try OCR
+          if (CONSTANTS.FILE_UPLOAD.OCR_ENABLED && content.trim().length < CONSTANTS.FILE_UPLOAD.OCR_MIN_TEXT_LENGTH) {
+            logger.debug('⚠️ PDF has little text - attempting OCR...');
+            toast.info('Wykryto skan - rozpoznawanie tekstu...');
+
+            try {
+              content = await performPDFOCR(pdf);
+              logger.debug('✓ PDF OCR complete! Total chars:', content.length);
+              toast.success('Rozpoznano tekst ze skanu');
+            } catch (ocrError) {
+              logger.error('❌ PDF OCR error:', ocrError);
+              toast.warning('Nie udało się rozpoznać tekstu ze skanu');
+              // Continue with whatever text was extracted
+            }
+          }
         } catch (pdfError) {
           logger.error('❌ PDF parsing error:', pdfError);
           toast.error(`Nie udało się odczytać PDF: ${pdfError instanceof Error ? pdfError.message : 'Nieznany błąd'}`);
+          return;
+        }
+      } else if (file.type === 'image/jpeg' || file.type === 'image/jpg' || file.type === 'image/png') {
+        // Image file - perform OCR
+        try {
+          logger.debug('🖼️ Image detected - performing OCR...');
+          toast.info('Rozpoznawanie tekstu z obrazu...');
+          content = await performOCR(file, file.name);
+          toast.success('Rozpoznano tekst z obrazu');
+        } catch (ocrError) {
+          logger.error('❌ Image OCR error:', ocrError);
+          toast.error('Nie udało się rozpoznać tekstu z obrazu');
           return;
         }
       } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
@@ -184,7 +282,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
                   ) : (
                     <>
                       <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-2" aria-hidden="true" />
-                      <span className="hidden sm:inline">Załącz plik (TXT, PDF, DOCX)</span>
+                      <span className="hidden sm:inline">Załącz plik (TXT, PDF, DOCX, JPG, PNG)</span>
                       <span className="sm:hidden">Załącz plik</span>
                     </>
                   )}
