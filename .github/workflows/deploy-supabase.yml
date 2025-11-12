@@ -32,14 +32,92 @@ jobs:
       - name: Link Supabase project
         run: |
           echo "Linking to project: ${{ secrets.SUPABASE_PROJECT_ID }}"
-          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          if ! supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --password "${{ secrets.SUPABASE_DB_PASSWORD }}"; then
+            echo "❌ Failed to link to Supabase project"
+            echo "Verify that:"
+            echo "  - SUPABASE_PROJECT_ID is correct"
+            echo "  - SUPABASE_DB_PASSWORD is correct"
+            echo "  - SUPABASE_ACCESS_TOKEN has sufficient permissions"
+            exit 1
+          fi
+          echo "✅ Successfully linked to Supabase project"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Check migration status
+        run: |
+          echo "Checking current migration status..."
+          supabase db diff --linked 2>&1 | tee diff.log || true
+
+          if [ -s diff.log ]; then
+            echo "Schema differences detected"
+            cat diff.log
+          else
+            echo "No schema differences detected"
+          fi
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        continue-on-error: true
 
       - name: Run Database Migrations
         run: |
           echo "Pushing database migrations to remote..."
-          supabase db push --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          echo ""
+          echo "📋 Local migrations:"
+          ls -1 supabase/migrations/ | cat -n
+          echo ""
+
+          # Try to push migrations with detailed output
+          if supabase db push --password "${{ secrets.SUPABASE_DB_PASSWORD }}" 2>&1 | tee migration.log; then
+            echo ""
+            echo "✅ Migrations completed successfully"
+            exit 0
+          fi
+
+          # Analyze the output to determine what happened
+          echo ""
+          echo "🔍 Analyzing migration result..."
+
+          # Check for "already applied" or "no changes" indicators
+          if grep -qi "already applied\|no migrations\|up to date\|nothing to migrate\|no new migrations" migration.log; then
+            echo "ℹ️ No new migrations to apply - database is up to date"
+            exit 0
+          fi
+
+          # Check for specific error patterns
+          if grep -qi "permission denied\|access denied\|authentication failed" migration.log; then
+            echo "❌ Authentication/Permission error:"
+            cat migration.log
+            echo ""
+            echo "Check SUPABASE_DB_PASSWORD and SUPABASE_ACCESS_TOKEN secrets"
+            exit 1
+          fi
+
+          if grep -qi "already exists\|duplicate" migration.log; then
+            echo "⚠️ Schema conflict detected (objects already exist):"
+            cat migration.log
+            echo ""
+            echo "This usually means migrations were applied manually or outside of this workflow"
+            exit 1
+          fi
+
+          if grep -qi "syntax error\|invalid" migration.log; then
+            echo "❌ SQL syntax error in migrations:"
+            cat migration.log
+            exit 1
+          fi
+
+          # Generic error check
+          if grep -qi "error\|failed" migration.log; then
+            echo "❌ Migration failed with errors:"
+            cat migration.log
+            exit 1
+          fi
+
+          # Unknown status - assume failure
+          echo "⚠️ Migration completed with unclear status:"
+          cat migration.log
+          exit 1
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         continue-on-error: true
@@ -48,7 +126,17 @@ jobs:
       - name: Deploy Edge Functions
         run: |
           echo "Deploying Edge Functions..."
-          supabase functions deploy --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+          set -e  # Exit on error
+          supabase functions deploy --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} 2>&1 | tee functions.log
+
+          # Check if deployment succeeded
+          if grep -qi "error\|failed" functions.log; then
+            echo "❌ Function deployment errors detected"
+            cat functions.log
+            exit 1
+          fi
+
+          echo "✅ Functions deployed successfully"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         continue-on-error: true
@@ -57,11 +145,38 @@ jobs:
       - name: Deployment Summary
         run: |
           echo "=== Deployment Summary ==="
-          echo "Migrations status: ${{ steps.migrations.outcome }}"
-          echo "Functions status: ${{ steps.functions.outcome }}"
+          echo ""
+          echo "📊 Status:"
+          echo "  Migrations: ${{ steps.migrations.outcome }}"
+          echo "  Functions: ${{ steps.functions.outcome }}"
+          echo ""
+
+          if [ "${{ steps.migrations.outcome }}" == "failure" ]; then
+            echo "❌ Migrations failed - Common causes:"
+            echo "   1. Schema conflicts with existing database objects"
+            echo "   2. Migration already applied to remote database"
+            echo "   3. Invalid SQL syntax or missing dependencies"
+            echo "   4. Database password or permissions incorrect"
+            echo ""
+            echo "💡 Troubleshooting:"
+            echo "   - Check migration logs above for specific errors"
+            echo "   - Verify SUPABASE_DB_PASSWORD secret is correct"
+            echo "   - Consider running 'supabase db reset --linked' locally to test"
+            echo ""
+          fi
+
+          if [ "${{ steps.functions.outcome }}" == "failure" ]; then
+            echo "❌ Functions deployment failed - Common causes:"
+            echo "   1. Missing dependencies in function code"
+            echo "   2. Invalid function configuration"
+            echo "   3. Access token or project ref incorrect"
+            echo ""
+          fi
+
           if [ "${{ steps.migrations.outcome }}" == "failure" ] || [ "${{ steps.functions.outcome }}" == "failure" ]; then
-            echo "⚠️ Some deployments failed - check logs above"
+            echo "⚠️ Deployment incomplete - see troubleshooting above"
             exit 1
           else
-            echo "✅ Deployment completed successfully!"
+            echo "✅ All deployments completed successfully!"
+            echo "🚀 Your changes are now live!"
           fi
