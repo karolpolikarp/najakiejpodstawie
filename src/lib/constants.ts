@@ -16,8 +16,14 @@ export const CONSTANTS = {
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
     ] as const,
-    ALLOWED_EXTENSIONS: ['.txt', '.pdf', '.doc', '.docx'] as const,
+    ALLOWED_EXTENSIONS: ['.txt', '.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'] as const,
+    // OCR configuration
+    OCR_MIN_TEXT_LENGTH: 50, // If PDF has less text, try OCR
+    OCR_ENABLED: true,
   },
 
   /**
