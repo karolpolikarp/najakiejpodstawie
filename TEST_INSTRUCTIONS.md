@@ -1,35 +1,55 @@
 # 🧪 MVP Testing Instructions
 
-## QUICK START (Raspberry Pi)
+## ⚡ SUPER QUICK START (Raspberry Pi)
 
-### 1. Przygotowanie środowiska
+### Jedna komenda - wszystko automatycznie!
 
 ```bash
 cd /home/user/najakiejpodstawie
 
-# Set environment variables (zastąp wartościami z Supabase)
-export SUPABASE_URL="https://your-project.supabase.co"
-export SUPABASE_ANON_KEY="your-anon-key-here"
+# 1. Pull latest test script (with SSE fix)
+git pull origin claude/review-budget-mvp-scope-011CV3ohUWNzs2R2ot3Z1ea1
 
-# Make script executable
-chmod +x test-runner.sh
+# 2. Set environment variables (masz już ustawione)
+export SUPABASE_URL="https://topujvufxlywazazgujz.supabase.co"
+export SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcHVqdnVmeGx5d2F6YXpndWp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYxNjQ0NzcsImV4cCI6MjA1MTc0MDQ3N30.5xjvPBDCNqx6B6ufLXSQwbHVRhcRxgjKy8f7ufTuY5M"
 
-# Run tests
-./test-runner.sh
+# 3. Run ALL tests automatically
+./run-all-tests.sh
+
+# ☕ Czekaj ~5-10 minut...
+# Zobaczysz realtime progress:
+# [A1] A-Popular: ✓ PASS (3420ms, cache: MISS)
+# [A2] A-Popular: ✓ PASS (2890ms, cache: MISS)
+# ...
+
+# 4. Na końcu skopiuj CAŁY output i wyślij do Claude!
 ```
 
-### 2. Uruchomienie testów
+**TO WSZYSTKO!** Zero interakcji, zero ręcznego zbierania logów.
 
-```bash
-# OPTION A: Full test suite (wszystkie 30 pytań)
-./test-runner.sh
+**✅ FIX APPLIED:** Skrypt teraz poprawnie obsługuje SSE streaming (problem z hanging rozwiązany!)
 
-# OPTION B: Manual testing przez UI
-# 1. Otwórz https://jakieprawo.pl/czat
-# 2. Zadaj pytania z test-scenarios.md
-# 3. Sprawdź czy odpowiedzi są poprawne
-# 4. Zbierz logi z Supabase (patrz sekcja 3)
-```
+### 2. Co robi skrypt automatycznie?
+
+**run-all-tests.sh** wykonuje:
+
+1. ✅ 27 testów API (5 kategorii)
+2. ✅ Measure response times
+3. ✅ Track cache hits/misses
+4. ✅ Count successes/failures
+5. ✅ Generate detailed report
+6. ✅ Calculate MVP readiness
+7. ✅ Format output for Claude
+
+**Output zawiera:**
+- Summary (passed/failed, cache stats)
+- Category breakdown (A-E)
+- Failed tests details
+- MVP readiness decision
+- Full detailed report (ready to copy)
+
+**Czas wykonania:** ~5-10 minut (zależy od API)
 
 ---
 

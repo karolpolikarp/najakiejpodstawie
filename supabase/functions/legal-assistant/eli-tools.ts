@@ -357,7 +357,18 @@ function validateArticleContent(data: ArticleResponse): { valid: boolean; reason
 }
 
 /**
+ * In-memory cache for articles to prevent duplicate fetches within the same request
+ * Key: "actCode:articleNumber" (e.g., "kp:152")
+ * Value: ArticleResponse
+ *
+ * IMPORTANT: This is a per-function-execution cache, not persistent.
+ * It prevents duplicate ELI-MCP calls within a single API request.
+ */
+const articleCache = new Map<string, ArticleResponse>();
+
+/**
  * Fetch article content from ELI MCP server with retry logic and adaptive timeout
+ * Includes in-memory caching to prevent duplicate fetches within the same request
  */
 export async function fetchArticle(
   actCode: string,
@@ -367,11 +378,19 @@ export async function fetchArticle(
   // The MCP server now has dynamic search capabilities - it will handle all acts!
   // This allows the system to access ALL ~15,000 acts from ISAP, not just hardcoded ones.
 
-  eliLogger.debug(`Fetching article: ${actCode} ${articleNumber}`);
+  // Check cache first
+  const cacheKey = `${actCode.toLowerCase()}:${articleNumber}`;
+  const cached = articleCache.get(cacheKey);
+  if (cached) {
+    eliLogger.debug(`[CACHE HIT] Using cached article: ${actCode} ${articleNumber}`);
+    return cached;
+  }
+
+  eliLogger.debug(`[CACHE MISS] Fetching article: ${actCode} ${articleNumber}`);
 
   let attemptNumber = 0;
 
-  return await withRetry(
+  const result = await withRetry(
     async () => {
       // QW7: Adaptive timeout based on attempt number
       const timeoutMs = attemptNumber === 0 ? MCP_TIMEOUT_FIRST
@@ -458,10 +477,49 @@ export async function fetchArticle(
       error: errorMessage,
     };
   });
+
+  // Cache the result (both success and failure) to prevent duplicate fetches
+  articleCache.set(cacheKey, result);
+  eliLogger.debug(`[CACHE STORE] Cached article: ${actCode} ${articleNumber}`);
+
+  return result;
+}
+
+/**
+ * Truncate article text to prevent token overflow
+ * Anthropic has 50k tokens/min limit, and each full article can be ~12k tokens!
+ * We limit to 3000 chars (~750 tokens) per article to stay under limits.
+ */
+function truncateArticleText(text: string, maxChars: number = 3000): string {
+  if (text.length <= maxChars) {
+    return text;
+  }
+
+  // Try to truncate at paragraph boundary (first occurrence of double newline after maxChars/2)
+  const halfPoint = Math.floor(maxChars / 2);
+  const paragraphBreak = text.indexOf('\n\n', halfPoint);
+
+  let truncatedText: string;
+  if (paragraphBreak !== -1 && paragraphBreak <= maxChars) {
+    truncatedText = text.substring(0, paragraphBreak);
+  } else {
+    // No good paragraph break found, truncate at maxChars and try to end at sentence
+    const textUpToMax = text.substring(0, maxChars);
+    const lastPeriod = textUpToMax.lastIndexOf('.');
+    const lastNewline = textUpToMax.lastIndexOf('\n');
+    const cutPoint = Math.max(lastPeriod, lastNewline);
+
+    truncatedText = cutPoint > maxChars * 0.8
+      ? text.substring(0, cutPoint + 1)
+      : textUpToMax;
+  }
+
+  return truncatedText + '\n\n[...artykuł został skrócony dla optymalizacji. Pełna treść: ISAP]';
 }
 
 /**
  * Format article data for inclusion in system prompt
+ * IMPORTANT: Truncates articles to prevent Anthropic 50k TPM rate limit
  */
 export function formatArticleContext(articles: ArticleResponse[]): string {
   if (articles.length === 0) {
@@ -479,9 +537,12 @@ export function formatArticleContext(articles: ArticleResponse[]): string {
   for (const article of successfulArticles) {
     if (!article.article || !article.act) continue;
 
+    // Truncate article text to prevent token overflow (50KB → 3KB)
+    const truncatedText = truncateArticleText(article.article.text);
+
     context += `**${article.act.title}**\n`;
     context += `Adres: ${article.act.displayAddress}\n\n`;
-    context += `${article.article.text}\n\n`;
+    context += `${truncatedText}\n\n`;
     context += `Źródło: ${article.isapLink}\n`;
     context += '---\n\n';
   }
@@ -515,10 +576,13 @@ export async function enrichWithArticles(
   usePremiumModel = false
 ): Promise<EnrichmentResult> {
   // QW4: Dynamic limits based on premium status
-  // Reduced limits to prevent Anthropic rate limiting (50k tokens/min)
-  // Each article can be ~50k chars (~12.5k tokens), so 3 articles ≈ 37.5k tokens
-  const MAX_ARTICLES_FROM_TOPICS = usePremiumModel ? 4 : 2;
-  const MAX_TOTAL_ARTICLES = usePremiumModel ? 6 : 3;
+  // CRITICAL: Reduced limits to prevent Anthropic rate limiting (50k tokens/min)
+  // With truncation: ~3k chars (~750 tokens) per article
+  // 2 articles = ~1500 tokens, 4 articles = ~3000 tokens (safe)
+  // Old: 3 articles * 50k chars = 37.5k tokens (EXCEEDED LIMIT!)
+  // New: 2 articles * 3k chars = 1.5k tokens (SAFE)
+  const MAX_ARTICLES_FROM_TOPICS = usePremiumModel ? 2 : 1;
+  const MAX_TOTAL_ARTICLES = usePremiumModel ? 4 : 2;
 
   // 1. Articles from user query (regex detection: "art 10 kp")
   const fromQuery = detectArticleReferences(message);

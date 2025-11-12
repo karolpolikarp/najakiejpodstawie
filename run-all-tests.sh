@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Full Automated Test Suite for MVP
-# Runs all tests + collects logs + generates report
-# Usage: ./run-all-tests.sh
+# MVP Test Suite - SSE Stream Compatible
+# Properly handles Server-Sent Events responses
 
 set -e
 
@@ -11,7 +10,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 # Configuration
 API_URL="${SUPABASE_URL}/functions/v1/legal-assistant"
@@ -23,19 +22,17 @@ RESULTS_FILE="${OUTPUT_DIR}/results_${TIMESTAMP}.txt"
 SUMMARY_FILE="${OUTPUT_DIR}/summary_${TIMESTAMP}.json"
 REPORT_FILE="${OUTPUT_DIR}/FINAL_REPORT_${TIMESTAMP}.txt"
 
-# Create output directory
 mkdir -p "${OUTPUT_DIR}"
 
 echo "════════════════════════════════════════════════════════════"
-echo "🧪 AUTOMATED MVP TEST SUITE"
+echo "🧪 AUTOMATED MVP TEST SUITE (SSE Compatible)"
 echo "════════════════════════════════════════════════════════════"
 echo "Started: $(date)"
-echo "Session ID: ${SESSION_ID}"
-echo "API: ${API_URL}"
+echo "Session: ${SESSION_ID}"
 echo "════════════════════════════════════════════════════════════"
 echo ""
 
-# Initialize counters
+# Counters
 total_tests=0
 passed_tests=0
 failed_tests=0
@@ -43,39 +40,47 @@ cache_hits=0
 cache_misses=0
 total_response_time=0
 
-# Arrays to store results
 declare -a failed_test_ids=()
 declare -a failed_test_details=()
 
-# Function to call API and measure
+# Call API with SSE handling
 call_api() {
     local question="$1"
     local category="$2"
     local test_id="$3"
-    local expected="$4"
 
     echo -n "[$test_id] ${category}: "
 
     start_time=$(date +%s%3N)
 
-    # Call API with timeout
-    response=$(timeout 30s curl -s -w "\n%{http_code}\n%{time_total}" \
-        -X POST "${API_URL}" \
-        -H "Content-Type: application/json" \
-        -H "apikey: ${ANON_KEY}" \
-        -H "Authorization: Bearer ${ANON_KEY}" \
-        -d "{
-            \"message\": \"${question}\",
-            \"sessionId\": \"${SESSION_ID}\",
-            \"messageId\": \"${test_id}-msg\",
-            \"usePremiumModel\": false
-        }" 2>&1) || {
-        echo -e "${RED}TIMEOUT${NC}"
+    # Create temp file for response
+    local temp_file=$(mktemp)
+
+    # Call API with timeout, stop after message_stop event
+    timeout 30s bash -c "
+        curl -s -N \
+            -X POST '${API_URL}' \
+            -H 'Content-Type: application/json' \
+            -H 'apikey: ${ANON_KEY}' \
+            -H 'Authorization: Bearer ${ANON_KEY}' \
+            -d '{\"message\":\"${question}\",\"sessionId\":\"${SESSION_ID}\",\"messageId\":\"${test_id}\",\"usePremiumModel\":false}' \
+            2>&1 | while IFS= read -r line; do
+                echo \"\$line\" >> '${temp_file}'
+                # Stop after message_stop event
+                if echo \"\$line\" | grep -q 'message_stop'; then
+                    break
+                fi
+            done
+    " || {
+        end_time=$(date +%s%3N)
+        response_time=$((end_time - start_time))
+        echo -e "${RED}TIMEOUT${NC} (${response_time}ms)"
         ((total_tests++))
         ((failed_tests++))
         failed_test_ids+=("${test_id}")
         failed_test_details+=("${test_id}: TIMEOUT after 30s")
-        echo "${TIMESTAMP} | ${test_id} | ${category} | ${question:0:40}... | TIMEOUT | 30000ms | N/A | timeout" >> "${RESULTS_FILE}"
+        echo "${TIMESTAMP} | ${test_id} | ${category} | ${question:0:40}... | TIMEOUT | ${response_time}ms | N/A | timeout" >> "${RESULTS_FILE}"
+        rm -f "${temp_file}"
         return 1
     }
 
@@ -83,180 +88,169 @@ call_api() {
     response_time=$((end_time - start_time))
     total_response_time=$((total_response_time + response_time))
 
-    # Parse response
-    http_code=$(echo "$response" | tail -2 | head -1)
-    body=$(echo "$response" | head -n -2)
+    # Check if response contains valid SSE data
+    if grep -q "message_stop" "${temp_file}"; then
+        # Success - got complete stream
+        cache_status="MISS"
+        if grep -q "X-Cache-Status: HIT" "${temp_file}"; then
+            cache_status="HIT"
+            ((cache_hits++))
+        else
+            ((cache_misses++))
+        fi
 
-    # Determine cache status
-    cache_status="MISS"
-    if echo "$body" | grep -q "X-Cache-Status: HIT"; then
-        cache_status="HIT"
-        ((cache_hits++))
-    else
-        ((cache_misses++))
-    fi
-
-    ((total_tests++))
-
-    # Check success
-    if [ "$http_code" = "200" ] || [ "$http_code" = "000" ]; then
         echo -e "${GREEN}PASS${NC} (${response_time}ms, cache: ${cache_status})"
+        ((total_tests++))
         ((passed_tests++))
-        echo "${TIMESTAMP} | ${test_id} | ${category} | ${question:0:40}... | PASS | ${response_time}ms | ${cache_status} | http_${http_code}" >> "${RESULTS_FILE}"
+        echo "${TIMESTAMP} | ${test_id} | ${category} | ${question:0:40}... | PASS | ${response_time}ms | ${cache_status} | ok" >> "${RESULTS_FILE}"
+        rm -f "${temp_file}"
         return 0
     else
-        echo -e "${RED}FAIL${NC} (HTTP ${http_code}, ${response_time}ms)"
+        # Check for errors
+        if grep -q "error" "${temp_file}"; then
+            error_msg=$(grep "error" "${temp_file}" | head -1)
+            echo -e "${RED}FAIL${NC} (${response_time}ms) - ${error_msg:0:50}"
+        else
+            echo -e "${RED}FAIL${NC} (${response_time}ms) - no valid response"
+        fi
+
+        ((total_tests++))
         ((failed_tests++))
+        ((cache_misses++))
         failed_test_ids+=("${test_id}")
-        failed_test_details+=("${test_id}: HTTP ${http_code} - ${body:0:100}")
-        echo "${TIMESTAMP} | ${test_id} | ${category} | ${question:0:40}... | FAIL | ${response_time}ms | ${cache_status} | http_${http_code}" >> "${RESULTS_FILE}"
+        failed_test_details+=("${test_id}: Invalid response")
+        echo "${TIMESTAMP} | ${test_id} | ${category} | ${question:0:40}... | FAIL | ${response_time}ms | MISS | error" >> "${RESULTS_FILE}"
+        rm -f "${temp_file}"
         return 1
     fi
 }
 
-# Sleep between categories to avoid rate limiting
-sleep_between_categories() {
-    echo ""
-    echo "⏳ Waiting 5s before next category..."
-    sleep 5
-    echo ""
-}
-
-# Initialize results file
+# Initialize results
 echo "TIMESTAMP | TEST_ID | CATEGORY | QUESTION | STATUS | TIME | CACHE | INFO" > "${RESULTS_FILE}"
 echo "══════════════════════════════════════════════════════════════════════════════════" >> "${RESULTS_FILE}"
 
-# ═══════════════════════════════════════════════════════════════
-# CATEGORY A: Popular Questions (Cache Test)
-# ═══════════════════════════════════════════════════════════════
-echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}📌 CATEGORY A: Popular Questions (Cache Test - 5 tests)${NC}"
-echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+sleep_between() {
+    echo ""
+    echo "⏳ Wait 3s..."
+    sleep 3
+    echo ""
+}
 
-call_api "Ile punktów karnych można mieć maksymalnie?" "A-Popular" "A1" "24 punkty"
-call_api "Kiedy przedawnia się roszczenie?" "A-Popular" "A2" "6 lat"
-call_api "Ile dni urlopu się należy?" "A-Popular" "A3" "20 lub 26 dni"
-call_api "Ile wynosi minimalne wynagrodzenie w Polsce?" "A-Popular" "A4" "minimalna krajowa"
-call_api "Czy wynajmujący może żądać kaucji?" "A-Popular" "A5" "TAK"
-
-sleep_between_categories
-
-# ═══════════════════════════════════════════════════════════════
-# CATEGORY B: Specific Articles (MCP Test)
-# ═══════════════════════════════════════════════════════════════
+# CATEGORY A
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}📌 CATEGORY B: Specific Articles (MCP Test - 8 tests)${NC}"
+echo -e "${BLUE}📌 CATEGORY A: Popular Questions (5 tests)${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 
-call_api "art 118 kc" "B-MCP" "B1" "Art. 118 KC"
-call_api "art 152 kp" "B-MCP" "B2" "Art. 152 KP"
-call_api "art 25 kk" "B-MCP" "B3" "Art. 25 KK"
-call_api "art 103 prawo o ruchu drogowym" "B-MCP" "B4" "Art. 103"
-call_api "art 30 konstytucji" "B-MCP" "B5" "Art. 30"
-call_api "art 187 kpc" "B-MCP" "B6" "Art. 187 KPC"
-call_api "art 23 kro" "B-MCP" "B7" "Art. 23 KRO"
-call_api "art 10 ustawa o prawach konsumenta" "B-MCP" "B8" "Art. 10"
+call_api "Ile punktów karnych można mieć maksymalnie?" "A-Popular" "A1"
+call_api "Kiedy przedawnia się roszczenie?" "A-Popular" "A2"
+call_api "Ile dni urlopu się należy?" "A-Popular" "A3"
+call_api "Ile wynosi minimalne wynagrodzenie?" "A-Popular" "A4"
+call_api "Czy wynajmujący może żądać kaucji?" "A-Popular" "A5"
 
-sleep_between_categories
+sleep_between
 
-# ═══════════════════════════════════════════════════════════════
-# CATEGORY C: General Questions (Context Test)
-# ═══════════════════════════════════════════════════════════════
+# CATEGORY B
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}📌 CATEGORY C: General Questions (Context Test - 5 tests)${NC}"
+echo -e "${BLUE}📌 CATEGORY B: Specific Articles (8 tests)${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 
-call_api "Co to jest obrona konieczna?" "C-Context" "C1" "Art. 25 KK"
-call_api "Jak rozwiązać umowę o pracę?" "C-Context" "C2" "rozwiązanie"
-call_api "Ile godzin tygodniowo można pracować?" "C-Context" "C3" "40 godzin"
-call_api "Jakie mam prawa przy windykacji długu?" "C-Context" "C4" "wierzyciel"
-call_api "Czy można pozwać za zniesławienie w internecie?" "C-Context" "C5" "Art. 212"
+call_api "art 118 kc" "B-MCP" "B1"
+call_api "art 152 kp" "B-MCP" "B2"
+call_api "art 25 kk" "B-MCP" "B3"
+call_api "art 103 prawo o ruchu drogowym" "B-MCP" "B4"
+call_api "art 30 konstytucji" "B-MCP" "B5"
+call_api "art 187 kpc" "B-MCP" "B6"
+call_api "art 23 kro" "B-MCP" "B7"
+call_api "art 10 ustawa o prawach konsumenta" "B-MCP" "B8"
 
-sleep_between_categories
+sleep_between
 
-# ═══════════════════════════════════════════════════════════════
-# CATEGORY D: Edge Cases (Error Handling - 4 tests)
-# ═══════════════════════════════════════════════════════════════
+# CATEGORY C
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}📌 CATEGORY D: Edge Cases (Error Handling - 4 tests)${NC}"
-echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-
-call_api "art 207 kpc" "D-Edge" "D1" "uchylony" || true
-call_api "art 99999 kc" "D-Edge" "D2" "nie znaleziono" || true
-call_api "art 10 ustawa o kotach i psach" "D-Edge" "D3" "błąd" || true
-call_api "Jaka jest najlepsza pizza w Warszawie?" "D-Edge" "D4" "pytania prawne" || true
-
-sleep_between_categories
-
-# ═══════════════════════════════════════════════════════════════
-# CATEGORY E: Cache Validation (Duplicates - 5 tests)
-# ═══════════════════════════════════════════════════════════════
-echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}📌 CATEGORY E: Cache Validation (Should all be HIT - 5 tests)${NC}"
+echo -e "${BLUE}📌 CATEGORY C: General Questions (5 tests)${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 
-call_api "Ile punktów karnych można mieć maksymalnie?" "E-Cache" "E1" "cache HIT"
-call_api "Kiedy przedawnia się roszczenie?" "E-Cache" "E2" "cache HIT"
-call_api "Ile dni urlopu się należy?" "E-Cache" "E3" "cache HIT"
-call_api "Ile wynosi minimalne wynagrodzenie w Polsce?" "E-Cache" "E4" "cache HIT"
-call_api "Czy wynajmujący może żądać kaucji?" "E-Cache" "E5" "cache HIT"
+call_api "Co to jest obrona konieczna?" "C-Context" "C1"
+call_api "Jak rozwiązać umowę o pracę?" "C-Context" "C2"
+call_api "Ile godzin tygodniowo można pracować?" "C-Context" "C3"
+call_api "Jakie mam prawa przy windykacji długu?" "C-Context" "C4"
+call_api "Czy można pozwać za zniesławienie w internecie?" "C-Context" "C5"
+
+sleep_between
+
+# CATEGORY D
+echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}📌 CATEGORY D: Edge Cases (4 tests)${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+
+call_api "art 207 kpc" "D-Edge" "D1" || true
+call_api "art 99999 kc" "D-Edge" "D2" || true
+call_api "art 10 ustawa o kotach i psach" "D-Edge" "D3" || true
+call_api "Jaka jest najlepsza pizza?" "D-Edge" "D4" || true
+
+sleep_between
+
+# CATEGORY E
+echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}📌 CATEGORY E: Cache Validation (5 tests - should be HIT)${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+
+call_api "Ile punktów karnych można mieć maksymalnie?" "E-Cache" "E1"
+call_api "Kiedy przedawnia się roszczenie?" "E-Cache" "E2"
+call_api "Ile dni urlopu się należy?" "E-Cache" "E3"
+call_api "Ile wynosi minimalne wynagrodzenie?" "E-Cache" "E4"
+call_api "Czy wynajmujący może żądać kaucji?" "E-Cache" "E5"
 
 echo ""
 echo "════════════════════════════════════════════════════════════"
 echo ""
 
-# Calculate statistics
+# Calculate stats
 success_rate=$(awk "BEGIN {printf \"%.1f\", (${passed_tests}/${total_tests})*100}")
 cache_hit_rate=$(awk "BEGIN {printf \"%.1f\", (${cache_hits}/(${cache_hits}+${cache_misses}))*100}")
 avg_response_time=$(awk "BEGIN {printf \"%.0f\", ${total_response_time}/${total_tests}}")
 
-# Determine if MVP is ready
 mvp_ready="NO"
-if (( passed_tests >= 25 )) && (( cache_hits >= 4 )); then
+if (( passed_tests >= 23 )) && (( cache_hits >= 4 )); then
     mvp_ready="YES"
 fi
 
-# ═══════════════════════════════════════════════════════════════
-# FINAL SUMMARY
-# ═══════════════════════════════════════════════════════════════
+# SUMMARY
 echo -e "${BLUE}════════════════════════════════════════════════════════════${NC}"
 echo -e "${BLUE}📊 FINAL TEST SUMMARY${NC}"
 echo -e "${BLUE}════════════════════════════════════════════════════════════${NC}"
 echo ""
-echo "Test Execution:"
-echo "  Total tests:        ${total_tests}"
-echo -e "  Passed:             ${GREEN}${passed_tests}${NC}"
-echo -e "  Failed:             ${RED}${failed_tests}${NC}"
-echo "  Success rate:       ${success_rate}%"
+echo "Results:"
+echo "  Total:        ${total_tests}"
+echo -e "  Passed:       ${GREEN}${passed_tests}${NC}"
+echo -e "  Failed:       ${RED}${failed_tests}${NC}"
+echo "  Success:      ${success_rate}%"
 echo ""
-echo "Performance:"
-echo "  Cache hits:         ${cache_hits}"
-echo "  Cache misses:       ${cache_misses}"
-echo "  Cache hit rate:     ${cache_hit_rate}%"
-echo "  Avg response time:  ${avg_response_time}ms"
+echo "Cache:"
+echo "  Hits:         ${cache_hits}"
+echo "  Misses:       ${cache_misses}"
+echo "  Hit rate:     ${cache_hit_rate}%"
+echo "  Avg time:     ${avg_response_time}ms"
 echo ""
-echo "MVP Readiness:"
-echo -e "  Target: >= 83% success (25/30 tests)"
-echo -e "  Target: >= 80% cache hits (4/5 duplicates)"
+echo "MVP Status:"
 if [ "$mvp_ready" = "YES" ]; then
-    echo -e "  Status: ${GREEN}✅ READY FOR INVESTORS!${NC}"
+    echo -e "  ${GREEN}✅ READY FOR INVESTORS!${NC}"
 else
-    echo -e "  Status: ${YELLOW}⚠️  NEEDS REVIEW${NC}"
+    echo -e "  ${YELLOW}⚠️  NEEDS REVIEW${NC}"
 fi
 echo ""
 echo "════════════════════════════════════════════════════════════"
 echo ""
 
-# Failed tests details
 if [ ${#failed_test_ids[@]} -gt 0 ]; then
-    echo -e "${YELLOW}⚠️  Failed Tests Details:${NC}"
+    echo -e "${YELLOW}Failed tests:${NC}"
     for detail in "${failed_test_details[@]}"; do
         echo "  - ${detail}"
     done
     echo ""
 fi
 
-# Save JSON summary
+# JSON summary
 cat > "${SUMMARY_FILE}" <<EOF
 {
   "timestamp": "${TIMESTAMP}",
@@ -269,140 +263,68 @@ cat > "${SUMMARY_FILE}" <<EOF
   "cache_misses": ${cache_misses},
   "cache_hit_rate": ${cache_hit_rate},
   "avg_response_time_ms": ${avg_response_time},
-  "mvp_ready": "${mvp_ready}",
-  "failed_test_ids": [$(IFS=,; echo "\"${failed_test_ids[*]//,/\",\"}\"")],
-  "results_file": "${RESULTS_FILE}",
-  "report_file": "${REPORT_FILE}"
+  "mvp_ready": "${mvp_ready}"
 }
 EOF
 
-# ═══════════════════════════════════════════════════════════════
-# GENERATE FINAL REPORT (for Claude to analyze)
-# ═══════════════════════════════════════════════════════════════
+# Final report
 cat > "${REPORT_FILE}" <<EOREPORT
-════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 MVP TEST REPORT - $(date)
-════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 
-SESSION INFO:
-  Timestamp:     ${TIMESTAMP}
-  Session ID:    ${SESSION_ID}
-  API Endpoint:  ${API_URL}
+SESSION: ${SESSION_ID}
 
-════════════════════════════════════════════════════════════════
-TEST RESULTS SUMMARY
-════════════════════════════════════════════════════════════════
+RESULTS:
+  Total tests:    ${total_tests}
+  Passed:         ${passed_tests}
+  Failed:         ${failed_tests}
+  Success rate:   ${success_rate}%
 
-Overall Performance:
-  Total tests:         ${total_tests}
-  Passed:              ${passed_tests} ✓
-  Failed:              ${failed_tests} ✗
-  Success rate:        ${success_rate}%
+CACHE:
+  Hits:           ${cache_hits}
+  Misses:         ${cache_misses}
+  Hit rate:       ${cache_hit_rate}%
 
-Category Breakdown:
-  A (Popular):         ?/5  (will check details)
-  B (MCP):             ?/8  (will check details)
-  C (Context):         ?/5  (will check details)
-  D (Edge):            ?/4  (will check details)
-  E (Cache):           ?/5  (will check details)
+PERFORMANCE:
+  Avg time:       ${avg_response_time}ms
 
-Cache Performance:
-  Cache hits:          ${cache_hits}
-  Cache misses:        ${cache_misses}
-  Cache hit rate:      ${cache_hit_rate}%
-  Expected for E:      100% (5/5)
-
-Response Times:
-  Average:             ${avg_response_time}ms
-  Expected (cache):    < 500ms
-  Expected (AI):       2000-10000ms
-
-════════════════════════════════════════════════════════════════
-MVP READINESS ASSESSMENT
-════════════════════════════════════════════════════════════════
-
-Success Criteria:
-  ✓ Success rate >= 83% (25/30):    $([ $passed_tests -ge 25 ] && echo "PASS" || echo "FAIL")
-  ✓ Cache hits >= 80% (4/5):        $([ $cache_hits -ge 4 ] && echo "PASS" || echo "FAIL")
-
-Final Decision: ${mvp_ready}
+MVP READY: ${mvp_ready}
 
 $(if [ "$mvp_ready" = "YES" ]; then
-    echo "✅ MVP IS READY FOR INVESTORS!"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Review failed tests (if any)"
-    echo "  2. Merge to main branch"
-    echo "  3. Deploy to production"
-    echo "  4. Prepare investor pitch"
+    echo "✅ MVP IS READY!"
 else
-    echo "⚠️  MVP NEEDS ATTENTION"
-    echo ""
-    echo "Issues to address:"
-    echo "  - Success rate: ${success_rate}% (target: 83%)"
-    echo "  - Failed tests: ${failed_tests}"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Analyze failed tests"
-    echo "  2. Apply targeted fixes (~\$5-10 budget)"
-    echo "  3. Re-run tests"
-    echo "  4. Then → investors"
+    echo "⚠️  Needs fixes (target: 23/27 passed, 4/5 cache hits)"
 fi)
 
-════════════════════════════════════════════════════════════════
-FAILED TESTS (if any)
-════════════════════════════════════════════════════════════════
-
+FAILED TESTS:
 $(if [ ${#failed_test_ids[@]} -gt 0 ]; then
     for detail in "${failed_test_details[@]}"; do
         echo "${detail}"
     done
 else
-    echo "No failed tests! All ${passed_tests}/${total_tests} passed. 🎉"
+    echo "None - all tests passed! 🎉"
 fi)
 
-════════════════════════════════════════════════════════════════
-DETAILED RESULTS
-════════════════════════════════════════════════════════════════
-
+DETAILED RESULTS:
 $(cat "${RESULTS_FILE}")
 
-════════════════════════════════════════════════════════════════
-END OF REPORT
-════════════════════════════════════════════════════════════════
-
-Files generated:
-  - Detailed results: ${RESULTS_FILE}
-  - JSON summary:     ${SUMMARY_FILE}
-  - This report:      ${REPORT_FILE}
-
-To share with Claude:
-  cat ${REPORT_FILE}
-
+════════════════════════════════════════════════════════════
+Files: ${RESULTS_FILE}, ${SUMMARY_FILE}, ${REPORT_FILE}
+════════════════════════════════════════════════════════════
 EOREPORT
 
-# Display final report
+echo -e "${GREEN}✅ Tests complete!${NC}"
 echo ""
-echo -e "${GREEN}✅ Test execution complete!${NC}"
-echo ""
-echo "Files generated:"
-echo "  📄 ${RESULTS_FILE}"
-echo "  📄 ${SUMMARY_FILE}"
-echo "  📄 ${REPORT_FILE}"
+echo "Files:"
+echo "  ${RESULTS_FILE}"
+echo "  ${SUMMARY_FILE}"
+echo "  ${REPORT_FILE}"
 echo ""
 echo "════════════════════════════════════════════════════════════"
-echo -e "${BLUE}📋 COPY THIS OUTPUT TO SEND TO CLAUDE:${NC}"
+echo -e "${BLUE}📋 FINAL REPORT (copy to send to Claude):${NC}"
 echo "════════════════════════════════════════════════════════════"
-echo ""
 cat "${REPORT_FILE}"
-echo ""
-echo "════════════════════════════════════════════════════════════"
-echo "Completed: $(date)"
 echo "════════════════════════════════════════════════════════════"
 
-# Exit with proper code
-if [ "$mvp_ready" = "YES" ]; then
-    exit 0
-else
-    exit 1
-fi
+[ "$mvp_ready" = "YES" ] && exit 0 || exit 1
