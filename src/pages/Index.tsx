@@ -263,14 +263,37 @@ const Index = () => {
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text mb-3 sm:mb-4">
                 Znajdź podstawę prawną
               </h2>
-              <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-2 px-2">
-                Wpisz pytanie zwykłym językiem, a wskażemy Ci konkretny artykuł ustawy
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-4 px-2">
+                3 sposoby na odpowiedź - wybierz swój tryb pracy
               </p>
-              <p className="text-xs sm:text-sm text-muted-foreground/70 mb-2">
-                ⚡ Szybkie odpowiedzi • 📚 Polskie prawo • 🔒 Prywatne
-              </p>
-              <p className="text-xs text-muted-foreground/60 mb-6 sm:mb-10 max-w-2xl mx-auto px-4">
-                To narzędzie wspomagające, nie zastępuje porady prawnika
+
+              {/* 3 Usage Modes - Compact Cards */}
+              <div className="grid sm:grid-cols-3 gap-3 max-w-3xl mx-auto mb-6 px-2">
+                <div className="glass-card p-4 border-2 border-green-500/30 bg-gradient-to-br from-green-500/5 to-emerald-500/5 hover:shadow-soft transition-all">
+                  <div className="text-3xl mb-2">📄</div>
+                  <div className="text-sm font-bold mb-1">Analiza dokumentów</div>
+                  <div className="text-xs text-muted-foreground">
+                    Załącz PDF/skan → Zadaj pytanie
+                  </div>
+                </div>
+                <div className="glass-card p-4 border-2 border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 hover:shadow-soft transition-all">
+                  <div className="text-3xl mb-2">🔍</div>
+                  <div className="text-sm font-bold mb-1">Szukaj artykułów</div>
+                  <div className="text-xs text-muted-foreground">
+                    15,000+ ustaw z API Sejmu
+                  </div>
+                </div>
+                <div className="glass-card p-4 border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5 hover:shadow-soft transition-all">
+                  <div className="text-3xl mb-2">💬</div>
+                  <div className="text-sm font-bold mb-1">Pytania AI <span className="text-xs text-amber-600">[Beta]</span></div>
+                  <div className="text-xs text-muted-foreground">
+                    Naturalne pytania → Podstawa prawna
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground/60 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
+                ⚠️ To narzędzie wspomagające, nie zastępuje porady prawnika
               </p>
               <ExampleQuestions
                 onSelect={handleSendMessage}
