@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from 'react-router-dom';
-
-const GDPR_ACCEPTANCE_KEY = 'gdpr_warning_accepted';
+import { StorageKeys, getStorageBoolean, setStorageBoolean } from '@/lib/storage';
 
 export function GDPRWarningModal() {
   const [open, setOpen] = useState(false);
@@ -20,7 +19,7 @@ export function GDPRWarningModal() {
 
   useEffect(() => {
     // Check if user has already accepted
-    const hasAccepted = localStorage.getItem(GDPR_ACCEPTANCE_KEY);
+    const hasAccepted = getStorageBoolean(StorageKeys.GDPR_ACCEPTANCE);
     if (!hasAccepted) {
       // Show modal after short delay for better UX
       setTimeout(() => setOpen(true), 500);
@@ -29,7 +28,7 @@ export function GDPRWarningModal() {
 
   const handleAccept = () => {
     if (understood) {
-      localStorage.setItem(GDPR_ACCEPTANCE_KEY, 'true');
+      setStorageBoolean(StorageKeys.GDPR_ACCEPTANCE, true);
       setOpen(false);
     }
   };

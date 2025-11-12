@@ -2,15 +2,14 @@ import { useEffect, useState } from 'react';
 import { Cookie, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-
-const COOKIE_CONSENT_KEY = 'cookie_consent_accepted';
+import { StorageKeys, getStorageBoolean, setStorageBoolean } from '@/lib/storage';
 
 export const CookieBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     // Sprawdź czy użytkownik już zaakceptował
-    const hasAccepted = localStorage.getItem(COOKIE_CONSENT_KEY);
+    const hasAccepted = getStorageBoolean(StorageKeys.COOKIE_CONSENT);
     if (!hasAccepted) {
       // Pokaż banner po krótkiej chwili
       setTimeout(() => setIsVisible(true), 1000);
@@ -18,7 +17,7 @@ export const CookieBanner = () => {
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem(COOKIE_CONSENT_KEY, 'true');
+    setStorageBoolean(StorageKeys.COOKIE_CONSENT, true);
     setIsVisible(false);
   };
 

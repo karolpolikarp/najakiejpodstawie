@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { CONSTANTS } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import {
@@ -41,7 +42,8 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
     if (!file) return;
 
     // Check file type
-    if (!CONSTANTS.FILE_UPLOAD.ALLOWED_TYPES.includes(file.type as any)) {
+    const allowedTypes = CONSTANTS.FILE_UPLOAD.ALLOWED_TYPES as readonly string[];
+    if (!allowedTypes.includes(file.type)) {
       toast.error('Wspierane formaty: TXT, PDF, DOC, DOCX');
       return;
     }
@@ -79,30 +81,30 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
       } else if (file.type === 'application/pdf') {
         // Extract text from PDF using pdf.js
         try {
-          console.log('📄 Starting PDF parsing...');
+          logger.debug('📄 Starting PDF parsing...');
           const arrayBuffer = await file.arrayBuffer();
-          console.log('✓ ArrayBuffer created, size:', arrayBuffer.byteLength);
+          logger.debug('✓ ArrayBuffer created, size:', arrayBuffer.byteLength);
 
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          console.log('✓ PDF loaded, pages:', pdf.numPages);
+          logger.debug('✓ PDF loaded, pages:', pdf.numPages);
 
           const textParts: string[] = [];
 
           for (let i = 1; i <= pdf.numPages; i++) {
-            console.log(`📄 Reading page ${i}/${pdf.numPages}...`);
+            logger.debug(`📄 Reading page ${i}/${pdf.numPages}...`);
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
             const pageText = textContent.items
               .map((item: any) => item.str)
               .join(' ');
             textParts.push(pageText);
-            console.log(`✓ Page ${i} extracted, chars:`, pageText.length);
+            logger.debug(`✓ Page ${i} extracted, chars:`, pageText.length);
           }
 
           content = textParts.join('\n\n');
-          console.log('✓ PDF parsing complete! Total chars:', content.length);
+          logger.debug('✓ PDF parsing complete! Total chars:', content.length);
         } catch (pdfError) {
-          console.error('❌ PDF parsing error:', pdfError);
+          logger.error('❌ PDF parsing error:', pdfError);
           toast.error(`Nie udało się odczytać PDF: ${pdfError instanceof Error ? pdfError.message : 'Nieznany błąd'}`);
           return;
         }
@@ -113,7 +115,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
           const result = await mammoth.extractRawText({ arrayBuffer });
           content = result.value;
         } catch (docxError) {
-          console.error('DOCX parsing error:', docxError);
+          logger.error('DOCX parsing error:', docxError);
           toast.error('Nie udało się odczytać DOCX');
           return;
         }
@@ -137,7 +139,7 @@ export function FileUpload({ onFileLoad, onFileRemove, currentFile }: FileUpload
       onFileLoad(content, file.name);
       toast.success(`Załączono: ${file.name}`);
     } catch (error) {
-      console.error('File read error:', error);
+      logger.error('File read error:', error);
       toast.error('Nie udało się wczytać pliku');
     } finally {
       setIsLoading(false);

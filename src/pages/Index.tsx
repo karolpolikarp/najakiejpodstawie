@@ -16,6 +16,7 @@ import { useChatStore } from '@/store/chatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { StorageKeys, removeStorageItem, clearAllStorage } from '@/lib/storage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -159,7 +160,7 @@ const Index = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('app_authenticated');
+    removeStorageItem(StorageKeys.APP_AUTHENTICATED);
     window.location.reload();
   };
 
@@ -177,7 +178,7 @@ const Index = () => {
     if (confirmed) {
       try {
         // Clear all localStorage data
-        localStorage.clear();
+        clearAllStorage();
 
         // Clear sessionStorage as well (in case any data is stored there)
         sessionStorage.clear();
