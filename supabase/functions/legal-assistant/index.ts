@@ -84,28 +84,47 @@ function requiresForcedToolCalling(message: string): boolean {
 /**
  * Wykrywa temat prawny na podstawie pytania użytkownika
  * Zwraca kontekst tekstowy + artykuły do automatycznego pobrania z MCP
+ *
+ * STRATEGIA RATE LIMIT PREVENTION:
+ * - Wykrywa tylko TOP 1 najlepiej pasujący temat (zamiast wszystkich)
+ * - Scoring oparty na liczbie matchujących keywords
+ * - Zapobiega przekroczeniu 50k tokens/min limit
  */
 function detectLegalContext(message: string): LegalContextResult {
   const lowerMessage = message.toLowerCase();
+
+  // CRITICAL: Limit to TOP 1 topic to prevent rate limiting
+  const MAX_DETECTED_TOPICS = 1;
+
+  // Score all topics based on matching keywords
+  const topicScores = Object.entries(LEGAL_CONTEXT)
+    .map(([topicKey, topicData]) => {
+      const keywords = topicData.keywords || [];
+
+      // Count how many keywords match
+      const matchingKeywords = keywords.filter(keyword =>
+        lowerMessage.includes(keyword.toLowerCase())
+      );
+
+      return {
+        key: topicKey,
+        data: topicData,
+        score: matchingKeywords.length,
+        matchedKeywords: matchingKeywords
+      };
+    })
+    .filter(topic => topic.score > 0)
+    .sort((a, b) => b.score - a.score)  // Highest score first
+    .slice(0, MAX_DETECTED_TOPICS);     // Take only TOP 1
+
   const detectedTopics: LegalTopic[] = [];
   const allMcpArticles: ArticleReference[] = [];
 
-  // Wykryj wszystkie pasujące tematy na podstawie keywords
-  for (const [topicKey, topicData] of Object.entries(LEGAL_CONTEXT)) {
-    const keywords = topicData.keywords || [];
-
-    // Sprawdź czy którekolwiek słowo kluczowe pasuje
-    const matches = keywords.some(keyword =>
-      lowerMessage.includes(keyword.toLowerCase())
-    );
-
-    if (matches) {
-      console.log(`[CONTEXT] Detected topic: ${topicData.name} (${topicKey})`);
-      detectedTopics.push(topicData);
-
-      // Dodaj artykuły tego tematu do listy do pobrania z MCP
-      allMcpArticles.push(...topicData.mcpArticles);
-    }
+  // Process only the best matching topic(s)
+  for (const topic of topicScores) {
+    console.log(`[CONTEXT] Detected topic: ${topic.data.name} (${topic.key}) - score: ${topic.score} - matched: ${topic.matchedKeywords.join(', ')}`);
+    detectedTopics.push(topic.data);
+    allMcpArticles.push(...topic.data.mcpArticles);
   }
 
   // Jeśli wykryto tematy, zwróć sformatowany kontekst
@@ -577,6 +596,11 @@ ${message}`;
       body: JSON.stringify(apiRequestBody)
     });
 
+    // TOKEN MONITORING: Log token usage from response headers
+    // Anthropic returns usage info in custom headers (for non-streaming) or in message_start event (for streaming)
+    // Since we use streaming, we'll log available headers here and track usage from stream events
+    console.log('[TOKENS] Request initiated - monitoring from stream events...');
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Anthropic API error:', response.status, errorText);
@@ -739,6 +763,11 @@ ${message}`;
                         try {
                           const parsed2 = JSON.parse(data2);
 
+                          // TOKEN MONITORING: Log usage from message_start event (second request)
+                          if (parsed2.type === 'message_start' && parsed2.message?.usage) {
+                            console.log(`[TOKENS] Second request (after tools) - Input: ${parsed2.message.usage.input_tokens || 0}, Output: ${parsed2.message.usage.output_tokens || 0}`);
+                          }
+
                           // Track text content
                           if (parsed2.type === 'content_block_delta' && parsed2.delta?.text) {
                             const deltaText2 = parsed2.delta.text;
@@ -872,6 +901,11 @@ ${message}`;
                 if (data !== '[DONE]') {
                   try {
                     const parsed = JSON.parse(data);
+
+                    // TOKEN MONITORING: Log usage from message_start event
+                    if (parsed.type === 'message_start' && parsed.message?.usage) {
+                      console.log(`[TOKENS] First request - Input: ${parsed.message.usage.input_tokens || 0}, Output: ${parsed.message.usage.output_tokens || 0}`);
+                    }
 
                     // Detect tool_use blocks
                     if (parsed.type === 'content_block_start' && parsed.content_block?.type === 'tool_use') {
