@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Lazy loading komponentów stron dla lepszej wydajności
 const Landing = lazy(() => import("./pages/Landing"));
+const NewLanding = lazy(() => import("./pages/NewLanding"));
 const Index = lazy(() => import("./pages/Index"));
 const Admin = lazy(() => import("./pages/Admin"));
 const About = lazy(() => import("./pages/About"));
@@ -34,6 +35,7 @@ const App = () => (
             }>
               <Routes>
                 <Route path="/" element={<Landing />} />
+                <Route path="/v2" element={<NewLanding />} />
                 <Route path="/czat" element={
                   <PasswordGate>
                     <Index />
