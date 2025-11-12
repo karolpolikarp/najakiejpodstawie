@@ -728,16 +728,18 @@ export class ELITools {
       // Common patterns for Polish legal acts
       // CRITICAL: All patterns MUST start with line beginning anchor to avoid matching in-text references
       // CRITICAL: Use GREEDY quantifier (not lazy!) to extract full article content
-      //           Lookahead ensures we stop at next article, not mid-content
+      // CRITICAL: Lookahead must distinguish "Art. 275. § 2." (paragraph) from "Art. 276. Kto..." (new article)
+      //           Solution: Require capital letter (NOT §) after "Art. XXX." to ensure it's a new article
       const patterns = [
         // Pattern 1: "Art. 10." with dot and space (most reliable for main article text)
         // Greedy {10,50000} extracts maximum content until lookahead condition is met
-        // Lookahead: Stop ONLY at next article "Art. Y. " (different number, with newline before)
-        new RegExp(`(?:^|\\n)\\s*Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000})(?=\\n+\\s*Art\\.\\s+\\d+\\.|$)`, 'gim'),
+        // Lookahead: Stop ONLY at "Art. Y. [Capital letter]" where capital letter is A-Z (not §!)
+        // This prevents stopping at "Art. 275. § 2." (same article paragraph) and only stops at "Art. 276. Kto..." (new article)
+        new RegExp(`(?:^|\\n)\\s*Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000})(?=\\n+\\s*Art\\.\\s+\\d+\\.\\s+[A-ZĄĆĘŁŃÓŚŹŻ]|$)`, 'gim'),
         // Pattern 2: "Art 10." without first dot
-        new RegExp(`(?:^|\\n)\\s*Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000})(?=\\n+\\s*Art\\.?\\s+\\d+\\.|$)`, 'gim'),
+        new RegExp(`(?:^|\\n)\\s*Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000})(?=\\n+\\s*Art\\.?\\s+\\d+\\.\\s+[A-ZĄĆĘŁŃÓŚŹŻ]|$)`, 'gim'),
         // Pattern 3: "Artykuł 10" (full word)
-        new RegExp(`(?:^|\\n)\\s*Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000})(?=\\n+\\s*(?:Artykuł|Art\\.)\\s+\\d+\\.|$)`, 'gim'),
+        new RegExp(`(?:^|\\n)\\s*Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000})(?=\\n+\\s*(?:Artykuł|Art\\.)\\s+\\d+\\.\\s+[A-ZĄĆĘŁŃÓŚŹŻ]|$)`, 'gim'),
       ];
 
       for (const pattern of patterns) {
