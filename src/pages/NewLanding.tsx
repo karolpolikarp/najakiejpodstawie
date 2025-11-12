@@ -268,48 +268,6 @@ const NewLanding = () => {
         </div>
       </section>
 
-      {/* Built By */}
-      <section className="py-24 px-6 bg-secondary/30">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-h1 mb-8 text-center">Built By Karol Polikarp</h2>
-
-          <div className="p-8 rounded-lg border border-border bg-card">
-            <div className="space-y-4">
-              <div>
-                <p className="text-lg font-medium text-foreground mb-2">
-                  Chief Specialist, Department of Research and Innovation
-                </p>
-                <p className="text-base text-muted-foreground">
-                  Ministry of Digital Affairs, Poland
-                </p>
-              </div>
-
-              <div className="pt-4 border-t border-border">
-                <p className="text-sm text-muted-foreground font-medium mb-3">Background:</p>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>AI Policy & EU AI Act implementation</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>CEEB system (national building registry)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Law (University of Warsaw)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>3+ years TypeScript/React</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Simple Footer */}
       <footer className="py-12 px-6 border-t border-border">
         <div className="max-w-6xl mx-auto text-center text-sm text-muted-foreground">
