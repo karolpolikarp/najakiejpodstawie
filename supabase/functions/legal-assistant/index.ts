@@ -445,6 +445,11 @@ CRITICAL RULES FOR WHEN TO USE TOOLS VS YOUR KNOWLEDGE:
      * "Ile urlopu się należy?" → Direct answer: "20 lub 26 dni (art. 154 KP)"
    - Provide concise, accurate answer immediately
    - Mention relevant article numbers if you know them
+   - IMPORTANT: Even for direct answers, use the structured format with sections:
+     **PODSTAWA PRAWNA:** (if known)
+     **CO TO OZNACZA:** (explanation)
+     **ŹRÓDŁO:** (if known)
+     **UWAGA:** (disclaimer)
    - Include disclaimer to verify on ISAP if needed
 
 3. Only call tools when:
@@ -851,32 +856,79 @@ ${message}`;
                   is_error: tr.is_error || undefined
                 }));
 
-                // Second request with tool results
+                // Second request with tool results - with retry logic for 429 errors
                 console.log('[TOOL] Making second request with tool results...');
-                const secondResponse = await fetch('https://api.anthropic.com/v1/messages', {
-                  method: 'POST',
-                  headers: {
-                    'x-api-key': ANTHROPIC_API_KEY,
-                    'anthropic-version': '2023-06-01',
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    model: selectedModel,
-                    max_tokens: 4096,
-                    system: systemPrompt,
-                    messages: [
-                      { role: 'user', content: userMessage },
-                      { role: 'assistant', content: assistantContent },
-                      { role: 'user', content: userContent }
-                    ],
-                    tools: LEGAL_TOOLS,
-                    temperature: 0.0,
-                    stream: true
-                  })
-                });
 
-                if (!secondResponse.ok) {
-                  throw new Error(`Second API call failed: ${secondResponse.status}`);
+                let secondResponse: Response | null = null;
+                let retryAttempt = 0;
+                const maxRetries = 4;
+                const baseDelay = 2000; // 2 seconds
+
+                while (retryAttempt <= maxRetries) {
+                  try {
+                    secondResponse = await fetch('https://api.anthropic.com/v1/messages', {
+                      method: 'POST',
+                      headers: {
+                        'x-api-key': ANTHROPIC_API_KEY,
+                        'anthropic-version': '2023-06-01',
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        model: selectedModel,
+                        max_tokens: 4096,
+                        system: systemPrompt,
+                        messages: [
+                          { role: 'user', content: userMessage },
+                          { role: 'assistant', content: assistantContent },
+                          { role: 'user', content: userContent }
+                        ],
+                        tools: LEGAL_TOOLS,
+                        temperature: 0.0,
+                        stream: true
+                      })
+                    });
+
+                    if (secondResponse.ok) {
+                      break; // Success, exit retry loop
+                    }
+
+                    // Handle 429 rate limit errors with exponential backoff
+                    if (secondResponse.status === 429) {
+                      if (retryAttempt < maxRetries) {
+                        const delay = baseDelay * Math.pow(2, retryAttempt);
+                        console.log(`[RETRY] Second API call hit 429 rate limit. Retry ${retryAttempt + 1}/${maxRetries} after ${delay}ms`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        retryAttempt++;
+                        continue;
+                      } else {
+                        console.error('[RETRY] Max retries exceeded for 429 error');
+                        return new Response(JSON.stringify({
+                          error: 'Osiągnięto limit zapytań API. Spróbuj ponownie za chwilę.'
+                        }), {
+                          status: 429,
+                          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                        });
+                      }
+                    }
+
+                    // For other errors, don't retry
+                    throw new Error(`Second API call failed: ${secondResponse.status}`);
+                  } catch (fetchError) {
+                    // Network errors - retry
+                    if (retryAttempt < maxRetries) {
+                      const delay = baseDelay * Math.pow(2, retryAttempt);
+                      console.log(`[RETRY] Network error on second API call. Retry ${retryAttempt + 1}/${maxRetries} after ${delay}ms`);
+                      await new Promise(resolve => setTimeout(resolve, delay));
+                      retryAttempt++;
+                      continue;
+                    } else {
+                      throw fetchError;
+                    }
+                  }
+                }
+
+                if (!secondResponse) {
+                  throw new Error('Second API call failed after retries');
                 }
 
                 // Stream second response to client
