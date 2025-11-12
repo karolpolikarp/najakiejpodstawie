@@ -445,6 +445,11 @@ CRITICAL RULES FOR WHEN TO USE TOOLS VS YOUR KNOWLEDGE:
      * "Ile urlopu się należy?" → Direct answer: "20 lub 26 dni (art. 154 KP)"
    - Provide concise, accurate answer immediately
    - Mention relevant article numbers if you know them
+   - IMPORTANT: Even for direct answers, use the structured format with sections:
+     **PODSTAWA PRAWNA:** (if known)
+     **CO TO OZNACZA:** (explanation)
+     **ŹRÓDŁO:** (if known)
+     **UWAGA:** (disclaimer)
    - Include disclaimer to verify on ISAP if needed
 
 3. Only call tools when:
@@ -876,7 +881,22 @@ ${message}`;
                 });
 
                 if (!secondResponse.ok) {
-                  throw new Error(`Second API call failed: ${secondResponse.status}`);
+                  const errorStatus = secondResponse.status;
+                  const errorText = await secondResponse.text();
+                  console.error(`[API ERROR] Second request failed: ${errorStatus} - ${errorText}`);
+
+                  // Improved error handling for 429 rate limits
+                  if (errorStatus === 429) {
+                    console.error('[RATE LIMIT] 429 error - likely token overflow. Check article truncation and limits.');
+                    return new Response(JSON.stringify({
+                      error: 'Przekroczono limit zapytań API. Spróbuj zadać prostsze pytanie lub użyć mniej artykułów.'
+                    }), {
+                      status: 429,
+                      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    });
+                  }
+
+                  throw new Error(`Second API call failed: ${errorStatus}`);
                 }
 
                 // Stream second response to client
