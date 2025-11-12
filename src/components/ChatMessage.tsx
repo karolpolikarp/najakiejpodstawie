@@ -467,7 +467,7 @@ export const ChatMessage = memo(({ role, content, messageId, userContent, feedba
             {formattedContent}
           </div>
         )}
-        {role === 'assistant' && (
+        {role === 'assistant' && content.trim() && (
           <div className="mt-4 pt-3 border-t border-border/50 flex flex-col gap-2">
             {/* Error actions - only for errors */}
             {isError && (
