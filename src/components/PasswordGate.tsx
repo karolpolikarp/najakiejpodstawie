@@ -3,10 +3,10 @@ import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { StorageKeys, getStorageBoolean, setStorageBoolean, removeStorageItem } from '@/lib/storage';
 
 // Password can be set via VITE_APP_PASSWORD env variable, defaults to 'lex' for easy MVP access
 const CORRECT_PASSWORD = import.meta.env.VITE_APP_PASSWORD || 'lex';
-const PASSWORD_KEY = 'app_authenticated';
 
 interface PasswordGateProps {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
 
   useEffect(() => {
     // Check if user is already authenticated
-    const authenticated = localStorage.getItem(PASSWORD_KEY) === 'true';
+    const authenticated = getStorageBoolean(StorageKeys.APP_AUTHENTICATED);
     setIsAuthenticated(authenticated);
     setIsLoading(false);
   }, []);
@@ -28,7 +28,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
     e.preventDefault();
 
     if (password === CORRECT_PASSWORD) {
-      localStorage.setItem(PASSWORD_KEY, 'true');
+      setStorageBoolean(StorageKeys.APP_AUTHENTICATED, true);
       setIsAuthenticated(true);
       toast.success('Zalogowano pomyślnie');
     } else {
@@ -38,7 +38,7 @@ export const PasswordGate = ({ children }: PasswordGateProps) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem(PASSWORD_KEY);
+    removeStorageItem(StorageKeys.APP_AUTHENTICATED);
     setIsAuthenticated(false);
     toast.success('Wylogowano');
   };

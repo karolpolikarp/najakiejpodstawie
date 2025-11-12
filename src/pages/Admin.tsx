@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface UserQuestion {
   id: string;
@@ -50,7 +51,7 @@ const Admin = () => {
       });
 
       if (error) {
-        console.error('Error fetching questions:', error);
+        logger.error('Error fetching questions:', error);
         toast.error('Nie udało się pobrać pytań');
         return;
       }
@@ -59,7 +60,7 @@ const Admin = () => {
       setTotalQuestions(data.pagination?.total || 0);
       setStatistics(data.statistics || null);
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       toast.error('Wystąpił błąd podczas pobierania danych');
     } finally {
       setIsLoading(false);

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { StorageKeys, getStorageItem, setStorageItem } from '@/lib/storage';
 
 type Theme = 'light' | 'dark';
 
@@ -12,7 +13,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     // Check localStorage first
-    const stored = localStorage.getItem('theme') as Theme | null;
+    const stored = getStorageItem(StorageKeys.THEME) as Theme | null;
     if (stored) return stored;
 
     // Check system preference
@@ -27,7 +28,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
-    localStorage.setItem('theme', theme);
+    setStorageItem(StorageKeys.THEME, theme);
   }, [theme]);
 
   const toggleTheme = () => {

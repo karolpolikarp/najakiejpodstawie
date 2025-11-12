@@ -1,17 +1,15 @@
 /**
  * usePremium Hook
  * Handles premium model toggle and password verification
- *
- * NOTE: This is a temporary solution with hardcoded password
- * TODO: Move to backend authentication with JWT tokens
  */
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { StorageKeys, getStorageBoolean, setStorageBoolean } from '@/lib/storage';
 
-const PREMIUM_PASSWORD = 'power'; // TODO: Remove hardcoded password
-const PREMIUM_KEY = 'premium_unlocked';
+// Premium password from environment variable
+const PREMIUM_PASSWORD = import.meta.env.VITE_PREMIUM_PASSWORD || 'power';
 
 export const usePremium = () => {
   const [usePremiumModel, setUsePremiumModel] = useState(false);
@@ -21,7 +19,7 @@ export const usePremium = () => {
 
   // Check if premium is unlocked on mount
   useEffect(() => {
-    const unlocked = localStorage.getItem(PREMIUM_KEY) === 'true';
+    const unlocked = getStorageBoolean(StorageKeys.PREMIUM_UNLOCKED);
     setIsPremiumUnlocked(unlocked);
 
     if (unlocked) {
@@ -46,7 +44,7 @@ export const usePremium = () => {
 
   const handlePremiumPassword = (password: string) => {
     if (password === PREMIUM_PASSWORD) {
-      localStorage.setItem(PREMIUM_KEY, 'true');
+      setStorageBoolean(StorageKeys.PREMIUM_UNLOCKED, true);
       setIsPremiumUnlocked(true);
       setUsePremiumModel(true);
       setShowPremiumDialog(false);

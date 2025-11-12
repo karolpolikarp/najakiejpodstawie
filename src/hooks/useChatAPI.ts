@@ -9,6 +9,7 @@ import { useChatStore } from '@/store/chatStore';
 import { StreamingService } from '@/services/streamingService';
 import { apiLogger as logger } from '@/lib/logger';
 import { isRateLimitError } from '@/lib/retry';
+import { StorageKeys, getStorageItem, setStorageItem } from '@/lib/storage';
 
 const streamingService = new StreamingService();
 
@@ -33,10 +34,10 @@ export const useChatAPI = () => {
       const tempMessageId = crypto.randomUUID();
 
       // Get or create session ID
-      let sessionId = localStorage.getItem('session_id');
+      let sessionId = getStorageItem(StorageKeys.SESSION_ID);
       if (!sessionId) {
         sessionId = crypto.randomUUID();
-        localStorage.setItem('session_id', sessionId);
+        setStorageItem(StorageKeys.SESSION_ID, sessionId);
       }
 
       // Add empty assistant message for streaming
