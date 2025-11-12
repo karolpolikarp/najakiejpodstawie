@@ -1,6 +1,6 @@
 /**
  * ELI MCP Tools
- * High-level functions for legal research
+ * High-level functions for legal research with OCR-corruption handling
  */
 
 import { ELIClient, ELISearchParams } from './eli-client.ts';
