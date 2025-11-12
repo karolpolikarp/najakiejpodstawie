@@ -19,33 +19,80 @@ const About = () => {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text mb-6">O projekcie</h1>
 
           <div className="prose prose-lg max-w-none space-y-6">
-            <section className="glass-card shadow-soft hover:shadow-soft-lg transition-all rounded-lg p-6">
+            <section className="glass-card shadow-soft hover:shadow-soft-lg transition-all rounded-lg p-6 border-2 border-primary/20">
+              <div className="inline-block mb-3 px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
+                <span className="text-xs font-bold text-primary">3-IN-1 LEGAL ASSISTANT</span>
+              </div>
               <h2 className="text-2xl font-semibold text-foreground mb-4">Czym jest JakiePrawo.pl?</h2>
+              <p className="text-muted-foreground leading-relaxed mb-3">
+                JakiePrawo.pl to <strong>pierwszy w Polsce asystent prawny 3-w-1</strong> łączący zaawansowane OCR,
+                dostęp do oficjalnego API Sejmu RP oraz AI-powered search.
+              </p>
               <p className="text-muted-foreground leading-relaxed">
-                JakiePrawo.pl to narzędzie wspierające wyszukiwanie informacji prawnych w polskim systemie prawnym.
-                Używamy sztucznej inteligencji (AI), żeby pomóc Ci szybciej znaleźć konkretny artykuł lub ustawę.
+                To nie jest kolejny chatbot - to kompletna platforma do pracy z prawem polskim.
               </p>
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">Jak to działa?</h2>
-              <p className="text-muted-foreground leading-relaxed mb-4">
-                Wpisujesz pytanie zwykłym językiem (np. "Czy pracodawca może odmówić urlopu?"), a AI przeszukuje polskie prawo
-                i podaje Ci konkretny artykuł wraz z wyjaśnieniem.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                <strong>Technologia:</strong> Używamy modeli AI firmy Anthropic - jednego z najbardziej zaawansowanych systemów AI na świecie.
+              <h2 className="text-2xl font-semibold text-foreground mb-4">3 sposoby na odpowiedź</h2>
+
+              <div className="space-y-4">
+                <div className="flex gap-4 items-start p-4 bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-l-4 border-green-500 rounded-lg">
+                  <div className="text-3xl">📄</div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">Analiza dokumentów</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Załącz PDF, skan lub zdjęcie dokumentu. OCR wyciąga tekst (polski + angielski), AI odpowiada na pytania.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 items-start p-4 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border-l-4 border-blue-500 rounded-lg">
+                  <div className="text-3xl">🔍</div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">Wyszukiwanie artykułów</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Dostęp do 15,000+ polskich ustaw z oficjalnego API Sejmu RP. Dosłowne cytaty, zawsze aktualne.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 items-start p-4 bg-gradient-to-br from-amber-500/5 to-orange-500/5 border-l-4 border-amber-500 rounded-lg">
+                  <div className="text-3xl">💬</div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">Pytania w języku naturalnym <span className="text-xs text-amber-600">[Beta]</span></h3>
+                    <p className="text-sm text-muted-foreground">
+                      Zadaj pytanie zwykłym językiem, a AI przeszukuje polskie prawo i wskazuje podstawę prawną.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-muted-foreground leading-relaxed mt-4">
+                <strong>Technologia:</strong> Claude AI (Anthropic), MCP Protocol, Tesseract OCR, PostgreSQL, React + TypeScript.
               </p>
             </section>
 
             <section className="bg-card border border-border rounded-lg p-6">
               <h2 className="text-2xl font-semibold text-foreground mb-4">Dla kogo?</h2>
-              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                <li>Przedsiębiorców szukających szybkiej odpowiedzi prawnej</li>
-                <li>Studentów prawa do nauki i sprawdzania wiedzy</li>
-                <li>Osób prywatnych z pytaniami o swoje prawa</li>
-                <li>Każdego, kto potrzebuje szybko zweryfikować podstawę prawną</li>
-              </ul>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <div className="font-semibold mb-1">🏢 Przedsiębiorcy</div>
+                  <div className="text-sm text-muted-foreground">Szybka weryfikacja podstaw prawnych</div>
+                </div>
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <div className="font-semibold mb-1">📚 Studenci prawa</div>
+                  <div className="text-sm text-muted-foreground">Nauka i przygotowanie do egzaminów</div>
+                </div>
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <div className="font-semibold mb-1">👥 Osoby prywatne</div>
+                  <div className="text-sm text-muted-foreground">Pytania o swoje prawa i obowiązki</div>
+                </div>
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <div className="font-semibold mb-1">🏛️ Zespoły HR/Legal</div>
+                  <div className="text-sm text-muted-foreground">Wsparcie in-house legal</div>
+                </div>
+              </div>
             </section>
 
             <section className="bg-destructive/10 border border-destructive/30 rounded-lg p-6">
