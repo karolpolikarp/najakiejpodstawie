@@ -100,7 +100,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
 
   wypowiedzenie_umowy_pracy: {
     name: "Wypowiedzenie umowy o pracę",
-    keywords: ["wypowiedzenie", "rozwiązanie umowy", "zwolnienie", "okres wypowiedzenia"],
+    keywords: ["wypowiedzenie umowy o pracę", "wypowiedzenie pracy", "zwolnienie z pracy", "okres wypowiedzenia pracy", "rozwiązanie umowy o pracę", "pracodawca wypowiada", "pracownik wypowiada"],
     mcpArticles: [
       { actCode: 'kp', articleNumber: '30' },
       { actCode: 'kp', articleNumber: '36' },
@@ -126,6 +126,34 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
   /**
    * PRAWO KONSUMENCKIE (Consumer Law)
    */
+  umowy_telekomunikacyjne: {
+    name: "Umowy z operatorami telekomunikacyjnymi",
+    keywords: ["operator", "telekomunikacyjny", "abonament", "przedterminowe rozwiązanie", "umowa z operatorem", "internet mobilny", "telefonia", "usługi telekomunikacyjne", "opłata za rozwiązanie", "kara umowna operator"],
+    mcpArticles: [
+      { actCode: 'upk', articleNumber: '27' }, // prawo odstąpienia (14 dni)
+      { actCode: 'upk', articleNumber: '38' }, // wyjątki od prawa odstąpienia
+      { actCode: 'kc', articleNumber: '483' }, // kara umowna
+      { actCode: 'kc', articleNumber: '484' }, // wysokość kary umownej
+    ],
+    mainActs: [
+      "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta",
+      "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
+    ],
+    mainArticles: [
+      "Art. 27 UPK - prawo odstąpienia od umowy (14 dni dla umów na odległość)",
+      "Art. 38 UPK - wyjątki od prawa odstąpienia",
+      "Art. 483 KC - kara umowna",
+      "Art. 484 KC - możliwość miarkowania nadmiernej kary umownej"
+    ],
+    relatedArticles: [
+      "Art. 29 UPK - termin zwrotu pieniędzy",
+      "Art. 56 UPK - umowy o świadczenie usług (telefonia, internet)",
+      "Art. 385¹ KC - niedozwolone klauzule umowne (abuzywność)",
+      "Art. 385² KC - wzorce umowne"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827"
+  },
+
   zwrot_towaru_online: {
     name: "Zwrot towaru kupionego online",
     keywords: ["zwrot", "odstąpienie", "sklep internetowy", "zakupy online", "14 dni"],
@@ -179,26 +207,49 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   wypowiedzenie_najmu: {
     name: "Wypowiedzenie umowy najmu",
-    keywords: ["najem", "wynajem", "wypowiedzenie najmu", "lokator", "właściciel"],
+    keywords: ["wypowiedzenie najmu", "wypowiedzenie umowy najmu", "rozwiązanie najmu", "lokator wypowiada", "właściciel wypowiada", "wynajem mieszkania wypowiedzenie"],
     mcpArticles: [
       { actCode: 'kc', articleNumber: '659' },
       { actCode: 'kc', articleNumber: '673' },
       { actCode: 'kc', articleNumber: '661' },
     ],
     mainActs: [
+      "Ustawa z dnia 23 czerwca 1974 r. o ochronie praw lokatorów, mieszkaniowym zasobie gminy i o zmianie Kodeksu cywilnego",
       "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
     ],
     mainArticles: [
-      "Art. 659 - umowa najmu",
-      "Art. 673 - wypowiedzenie przez najemcę"
+      "Art. 659 KC - umowa najmu",
+      "Art. 673 KC - wypowiedzenie przez najemcę",
+      "Art. 11 ustawy o ochronie praw lokatorów - wypowiedzenie przez wynajmującego"
     ],
     relatedArticles: [
-      "Art. 661 - terminy wypowiedzenia",
-      "Art. 685 - wypowiedzenie przez wynajmującego",
-      "Art. 664 - rozwiązanie umowy bez wypowiedzenia",
-      "Art. 672 - odpowiedzialność najemcy za szkody"
+      "Art. 661 KC - terminy wypowiedzenia",
+      "Art. 685 KC - wypowiedzenie przez wynajmującego",
+      "Art. 664 KC - rozwiązanie umowy bez wypowiedzenia",
+      "Art. 672 KC - odpowiedzialność najemcy za szkody"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
+  },
+
+  najem_okazjonalny: {
+    name: "Najem okazjonalny lokalu mieszkalnego",
+    keywords: ["najem okazjonalny", "najmu okazjonalnego", "różnica najem okazjonalny", "zwykły najem", "najem instytucjonalny"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '19a' }, // najem okazjonalny - ustawa o ochronie praw lokatorów
+    ],
+    mainActs: [
+      "Ustawa z dnia 23 czerwca 1974 r. o ochronie praw lokatorów, mieszkaniowym zasobie gminy i o zmianie Kodeksu cywilnego"
+    ],
+    mainArticles: [
+      "Art. 19a - najem okazjonalny lokalu mieszkalnego",
+      "Art. 19b - wypowiedzenie najmu okazjonalnego",
+      "Art. 19c - eksmisja w najem okazjonalnym"
+    ],
+    relatedArticles: [
+      "Art. 659 KC - ogólne przepisy o najmie",
+      "Art. 680 KC - ochrona najemcy lokalu"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20050310266"
   },
 
   /**
