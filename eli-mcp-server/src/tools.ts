@@ -1,6 +1,6 @@
 /**
  * ELI MCP Tools
- * High-level functions for legal research
+ * High-level functions for legal research with OCR-corruption handling
  */
 
 import { ELIClient, ELISearchParams } from './eli-client.ts';
@@ -500,6 +500,13 @@ export class ELITools {
       'człowie ka': 'człowieka',
       'wpły wem': 'wpływem',
       'okoliczno ściami': 'okolicznościami',
+
+      // Specific OCR errors from Kodeks rodzinny i opiekuńczy (Family and Guardianship Code)
+      'Małż ~ m, kowie': 'Małżonkowie',
+      'Małż ~ m , kowie': 'Małżonkowie',
+      'prgwa f': 'prawa i',
+      'prg wa f': 'prawa i',
+      'pr gwa f': 'prawa i',
     };
 
     // Apply dictionary fixes
@@ -713,6 +720,16 @@ export class ELITools {
     normalizedText = normalizedText.replace(/A\s+rt\s*\.\s*/gi, 'Art. ');  // "A rt." -> "Art. "
     normalizedText = normalizedText.replace(/Ar\s+t\s*\.\s*/gi, 'Art. ');  // "Ar t." -> "Art. "
     normalizedText = normalizedText.replace(/Art\s+\.\s*/gi, 'Art. ');     // "Art ." -> "Art. "
+
+    // Fix OCR garbage before article markers
+    // Problem: PDF OCR can produce corrupted characters before "Art." on the same line
+    // Example: "< u~iafb , Art. 23." - the garbage prevents line-beginning pattern matching
+    // Solution: Clean up obvious garbage patterns before "Art." to allow proper matching
+    // Pattern explanation:
+    // - Match any sequence of: punctuation/symbols/spaces (but not letters/digits)
+    // - Before "Art." or "Artykuł"
+    // - Replace with just a newline to ensure article starts on new line
+    normalizedText = normalizedText.replace(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9\n]{2,}\s*(Art\.?|Artykuł)\s+(\d+)/gi, '\n$1 $2');
 
     // Debug: show if normalization made any changes
     if (beforeNormalization !== normalizedText) {
