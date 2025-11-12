@@ -515,8 +515,10 @@ export async function enrichWithArticles(
   usePremiumModel = false
 ): Promise<EnrichmentResult> {
   // QW4: Dynamic limits based on premium status
-  const MAX_ARTICLES_FROM_TOPICS = usePremiumModel ? 10 : 5;
-  const MAX_TOTAL_ARTICLES = usePremiumModel ? 15 : 10;
+  // Reduced limits to prevent Anthropic rate limiting (50k tokens/min)
+  // Each article can be ~50k chars (~12.5k tokens), so 3 articles ≈ 37.5k tokens
+  const MAX_ARTICLES_FROM_TOPICS = usePremiumModel ? 4 : 2;
+  const MAX_TOTAL_ARTICLES = usePremiumModel ? 6 : 3;
 
   // 1. Articles from user query (regex detection: "art 10 kp")
   const fromQuery = detectArticleReferences(message);
