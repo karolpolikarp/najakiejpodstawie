@@ -7,19 +7,28 @@
 ```bash
 cd /home/user/najakiejpodstawie
 
-# Set environment variables (zastąp wartościami z Supabase)
-export SUPABASE_URL="https://your-project.supabase.co"
-export SUPABASE_ANON_KEY="your-anon-key-here"
+# 1. Pull latest test script (with SSE fix)
+git pull origin claude/review-budget-mvp-scope-011CV3ohUWNzs2R2ot3Z1ea1
 
-# Run ALL tests automatically
+# 2. Set environment variables (masz już ustawione)
+export SUPABASE_URL="https://topujvufxlywazazgujz.supabase.co"
+export SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcHVqdnVmeGx5d2F6YXpndWp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYxNjQ0NzcsImV4cCI6MjA1MTc0MDQ3N30.5xjvPBDCNqx6B6ufLXSQwbHVRhcRxgjKy8f7ufTuY5M"
+
+# 3. Run ALL tests automatically
 ./run-all-tests.sh
 
 # ☕ Czekaj ~5-10 minut...
+# Zobaczysz realtime progress:
+# [A1] A-Popular: ✓ PASS (3420ms, cache: MISS)
+# [A2] A-Popular: ✓ PASS (2890ms, cache: MISS)
+# ...
 
-# Na końcu skopiuj cały output i wyślij do Claude!
+# 4. Na końcu skopiuj CAŁY output i wyślij do Claude!
 ```
 
 **TO WSZYSTKO!** Zero interakcji, zero ręcznego zbierania logów.
+
+**✅ FIX APPLIED:** Skrypt teraz poprawnie obsługuje SSE streaming (problem z hanging rozwiązany!)
 
 ### 2. Co robi skrypt automatycznie?
 
