@@ -113,6 +113,19 @@ const NewLanding = () => {
               </a>
             </Button>
           </motion.div>
+
+          {/* Metrics */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto"
+          >
+            <Metric value="<1s" label="Response time" />
+            <Metric value="15k+" label="Legal acts" />
+            <Metric value="99.9%" label="Uptime" />
+            <Metric value="67%" label="Cache hit rate" />
+          </motion.div>
         </div>
       </section>
 
@@ -282,6 +295,19 @@ const NewLanding = () => {
 };
 
 // Helper Components
+function Metric({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="text-center">
+      <div className="text-2xl font-mono font-semibold text-foreground mb-1">
+        {value}
+      </div>
+      <div className="text-sm text-muted-foreground">
+        {label}
+      </div>
+    </div>
+  );
+}
+
 function ProblemCard({ title, issue }: { title: string; issue: string }) {
   return (
     <div className="p-6 rounded-lg border border-border bg-card">
