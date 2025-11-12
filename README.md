@@ -12,6 +12,8 @@ Zamiast godzinami przeszukiwać akty prawne, wystarczy zadać pytanie - a aplika
 - 📜 Konkretny artykuł i nazwę aktu prawnego
 - 📝 Wyjaśnienie w zrozumiałym języku
 - 🔗 Link do pełnego tekstu ustawy
+- 📸 Rozpoznawanie tekstu ze skanów i zdjęć (OCR)
+- ⚡ Szybkie odpowiedzi dzięki inteligentnej pamięci podręcznej
 
 ---
 
