@@ -727,17 +727,17 @@ export class ELITools {
 
       // Common patterns for Polish legal acts
       // CRITICAL: All patterns MUST start with line beginning anchor to avoid matching in-text references
-      // CRITICAL: Lookahead must NOT stop at "Art. X § Y" (paragraph with repeated article number)
-      //           Only stop at "Art. (X+1). " (next article - different number with dot and space)
+      // CRITICAL: Use GREEDY quantifier (not lazy!) to extract full article content
+      //           Lookahead ensures we stop at next article, not mid-content
       const patterns = [
         // Pattern 1: "Art. 10." with dot and space (most reliable for main article text)
-        // Lookahead: Stop at "Art. Y. " (with dot+space, not followed by § which would indicate paragraph)
-        // This captures ALL paragraphs of an article before stopping at the next article
-        new RegExp(`(?:^|\\n)\\s*Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.\\s+\\d+\\.\\s+(?!§)|$)`, 'gim'),
+        // Greedy {10,50000} extracts maximum content until lookahead condition is met
+        // Lookahead: Stop ONLY at next article "Art. Y. " (different number, with newline before)
+        new RegExp(`(?:^|\\n)\\s*Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000})(?=\\n+\\s*Art\\.\\s+\\d+\\.|$)`, 'gim'),
         // Pattern 2: "Art 10." without first dot
-        new RegExp(`(?:^|\\n)\\s*Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.?\\s+\\d+\\.\\s+(?!§)|$)`, 'gim'),
+        new RegExp(`(?:^|\\n)\\s*Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000})(?=\\n+\\s*Art\\.?\\s+\\d+\\.|$)`, 'gim'),
         // Pattern 3: "Artykuł 10" (full word)
-        new RegExp(`(?:^|\\n)\\s*Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*(?:Artykuł|Art\\.)\\s+\\d+\\.\\s+(?!§)|$)`, 'gim'),
+        new RegExp(`(?:^|\\n)\\s*Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000})(?=\\n+\\s*(?:Artykuł|Art\\.)\\s+\\d+\\.|$)`, 'gim'),
       ];
 
       for (const pattern of patterns) {
