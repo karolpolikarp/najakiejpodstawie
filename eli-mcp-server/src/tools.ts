@@ -727,14 +727,17 @@ export class ELITools {
 
       // Common patterns for Polish legal acts
       // CRITICAL: All patterns MUST start with line beginning anchor to avoid matching in-text references
+      // CRITICAL: Lookahead must NOT stop at "Art. X § Y" (paragraph with repeated article number)
+      //           Only stop at "Art. (X+1). " (next article - different number with dot and space)
       const patterns = [
         // Pattern 1: "Art. 10." with dot and space (most reliable for main article text)
-        // Requires newline before "Art." to ensure we're matching article headers, not references
-        new RegExp(`(?:^|\\n)\\s*Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.\\s*\\d|$)`, 'gim'),
+        // Lookahead: Stop at "Art. Y. " (with dot+space, not followed by § which would indicate paragraph)
+        // This captures ALL paragraphs of an article before stopping at the next article
+        new RegExp(`(?:^|\\n)\\s*Art\\.\\s*${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.\\s+\\d+\\.\\s+(?!§)|$)`, 'gim'),
         // Pattern 2: "Art 10." without first dot
-        new RegExp(`(?:^|\\n)\\s*Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.?\\s*\\d|$)`, 'gim'),
+        new RegExp(`(?:^|\\n)\\s*Art\\s+${this.escapeRegex(variant)}(?!\\d)\\.\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*Art\\.?\\s+\\d+\\.\\s+(?!§)|$)`, 'gim'),
         // Pattern 3: "Artykuł 10" (full word)
-        new RegExp(`(?:^|\\n)\\s*Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*(?:Artykuł|Art\\.)\\s*\\d|$)`, 'gim'),
+        new RegExp(`(?:^|\\n)\\s*Artykuł\\s+${this.escapeRegex(variant)}(?!\\d)\\s+([\\s\\S]{10,50000}?)(?=\\n+\\s*(?:Artykuł|Art\\.)\\s+\\d+\\.\\s+(?!§)|$)`, 'gim'),
       ];
 
       for (const pattern of patterns) {
@@ -760,16 +763,27 @@ export class ELITools {
 
           const textBefore = normalizedText.substring(Math.max(0, adjustedMatchIndex - 100), adjustedMatchIndex);
 
-          // DISQUALIFYING signals - immediately reject these matches
-          // If there's text on the same line before "Art. X", it's likely a reference, not an article header
+          // STRONG NEGATIVE signal - text before article on same line suggests it's a reference
+          // But don't auto-disqualify - allow scoring to decide (e.g., page numbers, marginal notes)
           const lastNewlineIndex = textBefore.lastIndexOf('\n');
           const textOnSameLine = lastNewlineIndex >= 0
             ? textBefore.substring(lastNewlineIndex + 1).trim()
             : textBefore.trim();
 
           if (textOnSameLine.length > 0) {
-            score -= 10000; // DISQUALIFY: Article number appears mid-line, not at line start
-            logger.debug(`Rejecting match - found text before article on same line: "${textOnSameLine.substring(0, 50)}"`);
+            // Check if it's likely a page number or marginal note (short, numeric)
+            const isLikelyPageNumber = /^\d{1,3}$/.test(textOnSameLine);
+            const isLikelyMargin = textOnSameLine.length <= 5;
+
+            if (isLikelyPageNumber || isLikelyMargin) {
+              // Minor penalty - probably just page formatting
+              score -= 50;
+              logger.debug(`Minor penalty for page number/margin: "${textOnSameLine}"`);
+            } else {
+              // Strong penalty but not auto-disqualify
+              score -= 500;
+              logger.debug(`Strong penalty for text before article on same line: "${textOnSameLine.substring(0, 50)}"`);
+            }
           }
 
           // STRONG negative signals - this is likely a reference, not the actual article
@@ -780,12 +794,23 @@ export class ELITools {
             score -= 500; // Explicit reference to another code
           }
           if (capturedText.length < 50) {
-            score -= 200; // Too short to be a real article (lowered from 100 to 50 to allow short but valid articles)
+            score -= 200; // Too short to be a real article
           }
 
           // Positive signals - this looks like actual article content
-          if (capturedText.length > 300) score += 100;
-          if (capturedText.length > 1000) score += 100;
+          // Length-based scoring
+          if (capturedText.length > 100) score += 50;   // Reasonable article length
+          if (capturedText.length > 300) score += 100;  // Good article length
+          if (capturedText.length > 1000) score += 150; // Long detailed article
+
+          // Strong positive signal: Article appears to start a new section (clean header)
+          // Check if text before the match is mostly whitespace or looks like end of previous article
+          const cleanHeader = textBefore.trim().length === 0 ||
+                             textBefore.trim().endsWith('.') ||
+                             /\n\s*\n\s*$/.test(textBefore); // Double newline before
+          if (cleanHeader) {
+            score += 200; // Strong indicator this is a real article header, not a reference
+          }
 
           // Note: "starts at beginning of line" check is now done above (textOnSameLine)
 
@@ -811,6 +836,12 @@ export class ELITools {
       if (candidateMatches.length > 0) {
         // Sort by score (highest first)
         candidateMatches.sort((a, b) => b.score - a.score);
+
+        // Debug: Show all candidates with scores
+        logger.debug(`Found ${candidateMatches.length} candidates for variant "${variant}":`);
+        candidateMatches.slice(0, 3).forEach((c, i) => {
+          logger.debug(`  Candidate ${i + 1}: score=${c.score}, length=${c.text.length}, preview="${c.text.substring(0, 80)}..."`);
+        });
 
         const best = candidateMatches[0];
 
@@ -843,11 +874,17 @@ export class ELITools {
             continue;
           }
 
-          if (text.length > 50) {
-            logger.debug(`✓ Extracted article text: ${text.substring(0, 150)}...`);
+          if (text.length > 20) {  // Reduced from 50 to 20 to match validation in eli-tools.ts
+            logger.debug(`✓ Extracted article text (${text.length} chars): ${text.substring(0, 200)}...`);
             return text;
+          } else {
+            logger.debug(`✗ Rejected: Article text too short (${text.length} chars)`);
           }
+        } else {
+          logger.debug(`✗ Best candidate has non-positive score (${best.score}), rejecting`);
         }
+      } else {
+        logger.debug(`No candidate matches found for variant "${variant}"`);
       }
     }
 
