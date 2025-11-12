@@ -1,4 +1,4 @@
-import { ArrowRight, Github, Check, X, Minus, TrendingUp, Zap, Database, Clock } from 'lucide-react';
+import { ArrowRight, Github, Check, X, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -15,14 +15,8 @@ const NewLanding = () => {
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
-              <a href="#demo" className="text-muted-foreground hover:text-foreground transition-colors">
-                Demo
-              </a>
               <a href="#architecture" className="text-muted-foreground hover:text-foreground transition-colors">
-                Architecture
-              </a>
-              <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">
-                About
+                Technologie
               </a>
               <a
                 href="https://github.com/karolpolikarp/najakiejpodstawie"
@@ -132,66 +126,6 @@ const NewLanding = () => {
             <Metric value="99.9%" label="Uptime" />
             <Metric value="67%" label="Cache hit rate" />
           </motion.div>
-
-          {/* Author Credit */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="mt-16 text-sm text-muted-foreground"
-          >
-            Built by <span className="text-foreground font-medium">Karol Polikarp</span>
-            {' • '}
-            Ministry of Digital Affairs, Poland
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Production Metrics Dashboard */}
-      <section className="py-24 px-6 bg-secondary/50" id="metrics">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-h1 mb-4">Production Metrics</h2>
-            <p className="text-muted-foreground">
-              Real-time performance data from the last 30 days
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <MetricCard
-              icon={<TrendingUp className="w-5 h-5" />}
-              value="2,847"
-              label="Queries processed"
-              trend="+23%"
-            />
-            <MetricCard
-              icon={<Zap className="w-5 h-5" />}
-              value="0.87s"
-              label="Avg response time"
-              trend="-15%"
-            />
-            <MetricCard
-              icon={<Database className="w-5 h-5" />}
-              value="67%"
-              label="Cache hit rate"
-              trend="+8%"
-            />
-            <MetricCard
-              icon={<Clock className="w-5 h-5" />}
-              value="99.94%"
-              label="Uptime"
-              trend="→"
-            />
-          </div>
-
-          {/* Cost Metric */}
-          <div className="mt-8 p-6 rounded-lg border border-border bg-card text-center">
-            <p className="text-sm text-muted-foreground mb-2">API Cost per Query</p>
-            <p className="text-3xl font-mono font-semibold text-primary">$0.003</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              60% reduction via intelligent caching
-            </p>
-          </div>
         </div>
       </section>
 
@@ -204,26 +138,26 @@ const NewLanding = () => {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-destructive text-2xl">⚠</span>
-                <h2 className="text-h1">The Problem</h2>
+                <h2 className="text-h1">Problem</h2>
               </div>
 
               <p className="text-lg text-muted-foreground max-w-3xl mb-6">
-                Legal research in Poland requires manual searches across 15,000+ acts
-                published on ISAP. Current solutions have critical limitations:
+                Poszukiwanie przepisów w polskim prawie wymaga ręcznego przeszukiwania 15 000+
+                aktów prawnych publikowanych w ISAP. Obecne rozwiązania mają istotne ograniczenia:
               </p>
 
               <div className="space-y-4">
                 <ProblemCard
-                  title="Government Portal"
-                  issue="PDF-only, no semantic search"
+                  title="Portale rządowe"
+                  issue="Tylko PDF, brak semantycznego wyszukiwania"
                 />
                 <ProblemCard
-                  title="Commercial Tools"
-                  issue="€500+/month, outdated indexes"
+                  title="Komercyjne bazy danych"
+                  issue="2000+ PLN/miesiąc, przestarzałe indeksy"
                 />
                 <ProblemCard
-                  title="General LLMs"
-                  issue="Hallucinate citations, unreliable"
+                  title="Ogólne modele AI"
+                  issue="Halucynują cytowania, niewiarygodne"
                 />
               </div>
             </div>
@@ -232,29 +166,29 @@ const NewLanding = () => {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Check className="w-6 h-6 text-primary" />
-                <h2 className="text-h1">Our Solution</h2>
+                <h2 className="text-h1">Rozwiązanie</h2>
               </div>
 
               <p className="text-lg text-muted-foreground max-w-3xl mb-6">
-                Three-layer architecture combining real-time API access,
-                intelligent caching, and custom LLM integration:
+                Trójwarstwowa architektura łącząca dostęp do API w czasie rzeczywistym,
+                inteligentne cache'owanie i dedykowaną integrację z LLM:
               </p>
 
               <div className="space-y-4">
                 <SolutionCard
                   number="1"
-                  title="Live API Integration"
-                  description="Direct connection to Sejm RP API ensures zero hallucinations and always-current legislation"
+                  title="Integracja z API Sejmu"
+                  description="Bezpośrednie połączenie z API Sejmu RP eliminuje halucynacje i zapewnia aktualność przepisów"
                 />
                 <SolutionCard
                   number="2"
-                  title="Intelligent Caching"
-                  description="Response cache with 7-day TTL achieves <500ms for popular queries, 60% cost reduction"
+                  title="Inteligentne cache'owanie"
+                  description="Cache odpowiedzi z 7-dniowym TTL osiąga <500ms dla popularnych zapytań, 60% redukcji kosztów"
                 />
                 <SolutionCard
                   number="3"
-                  title="MCP Server"
-                  description="Custom Model Context Protocol implementation for PDF parsing and citation validation"
+                  title="Serwer MCP"
+                  description="Autorska implementacja Model Context Protocol do parsowania PDF i walidacji cytatów"
                 />
               </div>
             </div>
@@ -265,84 +199,17 @@ const NewLanding = () => {
       {/* Technical Architecture */}
       <section className="py-24 px-6 bg-secondary/50" id="architecture">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-h1 mb-12 text-center">Technical Architecture</h2>
-
-          {/* Architecture Diagram - ASCII style */}
-          <div className="mb-12 p-8 rounded-lg bg-card border border-border overflow-x-auto">
-            <pre className="text-sm font-mono text-muted-foreground">
-{`┌─────────────────┐
-│   React + Vite  │  Frontend (Vercel)
-│   TypeScript    │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│   Supabase      │  Edge Functions (Deno)
-│   PostgreSQL    │  Auth & Storage
-└────────┬────────┘
-         │
-┌────────▼────────────────┐
-│   Claude API            │  Sonnet 4.5 / Haiku 4
-│   • Prompt caching      │
-│   • Response streaming  │
-└────────┬────────────────┘
-         │
-┌────────▼────────────┐
-│   ELI MCP Server    │  Raspberry Pi 5
-│   PDF extraction    │  Local deployment
-└────────┬────────────┘
-         │
-┌────────▼────────┐
-│   Sejm API      │  api.sejm.gov.pl
-│   15,000+ acts  │  Official source
-└─────────────────┘`}
-            </pre>
-          </div>
-
-          {/* Key Decisions */}
-          <div className="grid md:grid-cols-2 gap-8">
-            <TechDecision
-              title="Why MCP?"
-              points={[
-                "Standardized LLM tool protocol",
-                "PDF parsing outside context window",
-                "Enables local deployment"
-              ]}
-            />
-            <TechDecision
-              title="Why Raspberry Pi?"
-              points={[
-                "$60 vs $20/mo cloud (3mo ROI)",
-                "30ms local vs 200ms+ cloud",
-                "Full control, no rate limits"
-              ]}
-            />
-            <TechDecision
-              title="Why Supabase?"
-              points={[
-                "Deno runtime = native TypeScript",
-                "Global edge network (Warsaw POP)",
-                "Integrated PostgreSQL analytics"
-              ]}
-            />
-            <TechDecision
-              title="Why Claude?"
-              points={[
-                "Best-in-class for legal reasoning",
-                "200k context window",
-                "Prompt caching = 60% cost savings"
-              ]}
-            />
-          </div>
+          <h2 className="text-h1 mb-12 text-center">Stos Technologiczny</h2>
 
           {/* Stack List */}
-          <div className="mt-12 p-6 rounded-lg border border-border bg-card">
-            <h3 className="text-h2 mb-4">Complete Tech Stack</h3>
+          <div className="p-6 rounded-lg border border-border bg-card">
             <div className="grid md:grid-cols-3 gap-4 text-sm">
               <StackItem label="Frontend" value="React, TypeScript, Vite" />
               <StackItem label="Styling" value="Tailwind CSS, shadcn/ui" />
               <StackItem label="Backend" value="Supabase Edge Functions" />
               <StackItem label="Database" value="PostgreSQL (pgvector)" />
               <StackItem label="AI" value="Claude Sonnet 4.5 / Haiku 4" />
+              <StackItem label="MCP Server" value="ELI (Raspberry Pi 5)" />
               <StackItem label="OCR" value="Tesseract.js (PL/EN)" />
               <StackItem label="Hosting" value="Vercel, Raspberry Pi 5" />
               <StackItem label="API" value="api.sejm.gov.pl (REST)" />
@@ -409,93 +276,8 @@ const NewLanding = () => {
           </div>
 
           <p className="text-sm text-muted-foreground mt-6 text-center">
-            * Representative commercial legal databases (Legalis, LEX)
+            * Komercyjne bazy danych prawnych
           </p>
-        </div>
-      </section>
-
-      {/* About */}
-      <section className="py-24 px-6 bg-secondary/50" id="about">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-h1 mb-12">Built By</h2>
-
-          <div className="mb-8">
-            <h3 className="text-2xl font-semibold mb-2">Karol Polikarp</h3>
-            <p className="text-lg text-muted-foreground mb-4">
-              Chief Specialist, Department of Research and Innovation
-              <br />
-              Ministry of Digital Affairs, Poland
-            </p>
-          </div>
-
-          {/* Background */}
-          <div className="text-left mb-8 p-6 rounded-lg border border-border bg-card">
-            <h4 className="text-h2 mb-4">Background</h4>
-            <ul className="space-y-2 text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">•</span>
-                <span>AI Policy & EU AI Act implementation for Poland</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">•</span>
-                <span>Led CEEB system project (national building emissions registry)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">•</span>
-                <span>Education: Law (University of Warsaw), AI & Data Engineering (PJATK, SGH)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">•</span>
-                <span>3+ years building production TypeScript/React applications</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact Links */}
-          <div className="flex justify-center gap-4">
-            <Button asChild variant="outline">
-              <a
-                href="https://github.com/karolpolikarp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2"
-              >
-                <Github className="w-5 h-5" />
-                GitHub
-              </a>
-            </Button>
-            <Button asChild variant="outline">
-              <a
-                href="mailto:karol.polikarp@mc.gov.pl"
-                className="inline-flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Email
-              </a>
-            </Button>
-          </div>
-
-          {/* Open Source */}
-          <div className="mt-12 p-6 rounded-lg border border-primary/20 bg-card">
-            <h4 className="text-h2 mb-4">Open Source</h4>
-            <p className="text-muted-foreground mb-4">
-              Full source code available under MIT license.
-              Contributions welcome for prompt engineering, EU jurisdiction expansion,
-              and performance optimizations.
-            </p>
-
-            <a
-              href="https://github.com/karolpolikarp/najakiejpodstawie"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
-            >
-              <Github className="w-4 h-4" />
-              Star on GitHub
-            </a>
-          </div>
         </div>
       </section>
 
@@ -522,29 +304,6 @@ function Metric({ value, label }: { value: string; label: string }) {
       <div className="text-sm text-muted-foreground">
         {label}
       </div>
-    </div>
-  );
-}
-
-function MetricCard({
-  icon,
-  value,
-  label,
-  trend
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-  trend: string;
-}) {
-  return (
-    <div className="p-6 rounded-lg border border-border bg-card">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-muted-foreground">{icon}</div>
-        <span className="text-sm font-mono text-primary">{trend}</span>
-      </div>
-      <div className="text-3xl font-mono font-semibold mb-2">{value}</div>
-      <div className="text-sm text-muted-foreground">{label}</div>
     </div>
   );
 }
@@ -585,28 +344,6 @@ function SolutionCard({
         {description}
       </p>
     </motion.div>
-  );
-}
-
-function TechDecision({
-  title,
-  points
-}: {
-  title: string;
-  points: string[];
-}) {
-  return (
-    <div className="p-6 rounded-lg border border-border bg-card">
-      <h3 className="text-h2 mb-4">{title}</h3>
-      <ul className="space-y-2">
-        {points.map((point, i) => (
-          <li key={i} className="text-muted-foreground flex items-start gap-2">
-            <span className="text-primary mt-1">•</span>
-            <span>{point}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 
