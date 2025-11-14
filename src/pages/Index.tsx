@@ -310,6 +310,11 @@ const Index = () => {
               <AINoticeBanner />
               <div className="space-y-4 mb-6" role="log" aria-live="polite" aria-label="Historia rozmowy">
                 {messages.map((message, index) => {
+                  // Skip empty assistant messages during loading - they're shown as loading indicator instead
+                  if (isLoading && message.role === 'assistant' && message.content.trim() === '') {
+                    return null;
+                  }
+
                   // Znajdź poprzednie pytanie użytkownika dla wiadomości asystenta
                   let userContent: string | undefined;
                   if (message.role === 'assistant' && index > 0) {
@@ -334,7 +339,9 @@ const Index = () => {
                     />
                   );
                 })}
-                {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+                {isLoading && messages.length > 0 &&
+                  messages[messages.length - 1].role === 'assistant' &&
+                  messages[messages.length - 1].content.trim() === '' && (
                   <div className="flex justify-start mb-6">
                     <div className="bg-assistant text-assistant-foreground border border-border rounded-lg p-5 max-w-[85%]" role="status" aria-live="polite">
                       <div className="flex items-center gap-3 mb-3">
