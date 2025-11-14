@@ -173,4 +173,56 @@ All colors MUST be HSL.
   .hover-lift:hover {
     transform: translateY(-4px);
   }
+
+  /* Accessibility - Motion Preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* High Contrast Support */
+  @media (prefers-contrast: high) {
+    :root {
+      --border: 0 0% 30%;
+      --input: 0 0% 25%;
+    }
+
+    .dark {
+      --border: 0 0% 70%;
+      --input: 0 0% 75%;
+    }
+  }
+
+  /* Enhanced focus indicators */
+  *:focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Skip to content link for keyboard navigation */
+  .skip-to-content {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    padding: 1rem 2rem;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: top 0.3s ease;
+  }
+
+  .skip-to-content:focus {
+    top: 1rem;
+  }
 }

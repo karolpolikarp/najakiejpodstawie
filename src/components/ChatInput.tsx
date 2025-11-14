@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { Send, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,7 +9,7 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-export const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
+export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({ onSend, disabled }, ref) => {
   const [message, setMessage] = useState('');
   const [showPIIWarning, setShowPIIWarning] = useState(false);
   const [piiReasons, setPIIReasons] = useState<string[]>([]);
@@ -94,6 +94,7 @@ export const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
 
       <div className="flex gap-2 items-end">
         <Textarea
+          ref={ref}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -117,4 +118,6 @@ export const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
       </p>
     </form>
   );
-};
+});
+
+ChatInput.displayName = 'ChatInput';

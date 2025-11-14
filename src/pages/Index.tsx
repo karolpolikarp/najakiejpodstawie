@@ -30,6 +30,7 @@ import {
 import { useChatAPI } from '@/hooks/useChatAPI';
 import { usePremium } from '@/hooks/usePremium';
 import { useFeedback } from '@/hooks/useFeedback';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 const Index = () => {
   // Store hooks
@@ -54,6 +55,7 @@ const Index = () => {
   const messagesStartRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const shouldAutoScrollRef = useRef(true);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Local state
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -66,6 +68,16 @@ const Index = () => {
   const scrollToTop = () => {
     messagesStartRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    inputRef: chatInputRef,
+    onClearChat: () => setShowClearDialog(true),
+    onFocusInput: () => chatInputRef.current?.focus(),
+    onScrollToTop: scrollToTop,
+    onScrollToBottom: scrollToBottom,
+    enabled: !showClearDialog && !showPremiumDialog, // Disable when dialogs are open
+  });
 
   // Sprawdź czy użytkownik jest blisko dołu strony
   const isNearBottom = () => {
@@ -201,6 +213,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-main relative overflow-hidden">
+      {/* Skip to content link for accessibility */}
+      <a href="#main-content" className="skip-to-content">
+        Przejdź do treści
+      </a>
+
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -249,7 +266,7 @@ const Index = () => {
       />
 
       {/* Main Chat Area */}
-      <main className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-8 relative z-10" role="main">
+      <main id="main-content" className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-8 relative z-10" role="main">
         <div className="max-w-4xl mx-auto glass-card rounded-2xl shadow-soft-xl p-4 sm:p-6 md:p-8">
           {/* Welcome Message */}
           {messages.length === 0 && (
@@ -413,7 +430,7 @@ const Index = () => {
                 </label>
               </div>
 
-              <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+              <ChatInput ref={chatInputRef} onSend={handleSendMessage} disabled={isLoading} />
 
               {/* AI Disclaimer - AI Act Art. 13 compliance */}
               <div className="mt-2 pt-2 border-t border-border/50">
