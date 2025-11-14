@@ -225,4 +225,31 @@ All colors MUST be HSL.
   .skip-to-content:focus {
     top: 1rem;
   }
+
+  /* Ripple Effect for Micro-interactions */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: ripple-animation 600ms ease-out;
+    pointer-events: none;
+  }
+
+  .dark .ripple {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  @keyframes ripple-animation {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  /* Ensure buttons can contain ripple */
+  button {
+    position: relative;
+    overflow: hidden;
+  }
 }

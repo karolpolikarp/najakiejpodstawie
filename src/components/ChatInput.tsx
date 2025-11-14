@@ -3,6 +3,7 @@ import { Send, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { detectPII } from '@/lib/pii-detector';
+import { useRipple } from '@/hooks/useRipple';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -13,6 +14,7 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({ onSe
   const [message, setMessage] = useState('');
   const [showPIIWarning, setShowPIIWarning] = useState(false);
   const [piiReasons, setPIIReasons] = useState<string[]>([]);
+  const createRipple = useRipple();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +108,7 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({ onSe
           type="submit"
           disabled={!message.trim() || disabled}
           size="icon"
+          onClick={createRipple}
           className="h-[50px] w-[50px] sm:h-[60px] sm:w-[60px] shrink-0"
         >
           <Send className="h-4 w-4 sm:h-5 sm:w-5" />

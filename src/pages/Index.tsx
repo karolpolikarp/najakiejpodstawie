@@ -361,16 +361,51 @@ const Index = () => {
                   messages[messages.length - 1].content.trim() === '' && (
                   <div className="flex justify-start mb-6">
                     <div className="bg-assistant text-assistant-foreground border border-border rounded-lg p-5 max-w-[85%]" role="status" aria-live="polite">
-                      <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-3 mb-4">
                         <Scale className="h-5 w-5 text-primary animate-pulse" aria-hidden="true" />
                         <span className="text-sm font-medium text-muted-foreground">
                           {attachedFile ? 'Analizuję załączony dokument...' : 'Przeszukuję polskie prawo...'}
                         </span>
                       </div>
-                      <div className="space-y-2" aria-hidden="true">
-                        <div className="h-3 bg-muted rounded animate-pulse w-full" />
-                        <div className="h-3 bg-muted rounded animate-pulse w-5/6" />
-                        <div className="h-3 bg-muted rounded animate-pulse w-4/6" />
+
+                      {/* Skeleton loader showing structure of response */}
+                      <div className="space-y-3" aria-hidden="true">
+                        {/* Legal basis section skeleton */}
+                        <div className="p-3 bg-primary/5 rounded-lg border-l-4 border-primary/30 animate-pulse">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="h-4 w-4 bg-primary/30 rounded" />
+                            <div className="h-4 w-32 bg-primary/30 rounded" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="h-3 bg-primary/20 rounded w-full" />
+                            <div className="h-3 bg-primary/20 rounded w-5/6" />
+                          </div>
+                        </div>
+
+                        {/* Explanation section skeleton */}
+                        <div className="p-3 bg-muted/30 rounded-lg animate-pulse">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="h-4 w-4 bg-muted rounded" />
+                            <div className="h-4 w-28 bg-muted rounded" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="h-2.5 bg-muted/60 rounded w-full" />
+                            <div className="h-2.5 bg-muted/60 rounded w-11/12" />
+                            <div className="h-2.5 bg-muted/60 rounded w-4/5" />
+                          </div>
+                        </div>
+
+                        {/* Related provisions skeleton */}
+                        <div className="p-3 bg-emerald-50/30 dark:bg-emerald-950/10 rounded-lg border border-emerald-200/30 dark:border-emerald-900/30 animate-pulse">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="h-4 w-4 bg-emerald-600/30 dark:bg-emerald-400/30 rounded" />
+                            <div className="h-4 w-36 bg-emerald-600/30 dark:bg-emerald-400/30 rounded" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="h-2.5 bg-emerald-600/20 dark:bg-emerald-400/20 rounded w-3/4" />
+                            <div className="h-2.5 bg-emerald-600/20 dark:bg-emerald-400/20 rounded w-2/3" />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
