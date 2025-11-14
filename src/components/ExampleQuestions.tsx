@@ -390,8 +390,7 @@ export const ExampleQuestions = ({ onSelect, disabled, lastUserQuestion }: Examp
                 variant="outline"
                 onClick={() => onSelect(question)}
                 disabled={disabled}
-                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 border-primary/50 bg-primary/5 hover:bg-primary/10 hover:border-primary hover:text-primary animate-fade-in"
-                style={{ animationDelay: `${idx * 100}ms` }}
+                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 border-primary/50 bg-primary/5 hover:bg-primary/10 hover:border-primary hover:text-primary"
               >
                 {question}
               </Button>
@@ -414,8 +413,7 @@ export const ExampleQuestions = ({ onSelect, disabled, lastUserQuestion }: Examp
                 variant="outline"
                 onClick={() => onSelect(question)}
                 disabled={disabled}
-                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary animate-fade-in"
-                style={{ animationDelay: `${(contextual.length + idx) * 100}ms` }}
+                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary"
               >
                 {question}
               </Button>
@@ -443,8 +441,7 @@ export const ExampleQuestions = ({ onSelect, disabled, lastUserQuestion }: Examp
               variant="outline"
               onClick={() => onSelect(question)}
               disabled={disabled}
-              className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary animate-fade-in"
-              style={{ animationDelay: `${idx * 100}ms` }}
+              className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary"
             >
               {question}
             </Button>
