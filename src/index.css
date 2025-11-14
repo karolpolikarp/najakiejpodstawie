@@ -252,4 +252,59 @@ All colors MUST be HSL.
     position: relative;
     overflow: hidden;
   }
+
+  /* Better Scroll Experience */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar for better aesthetics */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.3);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.5);
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: hsl(var(--muted) / 0.3);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.4);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.6);
+  }
+
+  /* Scroll snap for mobile - smooth scrolling between messages */
+  @media (max-width: 640px) {
+    .message-container {
+      scroll-snap-type: y proximity;
+    }
+
+    .message-item {
+      scroll-snap-align: start;
+      scroll-margin-top: 1rem;
+    }
+  }
+
+  /* Pull-to-refresh prevention on mobile */
+  body {
+    overscroll-behavior-y: contain;
+  }
 }

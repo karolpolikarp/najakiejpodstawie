@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { detectPII } from '@/lib/pii-detector';
 import { useRipple } from '@/hooks/useRipple';
+import { useHaptic } from '@/hooks/useHaptic';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -15,6 +16,7 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({ onSe
   const [showPIIWarning, setShowPIIWarning] = useState(false);
   const [piiReasons, setPIIReasons] = useState<string[]>([]);
   const createRipple = useRipple();
+  const { vibrate } = useHaptic();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,11 +24,13 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({ onSe
       // Sprawdź czy są dane osobowe
       const piiCheck = detectPII(message.trim());
       if (piiCheck.detected) {
+        vibrate('warning'); // Haptic feedback for warning
         setShowPIIWarning(true);
         setPIIReasons(piiCheck.reasons);
         return;
       }
 
+      vibrate('success'); // Haptic feedback for successful send
       onSend(message.trim());
       setMessage('');
       setShowPIIWarning(false);
