@@ -3,6 +3,8 @@
  * Provides type-safe access to browser storage with consistent key naming
  */
 
+import { logger } from './logger';
+
 export const StorageKeys = {
   SESSION_ID: 'session_id',
   PREMIUM_UNLOCKED: 'premium_unlocked',
@@ -21,7 +23,7 @@ export const getStorageItem = (key: StorageKey): string | null => {
   try {
     return localStorage.getItem(key);
   } catch (error) {
-    console.error(`Failed to get item from storage: ${key}`, error);
+    logger.error(`Failed to get item from storage: ${key}`, error);
     return null;
   }
 };
@@ -33,7 +35,7 @@ export const setStorageItem = (key: StorageKey, value: string): void => {
   try {
     localStorage.setItem(key, value);
   } catch (error) {
-    console.error(`Failed to set item in storage: ${key}`, error);
+    logger.error(`Failed to set item in storage: ${key}`, error);
   }
 };
 
@@ -44,7 +46,7 @@ export const removeStorageItem = (key: StorageKey): void => {
   try {
     localStorage.removeItem(key);
   } catch (error) {
-    console.error(`Failed to remove item from storage: ${key}`, error);
+    logger.error(`Failed to remove item from storage: ${key}`, error);
   }
 };
 
@@ -79,6 +81,6 @@ export const clearAllStorage = (): void => {
   try {
     localStorage.clear();
   } catch (error) {
-    console.error('Failed to clear all storage', error);
+    logger.error('Failed to clear all storage', error);
   }
 };
