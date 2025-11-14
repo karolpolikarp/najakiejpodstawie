@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useMemo } from 'react';
+import { useHaptic } from '@/hooks/useHaptic';
 
 interface ExampleQuestionsProps {
   onSelect: (question: string) => void;
@@ -357,6 +358,13 @@ const getContextualQuestions = (lastQuestion: string, count: number = 3): string
 };
 
 export const ExampleQuestions = ({ onSelect, disabled, lastUserQuestion }: ExampleQuestionsProps) => {
+  const { vibrate } = useHaptic();
+
+  const handleSelect = (question: string) => {
+    vibrate('light'); // Light haptic feedback for question selection
+    onSelect(question);
+  };
+
   // Oblicz pytania do wyświetlenia
   const { contextual, general } = useMemo(() => {
     if (lastUserQuestion) {
@@ -388,10 +396,9 @@ export const ExampleQuestions = ({ onSelect, disabled, lastUserQuestion }: Examp
               <Button
                 key={`contextual-${question}-${idx}`}
                 variant="outline"
-                onClick={() => onSelect(question)}
+                onClick={() => handleSelect(question)}
                 disabled={disabled}
-                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 border-primary/50 bg-primary/5 hover:bg-primary/10 hover:border-primary hover:text-primary animate-fade-in"
-                style={{ animationDelay: `${idx * 100}ms` }}
+                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 border-primary/50 bg-primary/5 hover:bg-primary/10 hover:border-primary hover:text-primary"
               >
                 {question}
               </Button>
@@ -412,10 +419,9 @@ export const ExampleQuestions = ({ onSelect, disabled, lastUserQuestion }: Examp
               <Button
                 key={`general-${question}-${idx}`}
                 variant="outline"
-                onClick={() => onSelect(question)}
+                onClick={() => handleSelect(question)}
                 disabled={disabled}
-                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary animate-fade-in"
-                style={{ animationDelay: `${(contextual.length + idx) * 100}ms` }}
+                className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary"
               >
                 {question}
               </Button>
@@ -441,10 +447,9 @@ export const ExampleQuestions = ({ onSelect, disabled, lastUserQuestion }: Examp
             <Button
               key={`general-${question}-${idx}`}
               variant="outline"
-              onClick={() => onSelect(question)}
+              onClick={() => handleSelect(question)}
               disabled={disabled}
-              className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary animate-fade-in"
-              style={{ animationDelay: `${idx * 100}ms` }}
+              className="text-xs sm:text-sm hover:scale-105 transition-transform duration-200 hover:border-primary hover:text-primary"
             >
               {question}
             </Button>

@@ -126,27 +126,45 @@ All colors MUST be HSL.
     animation-delay: 200ms;
   }
 
-  /* Glass morphism */
+  /* Enhanced Glass morphism with depth */
   .glass {
     background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow:
+      0 8px 32px 0 rgba(31, 38, 135, 0.07),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.18);
   }
 
   .dark .glass {
     background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow:
+      0 8px 32px 0 rgba(0, 0, 0, 0.37),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
 
   .glass-card {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow:
+      0 8px 32px 0 rgba(31, 38, 135, 0.08),
+      0 2px 8px 0 rgba(31, 38, 135, 0.04),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   }
 
   .dark .glass-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 8px 32px 0 rgba(0, 0, 0, 0.4),
+      0 2px 8px 0 rgba(0, 0, 0, 0.2),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   }
 
   /* Cookie banner slide-up animation */
@@ -172,5 +190,167 @@ All colors MUST be HSL.
 
   .hover-lift:hover {
     transform: translateY(-4px);
+  }
+
+  /* Accessibility - Motion Preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* High Contrast Support */
+  @media (prefers-contrast: high) {
+    :root {
+      --border: 0 0% 30%;
+      --input: 0 0% 25%;
+    }
+
+    .dark {
+      --border: 0 0% 70%;
+      --input: 0 0% 75%;
+    }
+  }
+
+  /* Enhanced focus indicators */
+  *:focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Skip to content link for keyboard navigation */
+  .skip-to-content {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    padding: 1rem 2rem;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: top 0.3s ease;
+  }
+
+  .skip-to-content:focus {
+    top: 1rem;
+  }
+
+  /* Ripple Effect for Micro-interactions */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: ripple-animation 600ms ease-out;
+    pointer-events: none;
+  }
+
+  .dark .ripple {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  @keyframes ripple-animation {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  /* Ensure buttons can contain ripple */
+  button {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Better Scroll Experience */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar for better aesthetics */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.3);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.5);
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: hsl(var(--muted) / 0.3);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.4);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.6);
+  }
+
+  /* Scroll snap for mobile - smooth scrolling between messages */
+  @media (max-width: 640px) {
+    .message-container {
+      scroll-snap-type: y proximity;
+    }
+
+    .message-item {
+      scroll-snap-align: start;
+      scroll-margin-top: 1rem;
+    }
+  }
+
+  /* Pull-to-refresh prevention on mobile */
+  body {
+    overscroll-behavior-y: contain;
+  }
+
+  /* Animated Gradient Text */
+  .gradient-text {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)),
+      hsl(var(--accent)),
+      hsl(var(--primary))
+    );
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-flow 4s ease infinite;
+  }
+
+  /* 3D Transform utilities */
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .perspective {
+    perspective: 1000px;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
   }
 }
