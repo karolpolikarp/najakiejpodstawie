@@ -30,7 +30,6 @@ import {
 import { useChatAPI } from '@/hooks/useChatAPI';
 import { usePremium } from '@/hooks/usePremium';
 import { useFeedback } from '@/hooks/useFeedback';
-import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 const Index = () => {
   // Store hooks
@@ -55,7 +54,6 @@ const Index = () => {
   const messagesStartRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const shouldAutoScrollRef = useRef(true);
-  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Local state
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -68,16 +66,6 @@ const Index = () => {
   const scrollToTop = () => {
     messagesStartRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
-  // Keyboard shortcuts
-  useKeyboardShortcuts({
-    inputRef: chatInputRef,
-    onClearChat: () => setShowClearDialog(true),
-    onFocusInput: () => chatInputRef.current?.focus(),
-    onScrollToTop: scrollToTop,
-    onScrollToBottom: scrollToBottom,
-    enabled: !showClearDialog && !showPremiumDialog, // Disable when dialogs are open
-  });
 
   // Sprawdź czy użytkownik jest blisko dołu strony
   const isNearBottom = () => {
@@ -465,7 +453,7 @@ const Index = () => {
                 </label>
               </div>
 
-              <ChatInput ref={chatInputRef} onSend={handleSendMessage} disabled={isLoading} />
+              <ChatInput onSend={handleSendMessage} disabled={isLoading} />
 
               {/* AI Disclaimer - AI Act Art. 13 compliance */}
               <div className="mt-2 pt-2 border-t border-border/50">
