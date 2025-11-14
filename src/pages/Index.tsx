@@ -277,7 +277,7 @@ const Index = () => {
                 </div>
                 <Scale className="h-12 w-12 sm:h-16 sm:w-16 text-primary mx-auto mb-3 sm:mb-4 animate-scale-in relative z-10" aria-hidden="true" />
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text mb-3 sm:mb-4">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text mb-3 sm:mb-4">
                 Znajdź podstawę prawną
               </h2>
               <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-4 px-2">
