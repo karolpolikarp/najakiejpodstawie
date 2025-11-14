@@ -334,7 +334,9 @@ const Index = () => {
                     />
                   );
                 })}
-                {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+                {isLoading && messages.length > 0 &&
+                  messages[messages.length - 1].role === 'assistant' &&
+                  messages[messages.length - 1].content.trim() === '' && (
                   <div className="flex justify-start mb-6">
                     <div className="bg-assistant text-assistant-foreground border border-border rounded-lg p-5 max-w-[85%]" role="status" aria-live="polite">
                       <div className="flex items-center gap-3 mb-3">
