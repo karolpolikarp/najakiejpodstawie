@@ -17,10 +17,20 @@ export interface StreamOptions {
   usePremiumModel: boolean;
 }
 
+export interface SourceMetadata {
+  model: 'haiku' | 'sonnet';
+  usedMCP: boolean;
+  articlesCount?: number;
+  usedToolCalling?: boolean;  // LLM dynamicznie pobrał artykuły
+  hasFileContext?: boolean;   // Odpowiedź z załącznika PDF/DOCX
+  cached?: boolean;            // Odpowiedź z pamięci (cache)
+}
+
 export interface StreamCallbacks {
   onMessageStart: () => void;
   onContentDelta: (content: string) => void;
   onMessageComplete: (fullContent: string) => void;
+  onSourceMetadata?: (metadata: SourceMetadata) => void;
   onError: (error: Error) => void;
 }
 
@@ -236,8 +246,13 @@ export class StreamingService {
             try {
               const parsed = JSON.parse(data);
 
+              // Source metadata event
+              if (parsed.type === 'source_metadata' && parsed.metadata) {
+                logger.debug('Source metadata received:', parsed.metadata);
+                callbacks.onSourceMetadata?.(parsed.metadata);
+              }
               // Anthropic streaming format
-              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              else if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
                 streamedContent += parsed.delta.text;
                 callbacks.onContentDelta(streamedContent);
               } else if (parsed.type === 'content_block_start') {

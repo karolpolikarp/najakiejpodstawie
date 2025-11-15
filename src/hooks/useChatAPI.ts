@@ -14,7 +14,7 @@ import { StorageKeys, getStorageItem, setStorageItem } from '@/lib/storage';
 const streamingService = new StreamingService();
 
 export const useChatAPI = () => {
-  const { addMessage, updateMessageContent, setLoading, attachedFile } = useChatStore();
+  const { addMessage, updateMessageContent, updateMessageMetadata, setLoading, attachedFile } = useChatStore();
   const [isStreaming, setIsStreaming] = useState(false);
 
   const sendMessage = useCallback(
@@ -63,6 +63,10 @@ export const useChatAPI = () => {
               logger.debug('Stream completed:', fullContent.length, 'chars');
               updateMessageContent(tempMessageId, fullContent);
             },
+            onSourceMetadata: (metadata) => {
+              logger.debug('Source metadata received:', metadata);
+              updateMessageMetadata(tempMessageId, metadata);
+            },
             onError: (error) => {
               logger.error('Stream error:', error);
               throw error;
@@ -102,7 +106,7 @@ export const useChatAPI = () => {
         setIsStreaming(false);
       }
     },
-    [addMessage, updateMessageContent, setLoading, attachedFile]
+    [addMessage, updateMessageContent, updateMessageMetadata, setLoading, attachedFile]
   );
 
   return {

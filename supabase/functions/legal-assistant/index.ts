@@ -312,6 +312,19 @@ serve(async (req) => {
         const stream = new ReadableStream({
           start(controller) {
             try {
+              // Send source metadata first
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'source_metadata',
+                metadata: {
+                  model: usePremiumModel ? 'sonnet' : 'haiku',
+                  usedMCP: false,  // cached response didn't use MCP in this stream
+                  articlesCount: 0,
+                  usedToolCalling: false,
+                  hasFileContext: !!fileContext,
+                  cached: true
+                }
+              })}\n\n`));
+
               // Send SSE events in correct order
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                 type: 'message_start',
@@ -819,6 +832,19 @@ ${message}`;
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          // Send source metadata first (before any Anthropic events)
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'source_metadata',
+            metadata: {
+              model: usePremiumModel ? 'sonnet' : 'haiku',
+              usedMCP: enrichmentResult.successCount > 0,
+              articlesCount: enrichmentResult.successCount,
+              usedToolCalling: false,  // Will be updated if tool calling happens
+              hasFileContext: !!fileContext,
+              cached: false
+            }
+          })}\n\n`));
+
           let buffer = '';
 
           while (true) {
@@ -977,6 +1003,21 @@ ${message}`;
                   // No safety check - trust the response
 
                   // Send proper SSE event sequence
+                  // 0. source_metadata (before message_start)
+                  // Note: When tool calling happens, we update metadata with tool info
+                  const toolArticlesCount = toolUses.filter(tu => tu.name === 'get_article').length;
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'source_metadata',
+                    metadata: {
+                      model: usePremiumModel ? 'sonnet' : 'haiku',
+                      usedMCP: true,  // Tool calling means we used MCP
+                      articlesCount: enrichmentResult.successCount + toolArticlesCount,
+                      usedToolCalling: true,
+                      hasFileContext: !!fileContext,
+                      cached: false
+                    }
+                  })}\n\n`));
+
                   // 1. message_start
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                     type: 'message_start',
