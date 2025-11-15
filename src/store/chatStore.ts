@@ -1,12 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export interface SourceMetadata {
+  model: 'haiku' | 'sonnet';
+  usedMCP: boolean;
+  articlesCount?: number;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
   feedback?: 'positive' | 'negative' | null;
+  sourceMetadata?: SourceMetadata;
 }
 
 export interface AttachedFile {
@@ -20,6 +27,7 @@ interface ChatState {
   attachedFile: AttachedFile | null;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'> & { id?: string }) => void;
   updateMessageContent: (messageId: string, content: string) => void;
+  updateMessageMetadata: (messageId: string, metadata: SourceMetadata) => void;
   removeMessage: (messageId: string) => void;
   clearMessages: () => void;
   setLoading: (loading: boolean) => void;
@@ -48,6 +56,12 @@ export const useChatStore = create<ChatState>()(
         set((state) => ({
           messages: state.messages.map((msg) =>
             msg.id === messageId ? { ...msg, content } : msg
+          ),
+        })),
+      updateMessageMetadata: (messageId, metadata) =>
+        set((state) => ({
+          messages: state.messages.map((msg) =>
+            msg.id === messageId ? { ...msg, sourceMetadata: metadata } : msg
           ),
         })),
       removeMessage: (messageId) =>

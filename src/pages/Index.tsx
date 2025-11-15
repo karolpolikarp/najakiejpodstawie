@@ -337,6 +337,7 @@ const Index = () => {
                       messageId={message.id}
                       userContent={userContent}
                       feedback={message.feedback}
+                      sourceMetadata={message.sourceMetadata}
                       onRetry={handleRetry}
                       onRemove={handleRemoveMessage}
                       onFeedback={submitFeedback}

@@ -1,9 +1,15 @@
 import { motion } from 'framer-motion';
-import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
+import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X, ThumbsUp, ThumbsDown, MessageSquare, Sparkles, Database, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, memo } from 'react';
 import { toast } from 'sonner';
 import { CONSTANTS } from '@/lib/constants';
+
+interface SourceMetadata {
+  model: 'haiku' | 'sonnet';
+  usedMCP: boolean;
+  articlesCount?: number;
+}
 
 interface ChatMessageProps {
   role: 'user' | 'assistant';
@@ -11,6 +17,7 @@ interface ChatMessageProps {
   messageId?: string;
   userContent?: string;
   feedback?: 'positive' | 'negative' | null;
+  sourceMetadata?: SourceMetadata;
   onRetry?: (content: string) => void;
   onRemove?: (messageId: string) => void;
   onFeedback?: (messageId: string, feedback: 'positive' | 'negative' | null) => void;
@@ -398,7 +405,7 @@ const isErrorMessage = (content: string): boolean => {
   return errorPatterns.some(pattern => pattern.test(content.trim()));
 };
 
-export const ChatMessage = memo(({ role, content, messageId, userContent, feedback, onRetry, onRemove, onFeedback, onSendMessage }: ChatMessageProps) => {
+export const ChatMessage = memo(({ role, content, messageId, userContent, feedback, sourceMetadata, onRetry, onRemove, onFeedback, onSendMessage }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const isError = role === 'assistant' && isErrorMessage(content);
 
@@ -464,6 +471,29 @@ export const ChatMessage = memo(({ role, content, messageId, userContent, feedba
           <div className="whitespace-pre-wrap break-words">{formattedContent}</div>
         ) : (
           <div className="space-y-2">
+            {/* Source indicators - small and subtle */}
+            {sourceMetadata && (
+              <div className="flex flex-wrap gap-1.5 mb-2 opacity-60 hover:opacity-100 transition-opacity">
+                {sourceMetadata.model === 'sonnet' && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-violet-100/80 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 text-[10px] rounded border border-violet-200/50 dark:border-violet-800/50">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    Sonnet
+                  </span>
+                )}
+                {sourceMetadata.model === 'haiku' && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-sky-100/80 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400 text-[10px] rounded border border-sky-200/50 dark:border-sky-800/50">
+                    <Zap className="h-2.5 w-2.5" />
+                    Haiku
+                  </span>
+                )}
+                {sourceMetadata.usedMCP && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-100/80 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] rounded border border-emerald-200/50 dark:border-emerald-800/50">
+                    <Database className="h-2.5 w-2.5" />
+                    {sourceMetadata.articlesCount ? `${sourceMetadata.articlesCount} art.` : 'MCP'}
+                  </span>
+                )}
+              </div>
+            )}
             {formattedContent}
           </div>
         )}
