@@ -334,7 +334,13 @@ const Index = () => {
                     />
                   );
                 })}
-                {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+                {/* Show loading indicator when:
+                    1. isLoading is true
+                    2. Last message is from user (no assistant response yet)
+                    3. OR last message is empty assistant message (streaming about to start) */}
+                {isLoading && messages.length > 0 &&
+                  (messages[messages.length - 1].role === 'user' ||
+                   (messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content === '')) && (
                   <div className="flex justify-start mb-6">
                     <div className="bg-assistant text-assistant-foreground border border-border rounded-lg p-5 max-w-[85%]" role="status" aria-live="polite">
                       <div className="flex items-center gap-3 mb-3">
