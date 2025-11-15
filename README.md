@@ -183,13 +183,30 @@ Wszystko oparte na nowoczesnych, sprawdzonych technologiach używanych przez naj
 
 ---
 
-## ⚠️ Ważne zastrzeżenia
+## ⚠️ Ważne zastrzeżenia prawne
 
-**JakiePrawo.pl służy celom informacyjnym i edukacyjnym.**
+**JakiePrawo.pl dostarcza informacje edukacyjne o prawie, NIE porady prawne.**
 
-Aplikacja **nie zastępuje profesjonalnej porady prawnej**. W indywidualnych sprawach, szczególnie tych o dużym znaczeniu prawnym lub finansowym, zawsze skonsultuj się z wykwalifikowanym prawnikiem lub radcą prawnym.
+### Czym NIE jesteśmy
+- ❌ **Nie zastępujemy prawnika** - nie udzielamy porad prawnych dotyczących konkretnych spraw
+- ❌ **Nie interpretujemy** - nie oceniamy ani nie interpretujemy Twojej indywidualnej sytuacji prawnej
+- ❌ **Nie gwarantujemy aktualności** - przepisy prawa mogą się zmieniać, zawsze weryfikuj aktualność regulacji
+- ❌ **Nie ponosimy odpowiedzialności** - za decyzje podjęte wyłącznie na podstawie informacji z tej aplikacji
 
-Twórcy aplikacji nie ponoszą odpowiedzialności za decyzje podjęte wyłącznie na podstawie informacji uzyskanych z aplikacji.
+### Czym jesteśmy
+- ✅ **Narzędzie edukacyjne** - pokazujemy podstawy prawne i ogólne wyjaśnienia przepisów
+- ✅ **Punkt startowy** - pomagamy znaleźć właściwe artykuły i przepisy do dalszej weryfikacji
+- ✅ **Asystent wyszukiwania** - ułatwiamy dostęp do 15,000+ polskich ustaw z oficjalnych źródeł
+
+### Kiedy potrzebujesz prawnika?
+W sprawach wymagających porady prawnej **zawsze skonsultuj się z wykwalifikowanym prawnikiem lub radcą prawnym**:
+- Sprawy sądowe i spory prawne
+- Interpretacja przepisów w kontekście konkretnej sytuacji
+- Decyzje biznesowe i umowy o dużej wartości
+- Sprawy karne, rodzinne, spadkowe
+- Wszelkie sytuacje wymagające profesjonalnej reprezentacji
+
+**Odpowiedzi AI wymagają weryfikacji** - sztuczna inteligencja może popełniać błędy. Prawo zmienia się - zawsze sprawdź aktualność przepisów przed podjęciem decyzji.
 
 ---
 
