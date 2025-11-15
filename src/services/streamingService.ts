@@ -21,6 +21,9 @@ export interface SourceMetadata {
   model: 'haiku' | 'sonnet';
   usedMCP: boolean;
   articlesCount?: number;
+  usedToolCalling?: boolean;  // LLM dynamicznie pobrał artykuły
+  hasFileContext?: boolean;   // Odpowiedź z załącznika PDF/DOCX
+  cached?: boolean;            // Odpowiedź z pamięci (cache)
 }
 
 export interface StreamCallbacks {

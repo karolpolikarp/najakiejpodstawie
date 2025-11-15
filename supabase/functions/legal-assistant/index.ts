@@ -318,7 +318,10 @@ serve(async (req) => {
                 metadata: {
                   model: usePremiumModel ? 'sonnet' : 'haiku',
                   usedMCP: false,  // cached response didn't use MCP in this stream
-                  articlesCount: 0
+                  articlesCount: 0,
+                  usedToolCalling: false,
+                  hasFileContext: !!fileContext,
+                  cached: true
                 }
               })}\n\n`));
 
@@ -835,7 +838,10 @@ ${message}`;
             metadata: {
               model: usePremiumModel ? 'sonnet' : 'haiku',
               usedMCP: enrichmentResult.successCount > 0,
-              articlesCount: enrichmentResult.successCount
+              articlesCount: enrichmentResult.successCount,
+              usedToolCalling: false,  // Will be updated if tool calling happens
+              hasFileContext: !!fileContext,
+              cached: false
             }
           })}\n\n`));
 
@@ -998,12 +1004,17 @@ ${message}`;
 
                   // Send proper SSE event sequence
                   // 0. source_metadata (before message_start)
+                  // Note: When tool calling happens, we update metadata with tool info
+                  const toolArticlesCount = toolUses.filter(tu => tu.name === 'get_article').length;
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                     type: 'source_metadata',
                     metadata: {
                       model: usePremiumModel ? 'sonnet' : 'haiku',
-                      usedMCP: enrichmentResult.successCount > 0,
-                      articlesCount: enrichmentResult.successCount
+                      usedMCP: true,  // Tool calling means we used MCP
+                      articlesCount: enrichmentResult.successCount + toolArticlesCount,
+                      usedToolCalling: true,
+                      hasFileContext: !!fileContext,
+                      cached: false
                     }
                   })}\n\n`));
 

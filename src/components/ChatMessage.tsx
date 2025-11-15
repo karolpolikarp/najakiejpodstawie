@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X, ThumbsUp, ThumbsDown, MessageSquare, Sparkles, Database, Zap } from 'lucide-react';
+import { Copy, CheckCheck, Scale, FileText, Link as LinkIcon, AlertTriangle, Info, ListChecks, BookOpen, RotateCcw, X, ThumbsUp, ThumbsDown, MessageSquare, Sparkles, Database, Zap, Wrench, Paperclip, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, memo } from 'react';
 import { toast } from 'sonner';
@@ -9,6 +9,9 @@ interface SourceMetadata {
   model: 'haiku' | 'sonnet';
   usedMCP: boolean;
   articlesCount?: number;
+  usedToolCalling?: boolean;  // LLM dynamicznie pobrał artykuły
+  hasFileContext?: boolean;   // Odpowiedź z załącznika PDF/DOCX
+  cached?: boolean;            // Odpowiedź z pamięci (cache)
 }
 
 interface ChatMessageProps {
@@ -474,6 +477,7 @@ export const ChatMessage = memo(({ role, content, messageId, userContent, feedba
             {/* Source indicators - small and subtle */}
             {sourceMetadata && (
               <div className="flex flex-wrap gap-1.5 mb-2 opacity-60 hover:opacity-100 transition-opacity">
+                {/* Model indicator */}
                 {sourceMetadata.model === 'sonnet' && (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-violet-100/80 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 text-[10px] rounded border border-violet-200/50 dark:border-violet-800/50">
                     <Sparkles className="h-2.5 w-2.5" />
@@ -486,10 +490,32 @@ export const ChatMessage = memo(({ role, content, messageId, userContent, feedba
                     Haiku
                   </span>
                 )}
+                {/* MCP/Articles indicator */}
                 {sourceMetadata.usedMCP && (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-100/80 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] rounded border border-emerald-200/50 dark:border-emerald-800/50">
                     <Database className="h-2.5 w-2.5" />
                     {sourceMetadata.articlesCount ? `${sourceMetadata.articlesCount} art.` : 'MCP'}
+                  </span>
+                )}
+                {/* Tool calling indicator - when LLM dynamically fetched articles */}
+                {sourceMetadata.usedToolCalling && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100/80 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[10px] rounded border border-amber-200/50 dark:border-amber-800/50">
+                    <Wrench className="h-2.5 w-2.5" />
+                    Tool
+                  </span>
+                )}
+                {/* File attachment indicator */}
+                {sourceMetadata.hasFileContext && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-pink-100/80 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400 text-[10px] rounded border border-pink-200/50 dark:border-pink-800/50">
+                    <Paperclip className="h-2.5 w-2.5" />
+                    Załącznik
+                  </span>
+                )}
+                {/* Cached response indicator */}
+                {sourceMetadata.cached && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100/80 dark:bg-slate-900/20 text-slate-700 dark:text-slate-400 text-[10px] rounded border border-slate-200/50 dark:border-slate-800/50">
+                    <Clock className="h-2.5 w-2.5" />
+                    Pamięć
                   </span>
                 )}
               </div>
