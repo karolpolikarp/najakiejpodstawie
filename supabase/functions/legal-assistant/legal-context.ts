@@ -10,7 +10,20 @@
  * - mainArticles/relatedArticles are for AI reference (what to mention)
  * - mcpArticles defines what to automatically fetch from MCP
  *
- * Last updated: 2025-11-09
+ * CHANGELOG:
+ * - 2025-11-15: Major expansion - Added 23 new topics (+79% coverage):
+ *   * Prawo pracy: czas_pracy_nadgodziny, zwolnienie_lekarskie_l4, swiadectwo_pracy,
+ *     umowa_o_prace, dyskryminacja_w_pracy, urlop_bezplatny, odpowiedzialnosc_materialna_pracownika
+ *   * Prawo rodzinne: rozwod, wspolnosc_malzenska, wladza_rodzicielska
+ *   * Prawo karne: jazda_po_alkoholu, groźby_karalne, stalking_nekanie, niealimentacja, wypadek_drogowy
+ *   * Prawo konsumenckie: kredyt_konsumencki, klauzule_abuzywne
+ *   * Prawo mieszkaniowe: kupno_nieruchomosci, wspolnota_mieszkaniowa, sasiedzi_halas
+ *   * Prawo administracyjne: mandat_karny, rejestracja_pojazdu
+ *   Enhanced keywords for 12+ existing topics for better detection
+ *   Total topics: 52 (was 29)
+ * - 2025-11-09: Initial creation with 29 core topics
+ *
+ * Last updated: 2025-11-15
  */
 
 export interface ArticleReference {
@@ -34,7 +47,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   urlop: {
     name: "Urlop wypoczynkowy",
-    keywords: ["urlop", "urlopy", "wakacje", "urlop wypoczynkowy", "dni wolne", "urlop na żądanie", "macierzyński", "urlop macierzyński", "rodzicielski", "urlop rodzicielski", "wychowawczy", "urlop wychowawczy"],
+    keywords: ["urlop", "urlopy", "wakacje", "urlop wypoczynkowy", "dni wolne", "urlop na żądanie", "macierzyński", "urlop macierzyński", "rodzicielski", "urlop rodzicielski", "wychowawczy", "urlop wychowawczy", "ile urlopu", "wymiar urlopu", "prawo do urlopu", "ekwiwalent za urlop", "niewykorzystany urlop", "plan urlopów", "ojcowski", "urlop ojcowski", "tacierzyński", "ciążowy"],
     mcpArticles: [
       { actCode: 'kp', articleNumber: '152' },  // definicja urlopu
       { actCode: 'kp', articleNumber: '153' },  // nabywanie prawa
@@ -73,7 +86,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
 
   wynagrodzenie: {
     name: "Wynagrodzenie za pracę",
-    keywords: ["wynagrodzenie", "pensja", "płaca", "wypłata", "minimalna", "zarobki"],
+    keywords: ["wynagrodzenie", "pensja", "płaca", "wypłata", "minimalna", "zarobki", "wynagrodzenie minimalne", "płaca minimalna", "termin wypłaty", "potrącenia", "składniki wynagrodzenia", "premia", "bonus", "wynagrodzenie za godziny nadliczbowe", "kiedy wypłata", "opóźnienie wypłaty"],
     mcpArticles: [
       { actCode: 'kp', articleNumber: '78' },
       { actCode: 'kp', articleNumber: '80' },
@@ -179,7 +192,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
 
   reklamacja_towaru: {
     name: "Reklamacja towaru",
-    keywords: ["reklamacja", "wada", "rękojmia", "gwarancja", "zwrot towaru"],
+    keywords: ["reklamacja", "wada", "rękojmia", "gwarancja", "zwrot towaru", "towar uszkodzony", "produkt wadliwy", "naprawa", "wymiana towaru", "obniżenie ceny", "odstąpienie od umowy", "zgłoszenie wady", "termin reklamacji", "2 lata", "gwarancja producenta"],
     mcpArticles: [
       { actCode: 'kc', articleNumber: '556' },
       { actCode: 'kc', articleNumber: '560' },
@@ -257,7 +270,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   alimenty: {
     name: "Alimenty",
-    keywords: ["alimenty", "alimentacja", "obowiązek alimentacyjny", "dziecko"],
+    keywords: ["alimenty", "alimentacja", "obowiązek alimentacyjny", "dziecko", "alimenty na dziecko", "wysokość alimentów", "zmiana alimentów", "podwyższenie alimentów", "obniżenie alimentów", "alimenty po rozwodzie", "alimenty małżonek", "fundusz alimentacyjny", "alimenty od ojca", "alimenty od matki", "uchylanie się od alimentów"],
     mcpArticles: [
       { actCode: 'kro', articleNumber: '133' }, // Kodeks rodzinny i opiekuńczy
       { actCode: 'kro', articleNumber: '135' },
@@ -283,7 +296,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   zniewaga: {
     name: "Zniewaga",
-    keywords: ["zniewaga", "obraza", "wyzwisko"],
+    keywords: ["zniewaga", "obraza", "wyzwisko", "obelga", "zniewaga publiczna", "zniewaga w internecie", "zniewaga policjanta", "zniewaga funkcjonariusza", "obraza uczuć religijnych", "zniewaga sąsiad", "kara za zniewagę"],
     mcpArticles: [
       { actCode: 'kk', articleNumber: '216' },
       { actCode: 'kk', articleNumber: '212' }, // zniesławienie
@@ -323,7 +336,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
 
   kradziez: {
     name: "Kradzież",
-    keywords: ["kradzież", "zabór", "mienie", "skradziono"],
+    keywords: ["kradzież", "zabór", "mienie", "skradziono", "ukradziono", "kradzież w sklepie", "kradzież pojazdu", "kradzież samochodu", "kradzież roweru", "kradzież z włamaniem", "włamanie", "rabunek", "zgłoszenie kradzieży", "kara za kradzież"],
     mcpArticles: [
       { actCode: 'kk', articleNumber: '278' },
       { actCode: 'kk', articleNumber: '279' }, // kradzież z włamaniem
@@ -364,7 +377,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
 
   oszustwo: {
     name: "Oszustwo",
-    keywords: ["oszustwo", "wyłudzenie", "wprowadzenie w błąd", "oszukano"],
+    keywords: ["oszustwo", "wyłudzenie", "wprowadzenie w błąd", "oszukano", "oszustwo internetowe", "wyłudzenie pieniędzy", "phishing", "oszustwo na wnuczka", "oszustwo na policjanta", "oszustwo w internecie", "oszustwo allegro", "oszustwo olx", "oszustwo kredytowe", "kara za oszustwo"],
     mcpArticles: [
       { actCode: 'kk', articleNumber: '286' },
     ],
@@ -383,7 +396,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
 
   pobicie: {
     name: "Pobicie i uszkodzenie ciała",
-    keywords: ["pobicie", "bójka", "uszkodzenie ciała", "naruszenie nietykalności"],
+    keywords: ["pobicie", "bójka", "uszkodzenie ciała", "naruszenie nietykalności", "pobity", "policja pobicie", "zgłoszenie pobicia", "obrażenia ciała", "lekki uszczerbek", "ciężki uszczerbek", "średni uszczerbek", "przemoc fizyczna", "atak fizyczny"],
     mcpArticles: [
       { actCode: 'kk', articleNumber: '157' },
       { actCode: 'kk', articleNumber: '158' },
@@ -436,7 +449,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   spadek: {
     name: "Prawo spadkowe",
-    keywords: ["spadek", "testament", "dziedziczenie", "zachowek", "spadkobierca", "odrzucenie"],
+    keywords: ["spadek", "testament", "dziedziczenie", "zachowek", "spadkobierca", "odrzucenie", "przyjęcie spadku", "odrzucenie spadku", "spadek z dobrodziejstwem inwentarza", "proste przyjęcie", "bezwarunkowe przyjęcie", "dziedziczenie ustawowe", "dziedziczenie testamentowe", "otwarcie spadku", "stwierdzenie nabycia spadku", "długi spadkowe", "podział spadku", "dział spadku", "spadek po rodzicach", "spadek po dziadkach"],
     mcpArticles: [
       { actCode: 'kc', articleNumber: '922' },  // otwarcie spadku
       { actCode: 'kc', articleNumber: '924' },  // formy dziedziczenia
@@ -660,7 +673,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
 
   punkty_karne: {
     name: "Punkty karne",
-    keywords: ["punkty", "punkty karne", "ewidencja kierowców", "zatrzymanie prawa jazdy"],
+    keywords: ["punkty", "punkty karne", "ewidencja kierowców", "zatrzymanie prawa jazdy", "ile punktów", "sprawdzenie punktów", "kasowanie punktów", "resetowanie punktów", "utrata prawa jazdy", "24 punkty", "20 punktów", "kurs reedukacyjny", "punkty za przekroczenie prędkości"],
     mcpArticles: [
       { actCode: 'prd', articleNumber: '92a' },
       { actCode: 'prd', articleNumber: '97' },
@@ -705,7 +718,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   windykacja: {
     name: "Windykacja długu i egzekucja",
-    keywords: ["windykacja", "dług", "długi", "wierzyciel", "dłużnik", "egzekucja", "należność", "spłata", "przedawnienie"],
+    keywords: ["windykacja", "dług", "długi", "wierzyciel", "dłużnik", "egzekucja", "należność", "spłata", "przedawnienie", "przedawnienie długu", "6 lat", "3 lata", "odsetki za opóźnienie", "komornik", "tytuł wykonawczy", "nakaz zapłaty", "postępowanie egzekucyjne", "nieuregulowana należność", "dochodzenie długu"],
     mcpArticles: [
       { actCode: 'kc', articleNumber: '117' },  // przedawnienie roszczeń - ogólne
       { actCode: 'kc', articleNumber: '118' },  // przedawnienie - 6 lat (podstawa)
@@ -827,7 +840,7 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
    */
   pit: {
     name: "Podatek dochodowy od osób fizycznych (PIT)",
-    keywords: ["pit", "podatek dochodowy", "zeznanie podatkowe", "zeznanie roczne", "termin złożenia", "deklaracja podatkowa", "rozliczenie pit"],
+    keywords: ["pit", "podatek dochodowy", "zeznanie podatkowe", "zeznanie roczne", "termin złożenia", "deklaracja podatkowa", "rozliczenie pit", "pit 37", "pit 36", "pit 38", "pit 28", "30 kwietnia", "rozliczenie roczne", "zwrot podatku", "ulga podatkowa", "odliczenia", "skala podatkowa", "podatek liniowy"],
     mcpArticles: [
       { actCode: 'pit', articleNumber: '45' },   // obowiązek złożenia zeznania
       { actCode: 'op', articleNumber: '70' },    // terminy załatwiania spraw
@@ -875,6 +888,564 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
       "Art. 34 - odpowiedzialność za zmniejszenie wartości towaru"
     ],
     source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827"
+  },
+
+  /**
+   * PRAWO PRACY - ROZSZERZENIE (Labor Law - Extended)
+   */
+  czas_pracy_nadgodziny: {
+    name: "Czas pracy i nadgodziny",
+    keywords: ["czas pracy", "nadgodziny", "praca w godzinach nadliczbowych", "dobowy czas pracy", "tygodniowy czas pracy", "8 godzin", "40 godzin", "dodatek za nadgodziny", "praca w niedzielę", "praca w święto"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '128' },  // normy czasu pracy
+      { actCode: 'kp', articleNumber: '129' },  // dobowy czas pracy (8h)
+      { actCode: 'kp', articleNumber: '130' },  // tygodniowy czas pracy (40h)
+      { actCode: 'kp', articleNumber: '151' },  // nadgodziny - definicja i limit
+      { actCode: 'kp', articleNumber: '1511' }, // rekompensata za nadgodziny
+      { actCode: 'kp', articleNumber: '1512' }, // dodatek za pracę w nocy
+      { actCode: 'kp', articleNumber: '151³' }, // praca w niedzielę i święto
+    ],
+    mainActs: [
+      "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
+    ],
+    mainArticles: [
+      "Art. 128 - normy czasu pracy",
+      "Art. 129 - dobowy czas pracy (8 godzin)",
+      "Art. 130 - tygodniowy czas pracy (40 godzin w 5-dniowym tygodniu)",
+      "Art. 151 - praca w godzinach nadliczbowych (nadgodziny)",
+      "Art. 1511 - rekompensata za nadgodziny (dodatek 50% lub 100%, albo czas wolny)"
+    ],
+    relatedArticles: [
+      "Art. 132 - systemy czasu pracy",
+      "Art. 135 - pora nocna (21:00-07:00)",
+      "Art. 1512 - dodatek za pracę w porze nocnej (20%)",
+      "Art. 151³ - praca w niedzielę i święto",
+      "Art. 152 - norma dla prac szkodliwych"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
+  },
+
+  zwolnienie_lekarskie_l4: {
+    name: "Zwolnienie lekarskie (L4) i zasiłek chorobowy",
+    keywords: ["zwolnienie lekarskie", "l4", "el4", "e-zwolnienie", "zasiłek chorobowy", "chore", "niezdolność do pracy", "wynagrodzenie chorobowe", "zus"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '92' },   // obowiązki pracodawcy - ochrona zdrowia
+      { actCode: 'kp', articleNumber: '234' },  // przyczyny usprawiedliwiające nieobecność
+    ],
+    mainActs: [
+      "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy",
+      "Ustawa z dnia 25 czerwca 1999 r. o świadczeniach pieniężnych z ubezpieczenia społecznego w razie choroby i macierzyństwa"
+    ],
+    mainArticles: [
+      "Art. 92 KP - ochrona zdrowia pracowników",
+      "Art. 234 KP - usprawiedliwiona nieobecność w pracy",
+      "Art. 6 Ustawy zasiłkowej - zasiłek chorobowy (80% podstawy wymiaru)",
+      "Art. 9 Ustawy zasiłkowej - wynagrodzenie chorobowe za 33 dni (80% lub 100%)"
+    ],
+    relatedArticles: [
+      "Art. 17 Ustawy zasiłkowej - wysokość zasiłku",
+      "Art. 41 Ustawy zasiłkowej - niezdolność do pracy",
+      "Art. 52 KP - urlop wypoczynkowy po zwolnieniu"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
+  },
+
+  swiadectwo_pracy: {
+    name: "Świadectwo pracy",
+    keywords: ["świadectwo pracy", "wydanie świadectwa", "termin wydania świadectwa", "treść świadectwa", "sprostowanie świadectwa"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '97' },  // świadectwo pracy
+    ],
+    mainActs: [
+      "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
+    ],
+    mainArticles: [
+      "Art. 97 - obowiązek wydania świadectwa pracy (w dniu zakończenia pracy)",
+      "§ 1 - termin wydania",
+      "§ 2 - treść świadectwa",
+      "§ 3 - sprostowanie lub uzupełnienie"
+    ],
+    relatedArticles: [
+      "Rozporządzenie w sprawie świadectwa pracy",
+      "Art. 98 KP - kara za niewydanie świadectwa"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
+  },
+
+  umowa_o_prace: {
+    name: "Umowa o pracę - zawarcie i rodzaje",
+    keywords: ["umowa o pracę", "zawarcie umowy", "rodzaje umowy", "na czas nieokreślony", "na czas określony", "na okres próbny", "umowa na zastępstwo", "umowa terminowa"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '25' },  // rodzaje umów
+      { actCode: 'kp', articleNumber: '251' }, // umowa na czas określony - limit 33 miesięcy
+      { actCode: 'kp', articleNumber: '26' },  // okres próbny
+      { actCode: 'kp', articleNumber: '29' },  // forma umowy
+    ],
+    mainActs: [
+      "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
+    ],
+    mainArticles: [
+      "Art. 25 - rodzaje umów o pracę (nieokreślony, określony, próbny, zastępstwo, sezonowa)",
+      "Art. 251 - limit umów na czas określony (33 miesiące, max 3 umowy)",
+      "Art. 26 - umowa na okres próbny (max 3 miesiące)",
+      "Art. 29 - forma pisemna umowy (przed dopuszczeniem do pracy)"
+    ],
+    relatedArticles: [
+      "Art. 27 - rozwiązanie w okresie próbnym (3 dni, 1 tydzień, 2 tygodnie)",
+      "Art. 30 - okresy wypowiedzenia",
+      "Art. 211 - zasada równego traktowania"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
+  },
+
+  dyskryminacja_w_pracy: {
+    name: "Dyskryminacja w zatrudnieniu",
+    keywords: ["dyskryminacja", "dyskryminacja w pracy", "równe traktowanie", "mobbing", "molestowanie seksualne", "nierówne traktowanie", "płeć", "wiek", "niepełnosprawność", "pochodzenie"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '183a' }, // równe traktowanie - zakaz dyskryminacji
+      { actCode: 'kp', articleNumber: '183b' }, // definicja dyskryminacji bezpośredniej i pośredniej
+      { actCode: 'kp', articleNumber: '183c' }, // molestowanie i molestowanie seksualne
+      { actCode: 'kp', articleNumber: '183d' }, // ciężar dowodu
+      { actCode: 'kp', articleNumber: '183e' }, // zadośćuczynienie i odszkodowanie
+      { actCode: 'kp', articleNumber: '11' },   // równe traktowanie w zatrudnieniu
+    ],
+    mainActs: [
+      "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
+    ],
+    mainArticles: [
+      "Art. 183a - zakaz dyskryminacji w zatrudnieniu",
+      "Art. 183b - definicja dyskryminacji bezpośredniej i pośredniej",
+      "Art. 183c - molestowanie i molestowanie seksualne jako dyskryminacja",
+      "Art. 183e - odszkodowanie za dyskryminację (min. minimalne wynagrodzenie)"
+    ],
+    relatedArticles: [
+      "Art. 11 - równe traktowanie w zatrudnieniu",
+      "Art. 113 - ochrona przed mobbingiem",
+      "Art. 18³d - odwrócony ciężar dowodu"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
+  },
+
+  urlop_bezplatny: {
+    name: "Urlop bezpłatny",
+    keywords: ["urlop bezpłatny", "bezpłatny urlop", "zwolnienie z pracy bez wynagrodzenia", "urlop na własny wniosek"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '174' }, // urlop bezpłatny
+    ],
+    mainActs: [
+      "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
+    ],
+    mainArticles: [
+      "Art. 174 - urlop bezpłatny (na wniosek pracownika, za zgodą pracodawcy)"
+    ],
+    relatedArticles: [
+      "Art. 175 - skutki urlopu bezpłatnego dla uprawnień pracowniczych"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
+  },
+
+  odpowiedzialnosc_materialna_pracownika: {
+    name: "Odpowiedzialność materialna pracownika",
+    keywords: ["odpowiedzialność materialna", "szkoda wyrządzona pracodawcy", "niedobór", "zniszczenie mienia", "odszkodowanie dla pracodawcy"],
+    mcpArticles: [
+      { actCode: 'kp', articleNumber: '114' }, // odpowiedzialność za szkodę
+      { actCode: 'kp', articleNumber: '115' }, // wyłączenie odpowiedzialności
+      { actCode: 'kp', articleNumber: '116' }, // wysokość odszkodowania
+      { actCode: 'kp', articleNumber: '124' }, // odpowiedzialność pełna
+    ],
+    mainActs: [
+      "Ustawa z dnia 26 czerwca 1974 r. - Kodeks pracy"
+    ],
+    mainArticles: [
+      "Art. 114 - odpowiedzialność pracownika za szkodę wyrządzoną pracodawcy",
+      "Art. 115 - wyłączenie odpowiedzialności (siła wyższa, wina pracodawcy)",
+      "Art. 116 - wysokość odszkodowania (rzeczywista szkoda, max 3-miesięczne wynagrodzenie)",
+      "Art. 124 - odpowiedzialność w pełnej wysokości (umyślne wyrządzenie szkody)"
+    ],
+    relatedArticles: [
+      "Art. 119 - odpowiedzialność za mienie powierzone",
+      "Art. 125 - odpowiedzialność członków zespołu"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19740240141"
+  },
+
+  /**
+   * PRAWO RODZINNE - ROZSZERZENIE (Family Law - Extended)
+   */
+  rozwod: {
+    name: "Rozwód",
+    keywords: ["rozwód", "rozwodu", "rozwiązanie małżeństwa", "orzeczenie rozwodu", "małżeństwo rozwiązane", "wina rozwodowa", "separacja", "pozew o rozwód"],
+    mcpArticles: [
+      { actCode: 'kro', articleNumber: '56' },  // rozwód - przesłanki
+      { actCode: 'kro', articleNumber: '57' },  // dobro wspólnych małoletnich dzieci
+      { actCode: 'kro', articleNumber: '58' },  // skutki rozwodu
+      { actCode: 'kro', articleNumber: '60' },  // alimenty po rozwodzie
+    ],
+    mainActs: [
+      "Ustawa z dnia 25 lutego 1964 r. - Kodeks rodzinny i opiekuńczy"
+    ],
+    mainArticles: [
+      "Art. 56 - przesłanki rozwodu (zupełny i trwały rozkład pożycia)",
+      "Art. 57 - odmowa rozwodu ze względu na dobro małoletnich dzieci",
+      "Art. 58 - skutki rozwodu (ustanie małżeńskiej wspólności majątkowej)",
+      "Art. 60 - alimenty dla rozwiedzionego małżonka"
+    ],
+    relatedArticles: [
+      "Art. 61 - wina rozkładu pożycia",
+      "Art. 611 - separacja jako alternatywa rozwodu"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640090059"
+  },
+
+  wspolnosc_malzenska: {
+    name: "Wspólność majątkowa małżeńska",
+    keywords: ["wspólność majątkowa", "majątek wspólny", "podział majątku", "majątek osobisty", "intercyza", "rozdzielność majątkowa", "umowa majątkowa małżeńska"],
+    mcpArticles: [
+      { actCode: 'kro', articleNumber: '31' },  // ustroje majątkowe
+      { actCode: 'kro', articleNumber: '47' },  // intercyza - umowa majątkowa
+      { actCode: 'kro', articleNumber: '31¹' }, // wspólność ustawowa
+      { actCode: 'kro', articleNumber: '33' },  // majątek wspólny
+      { actCode: 'kro', articleNumber: '45' },  // podział majątku wspólnego
+    ],
+    mainActs: [
+      "Ustawa z dnia 25 lutego 1964 r. - Kodeks rodzinny i opiekuńczy"
+    ],
+    mainArticles: [
+      "Art. 31 - ustroje majątkowe małżeńskie (ustawowa wspólność, umowna)",
+      "Art. 31¹ - ustawowa wspólność majątkowa",
+      "Art. 33 - majątek wspólny (nabyty w czasie trwania wspólności)",
+      "Art. 45 - podział majątku wspólnego po ustaniu wspólności",
+      "Art. 47 - intercyza (umowa majątkowa małżeńska) - forma aktu notarialnego"
+    ],
+    relatedArticles: [
+      "Art. 34 - majątek osobisty każdego z małżonków",
+      "Art. 36 - zarząd majątkiem wspólnym",
+      "Art. 41 - rozdzielność majątkowa"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640090059"
+  },
+
+  wladza_rodzicielska: {
+    name: "Władza rodzicielska",
+    keywords: ["władza rodzicielska", "opieka nad dzieckiem", "kontakty z dzieckiem", "piecza nad dzieckiem", "przedstawicielstwo ustawowe", "ograniczenie władzy rodzicielskiej", "pozbawienie władzy"],
+    mcpArticles: [
+      { actCode: 'kro', articleNumber: '95' },  // treść władzy rodzicielskiej
+      { actCode: 'kro', articleNumber: '96' },  // obowiązki i prawa rodziców
+      { actCode: 'kro', articleNumber: '97' },  // przedstawicielstwo ustawowe
+      { actCode: 'kro', articleNumber: '107' }, // ograniczenie władzy rodzicielskiej
+      { actCode: 'kro', articleNumber: '111' }, // pozbawienie władzy rodzicielskiej
+      { actCode: 'kro', articleNumber: '113' }, // kontakty z dzieckiem
+    ],
+    mainActs: [
+      "Ustawa z dnia 25 lutego 1964 r. - Kodeks rodzinny i opiekuńczy"
+    ],
+    mainArticles: [
+      "Art. 95 - władza rodzicielska obejmuje pieczę nad osobą i majątkiem dziecka",
+      "Art. 96 - obowiązki i prawa rodziców (wychowanie, troska o zdrowie i rozwój)",
+      "Art. 97 - przedstawicielstwo ustawowe dziecka",
+      "Art. 107 - ograniczenie władzy rodzicielskiej przez sąd",
+      "Art. 111 - pozbawienie władzy rodzicielskiej (nadużycia, trwałe zaniedbanie)"
+    ],
+    relatedArticles: [
+      "Art. 98 - wykonywanie władzy przez oboje rodziców",
+      "Art. 113 - kontakty rodziców z dzieckiem",
+      "Art. 58 § 1a - regulacja władzy rodzicielskiej po rozwodzie"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640090059"
+  },
+
+  /**
+   * PRAWO KARNE - ROZSZERZENIE (Criminal Law - Extended)
+   */
+  jazda_po_alkoholu: {
+    name: "Jazda pod wpływem alkoholu",
+    keywords: ["jazda po alkoholu", "pijany kierowca", "prowadzenie pojazdu w stanie nietrzeźwości", "0.2 promila", "0.5 promila", "stan po użyciu alkoholu", "stan nietrzeźwości", "utrata prawa jazdy"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '178a' }, // prowadzenie pojazdu w stanie nietrzeźwości lub po użyciu
+      { actCode: 'kk', articleNumber: '178' },  // sprowadzenie niebezpieczeństwa w ruchu
+      { actCode: 'prd', articleNumber: '45' },  // stan po użyciu / stan nietrzeźwości (PRD)
+      { actCode: 'prd', articleNumber: '135' }, // zakaz prowadzenia w stanie nietrzeźwości
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny",
+      "Ustawa z dnia 20 czerwca 1997 r. - Prawo o ruchu drogowym"
+    ],
+    mainArticles: [
+      "Art. 178a KK - prowadzenie pojazdu w stanie nietrzeźwości (kara grzywny, ograniczenia wolności lub pozbawienia do 3 lat + zakaz prowadzenia)",
+      "Art. 45 PRD - definicje: stan po użyciu (0,2-0,5‰), stan nietrzeźwości (powyżej 0,5‰)",
+      "Art. 135 PRD - zakaz prowadzenia w stanie po użyciu alkoholu lub w stanie nietrzeźwości"
+    ],
+    relatedArticles: [
+      "Art. 178 KK - sprowadzenie niebezpieczeństwa w komunikacji",
+      "Art. 42 KK - zakaz prowadzenia pojazdów (środek karny)",
+      "Art. 43 KK - świadczenie pieniężne"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  groźby_karalne: {
+    name: "Groźby karalne",
+    keywords: ["groźby", "groźba karalna", "groźba bezprawna", "grożenie", "groził", "zagrożenie"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '190' }, // groźba karalna
+      { actCode: 'kk', articleNumber: '191' }, // groźba karana
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 190 - groźba karalna (groźba popełnienia przestępstwa na szkodę zagrożonego lub jego bliskich)",
+      "Art. 191 - groźba bezprawna (groźba rozgłoszenia wiadomości)"
+    ],
+    relatedArticles: [
+      "Art. 190a - uporczywe nękanie (stalking)",
+      "Art. 217 - groźba wobec funkcjonariusza publicznego"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  stalking_nekanie: {
+    name: "Stalking (uporczywe nękanie)",
+    keywords: ["stalking", "nękanie", "uporczywe nękanie", "stalkowanie", "prześladowanie", "nachodzenie"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '190a' }, // uporczywe nękanie (stalking)
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 190a - uporczywe nękanie (stalking) - nachodzenie, śledzenie, wywoływanie poczucia zagrożenia"
+    ],
+    relatedArticles: [
+      "Art. 190 - groźba karalna",
+      "Art. 191 - groźba bezprawna"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  niealimentacja: {
+    name: "Niealimentacja (uchylanie się od alimentów)",
+    keywords: ["niealimentacja", "uchylanie się od alimentów", "brak alimentów", "niepłacenie alimentów", "alimenty nie płaci"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '209' }, // uchylanie się od alimentów
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 209 - uchylanie się od obowiązku alimentacyjnego (kara grzywny lub ograniczenia wolności)"
+    ],
+    relatedArticles: [
+      "Art. 133 KRO - obowiązek alimentacyjny",
+      "Art. 138 KRO - alimenty między małżonkami"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  wypadek_drogowy: {
+    name: "Wypadek drogowy i spowodowanie wypadku",
+    keywords: ["wypadek", "wypadek drogowy", "kolizja", "spowodowanie wypadku", "nieudzielenie pomocy", "ucieczka z miejsca wypadku"],
+    mcpArticles: [
+      { actCode: 'kk', articleNumber: '177' },  // sprowadzenie wypadku w ruchu
+      { actCode: 'kk', articleNumber: '178' },  // sprowadzenie bezpośredniego niebezpieczeństwa
+      { actCode: 'kk', articleNumber: '162' },  // nieudzielenie pomocy
+    ],
+    mainActs: [
+      "Ustawa z dnia 6 czerwca 1997 r. - Kodeks karny"
+    ],
+    mainArticles: [
+      "Art. 177 - sprowadzenie katastrofy w ruchu (śmierć lub ciężki uszczerbek na zdrowiu)",
+      "Art. 178 - sprowadzenie bezpośredniego niebezpieczeństwa katastrofy w ruchu",
+      "Art. 162 - nieudzielenie pomocy osobie w stanie zagrożenia życia lub zdrowia"
+    ],
+    relatedArticles: [
+      "Art. 173 - narażenie na bezpośrednie niebezpieczeństwo",
+      "Art. 178a - prowadzenie w stanie nietrzeźwości"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19970880553"
+  },
+
+  /**
+   * PRAWO KONSUMENCKIE - ROZSZERZENIE (Consumer Law - Extended)
+   */
+  kredyt_konsumencki: {
+    name: "Kredyt konsumencki",
+    keywords: ["kredyt konsumencki", "kredyt gotówkowy", "pożyczka", "rrso", "rzeczywista roczna stopa oprocentowania", "harmonogram spłat", "odstąpienie od kredytu", "kredyt w banku"],
+    mcpArticles: [
+      { actCode: 'upk', articleNumber: '30' },  // prawo odstąpienia od umowy kredytu (14 dni)
+      { actCode: 'upk', articleNumber: '45' },  // całkowity koszt kredytu
+      { actCode: 'upk', articleNumber: '47' },  // RRSO
+      { actCode: 'upk', articleNumber: '54' },  // prawo wcześniejszej spłaty
+    ],
+    mainActs: [
+      "Ustawa z dnia 30 maja 2014 r. o prawach konsumenta"
+    ],
+    mainArticles: [
+      "Art. 30 - prawo odstąpienia od umowy kredytu konsumenckiego (14 dni)",
+      "Art. 45 - całkowity koszt kredytu",
+      "Art. 47 - rzeczywista roczna stopa oprocentowania (RRSO)",
+      "Art. 54 - prawo do wcześniejszej spłaty kredytu"
+    ],
+    relatedArticles: [
+      "Art. 49 - obowiązki przedsiębiorcy przed zawarciem umowy",
+      "Art. 51 - umowa kredytu - forma pisemna"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20140000827"
+  },
+
+  klauzule_abuzywne: {
+    name: "Niedozwolone klauzule umowne (klauzule abuzywne)",
+    keywords: ["klauzule abuzywne", "niedozwolone postanowienia", "nieuczciwe klauzule", "klauzula niedozwolona", "wzorzec umowny", "umowa kredytu frankowego", "indeksacja walutowa"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '385¹' }, // niedozwolone postanowienia umowne
+      { actCode: 'kc', articleNumber: '385²' }, // wzorce umowne
+      { actCode: 'kc', articleNumber: '385³' }, // kontrola wzorców umownych
+    ],
+    mainActs: [
+      "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny"
+    ],
+    mainArticles: [
+      "Art. 385¹ - niedozwolone postanowienia umowne (abuzywne) - sprzeczne z dobrymi obyczajami, rażąco naruszające interes konsumenta",
+      "Art. 385² - wzorce umowne i ich związanie konsumenta",
+      "Art. 385³ - kontrola wzorców umownych przez sąd"
+    ],
+    relatedArticles: [
+      "Art. 58 KC - nieważność czynności prawnej",
+      "Art. 353¹ KC - swoboda umów"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
+  },
+
+  /**
+   * PRAWO MIESZKANIOWE - ROZSZERZENIE (Housing Law - Extended)
+   */
+  kupno_nieruchomosci: {
+    name: "Kupno nieruchomości (mieszkania, domu)",
+    keywords: ["kupno mieszkania", "kupno domu", "kupno nieruchomości", "akt notarialny", "umowa przedwstępna", "sprzedaż nieruchomości", "księga wieczysta", "notariusz", "zadatek"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '155' },  // akt notarialny - forma dla nieruchomości
+      { actCode: 'kc', articleNumber: '158' },  // forma aktu notarialnego pod rygorem nieważności
+      { actCode: 'kc', articleNumber: '389' },  // umowa przedwstępna
+      { actCode: 'kc', articleNumber: '394' },  // zadatek
+      { actCode: 'kc', articleNumber: '535' },  // umowa sprzedaży
+    ],
+    mainActs: [
+      "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny",
+      "Ustawa z dnia 6 lipca 1982 r. o księgach wieczystych i hipotece"
+    ],
+    mainArticles: [
+      "Art. 158 KC - umowa przenosząca własność nieruchomości wymaga formy aktu notarialnego pod rygorem nieważności",
+      "Art. 155 KC - własność nieruchomości przechodzi na nabywcę z chwilą zawarcia umowy (wpis do księgi wieczystej ma charakter deklaratoryjny)",
+      "Art. 389 KC - umowa przedwstępna (zobowiązanie do zawarcia umowy przyrzeczonej)",
+      "Art. 394 KC - zadatek"
+    ],
+    relatedArticles: [
+      "Art. 535 KC - umowa sprzedaży",
+      "Art. 3 Ustawy o księgach wieczystych - wpis do księgi wieczystej",
+      "Art. 556 KC - rękojmia za wady"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
+  },
+
+  wspolnota_mieszkaniowa: {
+    name: "Wspólnota mieszkaniowa",
+    keywords: ["wspólnota mieszkaniowa", "zarząd wspólnoty", "czesne", "opłaty za mieszkanie", "fundusz remontowy", "zarządca nieruchomości", "właściciel lokalu"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '6' },    // nieruchomość lokalowa
+      { actCode: 'kc', articleNumber: '13' },   // zarząd nieruchomością wspólną
+      { actCode: 'kc', articleNumber: '14' },   // koszty zarządu
+      { actCode: 'kc', articleNumber: '22' },   // wspólnota mieszkaniowa
+    ],
+    mainActs: [
+      "Ustawa z dnia 24 czerwca 1994 r. o własności lokali"
+    ],
+    mainArticles: [
+      "Art. 6 - nieruchomość lokalowa (lokal + udział w częściach wspólnych)",
+      "Art. 13 - zarząd nieruchomością wspólną",
+      "Art. 14 - koszty zarządu nieruchomością wspólną",
+      "Art. 22 - wspólnota mieszkaniowa"
+    ],
+    relatedArticles: [
+      "Art. 12 - prawa i obowiązki właścicieli lokali",
+      "Art. 15 - fundusz remontowy",
+      "Art. 18 - zarządca nieruchomości"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19940850388"
+  },
+
+  sasiedzi_halas: {
+    name: "Sąsiedzi - hałas i uciążliwości",
+    keywords: ["hałas", "głośni sąsiedzi", "hałas sąsiadów", "imprezy u sąsiada", "cicha godzina", "uciążliwości", "przekroczenie granic", "immisje"],
+    mcpArticles: [
+      { actCode: 'kc', articleNumber: '144' },  // immisje - hałas, wstrząsy, itp.
+      { actCode: 'kc', articleNumber: '222' },  // roszczenia właściciela
+      { actCode: 'kk', articleNumber: '191' },  // naruszenie miru domowego
+    ],
+    mainActs: [
+      "Ustawa z dnia 23 kwietnia 1964 r. - Kodeks cywilny",
+      "Ustawa z dnia 27 kwietnia 2001 r. - Prawo ochrony środowiska"
+    ],
+    mainArticles: [
+      "Art. 144 KC - immisje (hałas, dym, zapachy) - właściciel powinien powstrzymać się od działań przekraczających przeciętną miarę",
+      "Art. 222 KC - roszczenia właściciela",
+      "Art. 113 Prawa ochrony środowiska - dopuszczalne poziomy hałasu"
+    ],
+    relatedArticles: [
+      "Art. 23 KC - dobra osobiste (spokój, zdrowie)",
+      "Art. 415 KC - odpowiedzialność za szkodę",
+      "Art. 191 KK - naruszenie miru domowego"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU19640160093"
+  },
+
+  /**
+   * PRAWO ADMINISTRACYJNE - ROZSZERZENIE (Administrative Law - Extended)
+   */
+  mandat_karny: {
+    name: "Mandat karny",
+    keywords: ["mandat", "mandat karny", "odwołanie od mandatu", "zaskarżenie mandatu", "nie przyjąłem mandatu", "taryfikator mandatów"],
+    mcpArticles: [
+      { actCode: 'kkw', articleNumber: '95' },  // mandat karny
+      { actCode: 'kkw', articleNumber: '96' },  // odmowa przyjęcia mandatu
+      { actCode: 'kkw', articleNumber: '101' }, // odwołanie od mandatu
+    ],
+    mainActs: [
+      "Ustawa z dnia 24 sierpnia 2001 r. - Kodeks postępowania w sprawach o wykroczenia",
+      "Ustawa z dnia 20 maja 1971 r. - Kodeks wykroczeń"
+    ],
+    mainArticles: [
+      "Art. 95 KPW - nałożenie grzywny w drodze mandatu karnego",
+      "Art. 96 KPW - ukarany może odmówić przyjęcia mandatu",
+      "Art. 101 KPW - wniesienie sprzeciwu od mandatu (7 dni od dnia doręczenia)"
+    ],
+    relatedArticles: [
+      "Art. 97 KPW - skutki przyjęcia mandatu",
+      "Art. 98 KPW - uiszczenie grzywny"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20011060117"
+  },
+
+  rejestracja_pojazdu: {
+    name: "Rejestracja pojazdu",
+    keywords: ["rejestracja pojazdu", "rejestracja samochodu", "tablice rejestracyjne", "dowód rejestracyjny", "przerejestrowani pojazdu", "wyrejestrowanie"],
+    mcpArticles: [
+      { actCode: 'prd', articleNumber: '73' },  // obowiązek rejestracji pojazdu
+      { actCode: 'prd', articleNumber: '75' },  // termin rejestracji (30 dni)
+      { actCode: 'prd', articleNumber: '78' },  // dokumenty potrzebne do rejestracji
+    ],
+    mainActs: [
+      "Ustawa z dnia 20 czerwca 1997 r. - Prawo o ruchu drogowym"
+    ],
+    mainArticles: [
+      "Art. 73 PRD - obowiązek rejestracji pojazdu",
+      "Art. 75 PRD - termin rejestracji (30 dni od nabycia lub importu)",
+      "Art. 78 PRD - dokumenty wymagane do rejestracji"
+    ],
+    relatedArticles: [
+      "Art. 79 PRD - przerejestrowanie pojazdu przy zmianie właściciela",
+      "Art. 82 PRD - wyrejestrowanie pojazdu"
+    ],
+    source: "https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20240001251"
   }
 };
 
