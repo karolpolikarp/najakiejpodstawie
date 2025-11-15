@@ -122,7 +122,6 @@
 1. **3-in-1** - pierwsza platforma łącząca OCR + Legal API + AI
 2. **Real-time oficjalne źródła** - nie halucynacje, tylko api.sejm.gov.pl
 3. **Polish-first** - OCR + AI trenowane dla języka polskiego
-4. **Open source** - transparentność i trust
 
 ---
 
@@ -215,12 +214,6 @@ W sprawach wymagających porady prawnej **zawsze skonsultuj się z wykwalifikowa
 Masz pytania lub sugestie? Skontaktuj się poprzez:
 - GitHub Issues: https://github.com/karolpolikarp/najakiejpodstawie/issues
 - Email: [dostępny na prośbę]
-
----
-
-## 📄 Licencja
-
-Projekt open source na licencji MIT.
 
 ---
 

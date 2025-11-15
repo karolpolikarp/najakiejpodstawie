@@ -143,9 +143,6 @@ const Landing = () => {
               <Link to="/o-nas">Dowiedz się więcej</Link>
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground/70 animate-fade-in font-mono" style={{ animationDelay: '300ms' }}>
-            Fast • Accurate • Private
-          </p>
         </div>
       </section>
 
@@ -501,9 +498,9 @@ const Landing = () => {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-3">Open Source</h4>
+              <h4 className="font-semibold mb-3">Kod projektu</h4>
               <p className="text-sm text-muted-foreground mb-3">
-                Kod źródłowy dostępny na licencji MIT
+                Projekt dostępny na GitHub
               </p>
               <Button variant="outline" size="sm" asChild>
                 <a
@@ -511,13 +508,13 @@ const Landing = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Zobacz kod
+                  Zobacz na GitHub
                 </a>
               </Button>
             </div>
           </div>
           <div className="text-center text-sm text-muted-foreground pt-4 border-t border-border">
-            <p>© 2025 JakiePrawo.pl • Projekt Open Source • Licencja MIT</p>
+            <p>© 2025 JakiePrawo.pl</p>
             <p className="mt-2">Narzędzie informacyjne, nie zastępuje porady prawnika. W konkretnych sprawach skonsultuj się z prawnikiem.</p>
           </div>
         </div>

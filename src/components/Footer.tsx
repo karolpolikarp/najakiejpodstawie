@@ -62,7 +62,7 @@ export const Footer = () => {
             Narzędzie wspomagające wyszukiwanie informacji prawnych
           </p>
           <p className="text-xs text-muted-foreground/70 mt-1">
-            To nie jest porada prawna • Projekt open source
+            To nie jest porada prawna
           </p>
         </div>
       </div>

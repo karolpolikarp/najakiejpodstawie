@@ -2,6 +2,7 @@ import { Github } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
 
 const About = () => {
   return (
@@ -106,8 +107,8 @@ const About = () => {
             <section className="bg-card border border-border rounded-lg p-6">
               <h2 className="text-2xl font-semibold text-foreground mb-4">Kto to stworzył?</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Projekt otwartoźródłowy (open source) stworzony jako narzędzie pomocnicze dla osób poszukujących
-                informacji prawnych. Kod dostępny publicznie na GitHub.
+                Projekt stworzony jako narzędzie pomocnicze dla osób poszukujących
+                informacji prawnych. Kod dostępny na GitHub.
               </p>
               <div className="mt-4">
                 <Button variant="outline" asChild>
@@ -130,6 +131,8 @@ const About = () => {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 };
