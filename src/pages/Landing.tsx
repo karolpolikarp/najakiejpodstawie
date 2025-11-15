@@ -143,9 +143,6 @@ const Landing = () => {
               <Link to="/o-nas">Dowiedz się więcej</Link>
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground/70 animate-fade-in font-mono" style={{ animationDelay: '300ms' }}>
-            Fast • Accurate • Private
-          </p>
         </div>
       </section>
 
@@ -406,24 +403,41 @@ const Landing = () => {
       {/* Disclaimer Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="max-w-3xl mx-auto">
-          <Card className="border-destructive/30 bg-destructive/5">
+          <Card className="border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20">
             <CardHeader>
-              <CardTitle className="text-2xl text-destructive flex items-center gap-2">
+              <CardTitle className="text-2xl text-amber-900 dark:text-amber-100 flex items-center gap-2">
                 <Shield className="h-6 w-6" />
-                Important Disclaimer
+                Ważne zastrzeżenia prawne
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="font-medium">
-                JakiePrawo.pl provides legal information for educational purposes, NOT legal advice for specific cases.
+            <CardContent className="space-y-4">
+              <p className="font-semibold text-amber-900 dark:text-amber-100">
+                JakiePrawo.pl dostarcza informacje edukacyjne o prawie, NIE porady prawne.
               </p>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Information is educational - we show legal bases and general explanations</li>
-                <li>• We do NOT interpret specific user situations or advise on individual cases</li>
-                <li>• For matters requiring legal advice, always consult a qualified lawyer</li>
-                <li>• We assume no responsibility for decisions made based on information from this service</li>
-                <li>• Law changes - always verify currency of regulations</li>
-              </ul>
+
+              <div>
+                <h4 className="font-semibold mb-2 text-amber-900 dark:text-amber-100">Czym NIE jesteśmy:</h4>
+                <ul className="space-y-1 text-sm text-amber-800 dark:text-amber-200">
+                  <li>❌ Nie zastępujemy prawnika - nie udzielamy porad prawnych dotyczących konkretnych spraw</li>
+                  <li>❌ Nie interpretujemy - nie oceniamy Twojej indywidualnej sytuacji prawnej</li>
+                  <li>❌ Nie gwarantujemy aktualności - przepisy prawa mogą się zmieniać</li>
+                  <li>❌ Nie ponosimy odpowiedzialności - za decyzje podjęte na podstawie informacji z aplikacji</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2 text-amber-900 dark:text-amber-100">Czym jesteśmy:</h4>
+                <ul className="space-y-1 text-sm text-amber-800 dark:text-amber-200">
+                  <li>✅ Narzędzie edukacyjne - pokazujemy podstawy prawne i ogólne wyjaśnienia</li>
+                  <li>✅ Punkt startowy - pomagamy znaleźć właściwe artykuły do dalszej weryfikacji</li>
+                  <li>✅ Asystent wyszukiwania - ułatwiamy dostęp do 15,000+ polskich ustaw</li>
+                </ul>
+              </div>
+
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-100 pt-2 border-t border-amber-500/30">
+                W sprawach wymagających porady prawnej zawsze skonsultuj się z wykwalifikowanym prawnikiem lub radcą prawnym.
+                Odpowiedzi AI wymagają weryfikacji - sztuczna inteligencja może popełniać błędy.
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -455,38 +469,38 @@ const Landing = () => {
                 <h4 className="font-bold text-primary">JakiePrawo.pl</h4>
               </div>
               <p className="text-sm text-muted-foreground">
-                AI-powered Polish legal search platform
+                Platforma wyszukiwania przepisów prawa z AI
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-3">Navigation</h4>
+              <h4 className="font-semibold mb-3">Nawigacja</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <Link to="/czat" className="hover:text-primary transition-colors">
-                    Search Tool
+                    Asystent prawny
                   </Link>
                 </li>
                 <li>
                   <Link to="/o-nas" className="hover:text-primary transition-colors">
-                    About
+                    O nas
                   </Link>
                 </li>
                 <li>
                   <Link to="/kontakt" className="hover:text-primary transition-colors">
-                    Contact
+                    Kontakt
                   </Link>
                 </li>
                 <li>
                   <Link to="/polityka-prywatnosci" className="hover:text-primary transition-colors">
-                    Privacy Policy
+                    Polityka prywatności
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-3">Open Source</h4>
+              <h4 className="font-semibold mb-3">Kod projektu</h4>
               <p className="text-sm text-muted-foreground mb-3">
-                Full source code available under MIT license
+                Projekt dostępny na GitHub
               </p>
               <Button variant="outline" size="sm" asChild>
                 <a
@@ -494,14 +508,14 @@ const Landing = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  View Code
+                  Zobacz na GitHub
                 </a>
               </Button>
             </div>
           </div>
           <div className="text-center text-sm text-muted-foreground pt-4 border-t border-border">
-            <p>© 2025 JakiePrawo.pl • Open Source Project • MIT License</p>
-            <p className="mt-2">Legal information tool, not legal advice. Consult a qualified lawyer for specific cases.</p>
+            <p>© 2025 JakiePrawo.pl</p>
+            <p className="mt-2">Narzędzie informacyjne, nie zastępuje porady prawnika. W konkretnych sprawach skonsultuj się z prawnikiem.</p>
           </div>
         </div>
       </footer>

@@ -298,7 +298,7 @@ const Index = () => {
               </div>
 
               <p className="text-xs text-muted-foreground/60 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
-                ⚠️ To narzędzie wspomagające, nie zastępuje porady prawnika
+                ⚠️ Narzędzie edukacyjne – pokazujemy przepisy prawa, nie udzielamy porad prawnych w konkretnych sprawach
               </p>
               <ExampleQuestions
                 onSelect={handleSendMessage}
@@ -458,9 +458,9 @@ const Index = () => {
               {/* AI Disclaimer - AI Act Art. 13 compliance */}
               <div className="mt-2 pt-2 border-t border-border/50">
                 <p className="text-xs text-muted-foreground text-center">
-                  🤖 Wyjaśnienia przepisów, NIE porady prawne •
-                  Odpowiedzi AI (Anthropic) wymagają weryfikacji •
-                  Nie przesyłaj danych osobowych
+                  🤖 Informacje edukacyjne o prawie, NIE porady prawne dla konkretnych spraw •
+                  Odpowiedzi AI (Anthropic) wymagają weryfikacji przez prawnika •
+                  Nie przesyłaj danych wrażliwych ani osobowych
                 </p>
               </div>
             </div>

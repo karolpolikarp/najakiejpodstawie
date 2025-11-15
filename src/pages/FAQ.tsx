@@ -1,6 +1,7 @@
 import { Scale, HelpCircle, Shield, Globe, Brain, FileText, Lock, Euro, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Footer } from '@/components/Footer';
 
 const FAQ = () => {
   const faqs = [
@@ -280,6 +281,8 @@ const FAQ = () => {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 };

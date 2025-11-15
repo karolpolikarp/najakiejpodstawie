@@ -2,6 +2,7 @@ import { Scale, Mail, Github, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Footer } from '@/components/Footer';
 
 const Contact = () => {
   return (
@@ -82,22 +83,6 @@ const Contact = () => {
                 </div>
               </div>
             </Card>
-
-            <Card className="p-6 bg-muted/30">
-              <h2 className="text-xl font-semibold text-foreground mb-3">Współpraca</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Projekt jest otwartoźródłowy (open source). Zapraszamy do współtworzenia - pull requesty mile widziane!
-              </p>
-              <Button asChild variant="outline" size="sm">
-                <a
-                  href="https://github.com/karolpolikarp/najakiejpodstawie"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Zobacz repozytorium
-                </a>
-              </Button>
-            </Card>
           </div>
 
           <div className="mt-8 flex gap-4">
@@ -110,6 +95,8 @@ const Contact = () => {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 };
