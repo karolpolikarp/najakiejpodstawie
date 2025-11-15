@@ -901,8 +901,8 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
       { actCode: 'kp', articleNumber: '129' },  // dobowy czas pracy (8h)
       { actCode: 'kp', articleNumber: '130' },  // tygodniowy czas pracy (40h)
       { actCode: 'kp', articleNumber: '151' },  // nadgodziny - definicja i limit
-      { actCode: 'kp', articleNumber: '1511' }, // rekompensata za nadgodziny
-      { actCode: 'kp', articleNumber: '1512' }, // dodatek za pracę w nocy
+      { actCode: 'kp', articleNumber: '151¹' }, // rekompensata za nadgodziny
+      { actCode: 'kp', articleNumber: '151²' }, // dodatek za pracę w nocy
       { actCode: 'kp', articleNumber: '151³' }, // praca w niedzielę i święto
     ],
     mainActs: [
@@ -1405,9 +1405,9 @@ export const LEGAL_CONTEXT: Record<string, LegalTopic> = {
     name: "Mandat karny",
     keywords: ["mandat", "mandat karny", "odwołanie od mandatu", "zaskarżenie mandatu", "nie przyjąłem mandatu", "taryfikator mandatów"],
     mcpArticles: [
-      { actCode: 'kkw', articleNumber: '95' },  // mandat karny
-      { actCode: 'kkw', articleNumber: '96' },  // odmowa przyjęcia mandatu
-      { actCode: 'kkw', articleNumber: '101' }, // odwołanie od mandatu
+      // UWAGA: KPW (Kodeks postępowania w sprawach o wykroczenia) nie jest obecnie dostępny w MCP
+      // Kod 'kkw' oznacza Kodeks Karny Wykonawczy (inna ustawa)
+      // Artykuły 95-101 dotyczące mandatów znajdują się w KPW, który wymaga dodania do ACT_CODES
     ],
     mainActs: [
       "Ustawa z dnia 24 sierpnia 2001 r. - Kodeks postępowania w sprawach o wykroczenia",
